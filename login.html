@@ -1,1 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Resume Reader</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
 
+    <div class="login-container">
+        <div class="image-panel">
+            <div class="logo-placeholder">
+                <i class="fa-solid fa-file-magnifying-glass"></i>
+                <h2>RESUME READER</h2>
+            </div>
+        </div>
+
+        <div class="form-panel">
+            <h1>Login</h1>
+            
+            <form action="login_process.php" method="POST">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" placeholder="•••••••••" required>
+                        <i class="fa-solid fa-eye-slash" id="togglePassword"></i>
+                    </div>
+                </div>
+                
+                <a href="#" class="forgot-password">Forgot Password?</a>
+                
+                <button type="submit" class="login-button">Login</button>
+            </form>
+            
+            <p class="copyright">Copyright 2025 | ResumeReader</p>
+        </div>
+    </div>
+
+    <div id="forgotPasswordModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Forgot Password</h2>
+            <p class="modal-message">Verification code sent to ***@gmail.com</p>
+            
+            <form action="#" method="POST">
+                <div class="form-group modal-form-group">
+                    <label for="verificationCode">Verification Code</label>
+                    <input type="text" id="verificationCode" name="verificationCode" placeholder="Verification Code">
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-confirm">Confirm</button>
+                    <button type="button" class="btn btn-cancel" id="cancelModal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Password Toggle Script ---
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
+
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function () {
+                // Toggle the type attribute
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                // Toggle the icon
+                this.classList.toggle('fa-eye');
+                this.classList.toggle('fa-eye-slash');
+            });
+        }
+
+        // --- Modal Script ---
+        const forgotPasswordLink = document.querySelector('.forgot-password');
+        const modal = document.getElementById('forgotPasswordModal');
+        const cancelModal = document.getElementById('cancelModal');
+
+        if (forgotPasswordLink && modal && cancelModal) {
+            // Show the modal when "Forgot Password?" is clicked
+            forgotPasswordLink.addEventListener('click', function(e) {
+                e.preventDefault(); // Stop the link from navigating
+                modal.style.display = 'flex';
+            });
+
+            // Hide the modal when "Cancel" is clicked
+            cancelModal.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+
+            // Hide the modal when clicking on the overlay (outside the content)
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
