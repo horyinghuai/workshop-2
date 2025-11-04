@@ -1,12 +1,18 @@
 /* --- Global Styles & Variables --- */
 :root {
-    --primary-color: #8fadac; /* Dusty teal from the image */
+    /* Colors from login page */
+    --primary-color: #8fadac; 
     --text-color-dark: #333;
     --text-color-light: #555;
-    --text-color-logo: #2c3e50; /* Dark blue for logo text */
+    --text-color-logo: #2c3e50;
     --border-color: #ddd;
     --background-color: #ffffff;
-    --body-background: #f4f6f8; /* Light gray for the page background */
+    --body-background: #f4f6f8; 
+    
+    /* Colors from modal */
+    --green-confirm: #28a745;
+    --red-cancel: #dc3545;
+    --modal-input-bg: #eef1f1;
 }
 
 * {
@@ -106,8 +112,7 @@ body {
 }
 
 .password-wrapper input {
-    /* Make space for the icon */
-    padding-right: 45px;
+    padding-right: 45px; /* Make space for the icon */
 }
 
 .password-wrapper i {
@@ -125,7 +130,7 @@ body {
     color: #007bff;
     text-decoration: none;
     margin-bottom: 25px;
-    cursor: pointer; /* Change cursor to show it's clickable */
+    cursor: pointer;
 }
 
 .forgot-password:hover {
@@ -155,31 +160,9 @@ body {
     color: #999;
 }
 
-/* --- Responsive Design (for tablets and phones) --- */
-@media (max-width: 768px) {
-    .login-container {
-        flex-direction: column;
-        width: 90%;
-    }
-
-    /* Hide the image panel on small screens to save space */
-    .image-panel {
-        display: none;
-    }
-
-    .form-panel {
-        padding: 40px;
-    }
-
-    .form-panel h1 {
-        font-size: 2rem; /* 32px */
-    }
-}
-
 /* ================================
---- FORGOT PASSWORD MODAL STYLES ---
-================================
-*/
+   --- FORGOT PASSWORD MODAL ---
+   ================================ */
 
 .modal-overlay {
     position: fixed;
@@ -188,14 +171,14 @@ body {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5); /* Dimmed background */
-    display: none; /* Hidden by default, shown with JS */
+    display: none; /* Hidden by default */
     justify-content: center;
     align-items: center;
     z-index: 1000;
 }
 
 .modal-content {
-    background-color: #ffffff;
+    background-color: var(--background-color);
     padding: 30px 40px;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
@@ -213,7 +196,7 @@ body {
 
 .modal-message {
     font-size: 0.95rem; /* 15.2px */
-    color: #dc3545; /* Red from image */
+    color: var(--red-cancel); /* Red from image */
     margin-bottom: 25px;
 }
 
@@ -229,8 +212,11 @@ body {
 }
 
 .modal-form-group input {
-    background-color: #eef1f1; /* Light gray-teal from image */
+    background-color: var(--modal-input-bg); /* Light gray-teal from image */
     border: 1px solid #dce2e2;
+}
+.modal-form-group input::placeholder{
+    color: #8da0a0;
 }
 
 .modal-buttons {
@@ -246,6 +232,7 @@ body {
     padding: 12px 0;
     font-size: 1rem; /* 16px */
     font-weight: 600;
+    color: white;
     cursor: pointer;
     transition: opacity 0.3s ease;
 }
@@ -255,11 +242,33 @@ body {
 }
 
 .btn-confirm {
-    background-color: #28a745; /* Green from image */
-    color: white;
+    background-color: var(--green-confirm);
 }
 
 .btn-cancel {
-    background-color: #dc3545; /* Red from image */
-    color: white;
+    background-color: var(--red-cancel);
+}
+
+/* ================================
+   --- RESPONSIVE DESIGN ---
+   ================================ */
+@media (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+        width: 90%;
+        margin: 20px 0;
+    }
+
+    /* Hide the image panel on small screens */
+    .image-panel {
+        display: none;
+    }
+
+    .form-panel {
+        padding: 40px;
+    }
+
+    .form-panel h1 {
+        font-size: 2rem; /* 32px */
+    }
 }

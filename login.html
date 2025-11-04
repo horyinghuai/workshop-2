@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Resume Reader</title>
+    
     <link rel="stylesheet" href="style.css">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,6 +16,7 @@
 <body>
 
     <div class="login-container">
+        
         <div class="image-panel">
             <div class="logo-placeholder">
                 <i class="fa-solid fa-file-magnifying-glass"></i>
@@ -69,7 +71,7 @@
 
 
     <script>
-        // --- Password Toggle Script ---
+        // --- 1. Password Show/Hide Toggle ---
         const togglePassword = document.getElementById('togglePassword');
         const password = document.getElementById('password');
 
@@ -79,21 +81,22 @@
                 const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
                 password.setAttribute('type', type);
                 
-                // Toggle the icon
+                // Toggle the icon class
                 this.classList.toggle('fa-eye');
                 this.classList.toggle('fa-eye-slash');
             });
         }
 
-        // --- Modal Script ---
+        // --- 2. Forgot Password Modal Control ---
         const forgotPasswordLink = document.querySelector('.forgot-password');
         const modal = document.getElementById('forgotPasswordModal');
         const cancelModal = document.getElementById('cancelModal');
 
         if (forgotPasswordLink && modal && cancelModal) {
+            
             // Show the modal when "Forgot Password?" is clicked
             forgotPasswordLink.addEventListener('click', function(e) {
-                e.preventDefault(); // Stop the link from navigating
+                e.preventDefault(); // Stop the link from trying to navigate
                 modal.style.display = 'flex';
             });
 
@@ -102,8 +105,9 @@
                 modal.style.display = 'none';
             });
 
-            // Hide the modal when clicking on the overlay (outside the content)
+            // Hide the modal when clicking on the dark overlay
             modal.addEventListener('click', function(e) {
+                // Check if the click is on the overlay itself, not the content box
                 if (e.target === modal) {
                     modal.style.display = 'none';
                 }
