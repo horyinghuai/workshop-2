@@ -96,6 +96,7 @@ button {
     <a href="#">Back</a> &nbsp;&nbsp; Resume Reader
 </div>
 
+
 <div class="container">
     <h2>Upload Resume</h2>
     <form method="POST" enctype="multipart/form-data">
@@ -112,6 +113,41 @@ button {
         <div class="upload-box">
             Drag & drop the resume here<br>PDF, DOCX up to 5MB<br><br>
             <input type="file" name="resume_file" accept=".pdf,.docx" required>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileNameDisplay = document.getElementById('file-name');
+
+    // Click to browse
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // Display file name when selected
+    fileInput.addEventListener('change', () => {
+      fileNameDisplay.textContent = fileInput.files.length
+        ? fileInput.files[0].name
+        : '';
+    });
+
+    // Drag over highlight
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    // Drop file
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      fileInput.files = e.dataTransfer.files;
+      fileNameDisplay.textContent = file.name;
+    });
+  </script>
         </div>
 
         <button type="submit" name="submit" class="confirm-btn">Confirm</button>
