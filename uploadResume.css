@@ -1,0 +1,91 @@
+/* ===============================
+   Upload Resume Page Styles
+   =============================== */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f7f7;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== HEADER ===== */
+.header {
+    background-color: #3a7c7c;
+    color: white;
+    padding: 15px 30px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.header a {
+    color: white;
+    text-decoration: underline;
+    font-size: 16px;
+}
+
+/* ===== UPLOAD BOX CONTAINER ===== */
+.container {
+    width: 400px;
+    margin: 80px auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    text-align: center;
+}
+
+.container h2 {
+    margin-bottom: 20px;
+    color: #000;
+}
+
+/* ===== FORM ELEMENTS ===== */
+select,
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.upload-box {
+    border: 2px dashed #8fbdbd;
+    border-radius: 8px;
+    padding: 25px;
+    color: #555;
+    margin-top: 10px;
+    background-color: #f9ffff;
+    font-size: 14px;
+}
+
+/* ===== BUTTONS ===== */
+button {
+    width: 45%;
+    padding: 10px;
+    margin: 15px 5px 0 5px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.confirm-btn {
+    background-color: #27c327;
+}
+
+.cancel-btn {
+    background-color: #e74c3c;
+}
+
+.confirm-btn:hover {
+    background-color: #22a622;
+}
+
+.cancel-btn:hover {
+    background-color: #cf3d33;
+}

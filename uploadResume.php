@@ -11,7 +11,7 @@ if (isset($_POST['submit'])) {
         $targetFilePath = $targetDir . $fileName;
 
         move_uploaded_file($file["tmp_name"], $targetFilePath);
-        header("Location: PreviewResume.php?job=" . urlencode($job) . "&file=" . urlencode($targetFilePath));
+        header("Location: previewResume.php?job=" . urlencode($job) . "&file=" . urlencode($targetFilePath));
         exit();
     } else {
         echo "<script>alert('Please select a valid file!');</script>";
