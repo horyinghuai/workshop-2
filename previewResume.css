@@ -1,0 +1,83 @@
+/* ===============================
+   Preview Resume Page Styles
+   =============================== */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f7f7;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== HEADER ===== */
+.header {
+    background-color: #3a7c7c;
+    color: white;
+    padding: 15px 30px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.header a {
+    color: white;
+    text-decoration: underline;
+    font-size: 16px;
+}
+
+/* ===== MAIN CONTAINER ===== */
+.main-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    gap: 25px;
+}
+
+/* ===== RESUME BOXES ===== */
+.resume-box {
+    background-color: white;
+    padding: 20px;
+    border-radius: 15px;
+    width: 40%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.preview {
+    text-align: center;
+}
+
+.preview img {
+    border-radius: 50%;
+}
+
+.right-box input,
+.right-box textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* ===== DOWNLOAD BUTTON ===== */
+.download-btn {
+    background-color: #3a7c7c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    float: right;
+    transition: 0.3s ease;
+}
+
+.download-btn:hover {
+    background-color: #2f6b6b;
+}
+
+/* ===== HEADINGS ===== */
+h3 {
+    color: #3a7c7c;
+    margin-bottom: 10px;
+}
