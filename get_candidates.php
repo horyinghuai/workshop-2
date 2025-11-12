@@ -83,7 +83,7 @@ if (isset($_GET['sort_by']) && !empty($_GET['sort_by'])) {
 }
 
 
-$sql = "SELECT id, name, contact_number, applied_job_position, department, applied_date, 
+$sql = "SELECT name, contact_number, applied_job_position, department, applied_date, 
                overall_score, education_score, skills_score, experience_score, 
                achievements_score, language_score, status 
         FROM candidate";
