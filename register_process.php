@@ -46,11 +46,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     }
 
     // --- VALIDATE PASSWORD ---
+    // List all password requirements to the user
+    $_SESSION['password_requirements'] = "Password must meet the following criteria: \n" .
+        "- At least 6 characters long \n" .
+        "- At least one uppercase letter \n" .
+        "- At least one lowercase letter \n" .
+        "- At least one symbol (e.g., !@#$%^&*)";
+
+    // Validate password against each requirement
     if (empty($password)) {
         $_SESSION['password_err'] = "Please enter a password.";
         $has_errors = true;
     } elseif (strlen($password) < 6) {
         $_SESSION['password_err'] = "Password must have at least 6 characters.";
+        $has_errors = true;
+    } elseif (!preg_match('/[A-Z]/', $password)) {
+        $_SESSION['password_err'] = "Password must include at least one uppercase letter.";
+        $has_errors = true;
+    } elseif (!preg_match('/[a-z]/', $password)) {
+        $_SESSION['password_err'] = "Password must include at least one lowercase letter.";
+        $has_errors = true;
+    } elseif (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password)) {
+        $_SESSION['password_err'] = "Password must include at least one symbol.";
         $has_errors = true;
     }
 
@@ -72,9 +89,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     // --- IF VALIDATION PASSES, PROCEED WITH DATABASE ---
 
     // 1. Check if email already exists
-    $sql = "SELECT id FROM user WHERE email = ?";
-    
-    if ($stmt = $mysqli->prepare($sql)) {
+    $sql = "SELECT email FROM user WHERE email = ?";
+
+    if ($stmt = $conn->prepare($sql)) {
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
@@ -99,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
 
     $sql = "INSERT INTO user (name, email, password) VALUES (?, ?, ?)";
 
-    if ($stmt = $mysqli->prepare($sql)) {
+    if ($stmt = $conn->prepare($sql)) {
         // Bind parameters: s = string
         $stmt->bind_param("sss", $name, $email, $hashed_password);
 
@@ -118,7 +135,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
                   </script>";
             
             $stmt->close();
-            $mysqli->close();
+            $conn->close();
             exit(); // Stop script execution
             
         } else {
