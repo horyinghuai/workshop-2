@@ -8,7 +8,7 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - ResumeReader</title>
+    <title>ResumeReader</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,8 +19,7 @@ session_start();
 </head>
 <body>
 
-    <div class="card">
-        <div class="logo-column">
+<div class="logo-column">
             <img src="image/logo.jpg" alt="Resume Reader Logo">
         </div>
 
@@ -63,7 +62,10 @@ session_start();
                     <label for="password">Password</label>
                     <div class="password-wrapper">
                         <input type="password" id="password" name="password">
-                        <i class="fas fa-eye-slash" id="togglePassword"></i>
+                        <i class="fas fa-info-circle info-icon" id="toggleInfo" title="Password requirements"></i>
+                        <div class="info-box" id="infoBox">
+                            <p><?php echo nl2br($_SESSION['password_requirements'] ?? ''); ?></p>
+                        </div>
                     </div>
                     <span class="error-message">
                         <?php 
@@ -77,7 +79,6 @@ session_start();
                     <label for="confirm_password">Confirm New Password</label>
                     <div class="password-wrapper">
                         <input type="password" id="confirm_password" name="confirm_password">
-                        <i class="fas fa-eye-slash" id="toggleConfirmPassword"></i>
                     </div>
                     <span class="error-message">
                         <?php 
@@ -96,29 +97,13 @@ session_start();
                 <p class="copyright">Copyright 2025 | ResumeReader</p>
             </div>
         </div>
-    </div>
 
     <script>
-        const togglePassword = document.getElementById('togglePassword');
-        const password = document.getElementById('password');
-        
-        togglePassword.addEventListener('click', function () {
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-            this.classList.toggle('fa-eye');
-            this.classList.toggle('fa-eye-slash');
-        });
+        const toggleInfo = document.getElementById('toggleInfo');
+        const infoBox = document.getElementById('infoBox');
 
-        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
-        const confirm_password = document.getElementById('confirm_password');
-
-        toggleConfirmPassword.addEventListener('click', function () {
-            const type = confirm_password.getAttribute('type') === 'password' ? 'text' : 'password';
-            confirm_password.setAttribute('type', type);
-            
-            // Toggle the icon
-            this.classList.toggle('fa-eye');
-            this.classList.toggle('fa-eye-slash');
+        toggleInfo.addEventListener('click', function () {
+            infoBox.style.display = infoBox.style.display === 'block' ? 'none' : 'block';
         });
     </script>
 
