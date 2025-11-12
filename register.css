@@ -1,0 +1,197 @@
+/* --- CSS RESET --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* --- GLOBAL STYLES --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f7f6;
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+/* --- CARD LAYOUT --- */
+.card {
+    display: flex;
+    max-width: 900px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+/* --- LEFT LOGO COLUMN --- */
+.logo-column {
+    flex: 1;
+    display: flex;
+    /* The image itself provides the color */
+}
+
+.logo-column img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* This ensures the image covers the column fully */
+}
+
+/* --- RIGHT FORM COLUMN --- */
+.form-column {
+    flex: 1;
+    padding: 3rem;
+}
+
+h1 {
+    font-size: 2.25rem; /* 36px */
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+/* --- FORM STYLES --- */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+input[type="email"],
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="email"]:focus,
+input[type="text"]:focus,
+input[type="password"]:focus {
+    outline: none;
+    border-color: #a8c2c2;
+    box-shadow: 0 0 0 3px rgba(168, 194, 194, 0.3);
+}
+
+/* --- PASSWORD FIELD WITH ICON --- */
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
+}
+
+/* --- BUTTONS --- */
+.register-btn {
+    width: 100%;
+    padding: 0.85rem;
+    border: none;
+    border-radius: 8px;
+    background-color: #a8c2c2; /* Color from image */
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem;
+}
+
+.register-btn:hover {
+    background-color: #90abab; /* A slightly darker shade */
+}
+
+/* --- FOOTER LINKS --- */
+.footer-links {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.footer-links p {
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
+.footer-links a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+.copyright {
+    color: #888;
+    font-size: 0.8rem;
+    margin-top: 1rem;
+}
+
+/* --- ERROR & SUCCESS MESSAGES --- */
+.error-message {
+    color: #d9534f;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
+    min-height: 1em; /* Prevents layout jump */
+}
+
+.error-general {
+    padding: 1rem;
+    background: #f2dede;
+    color: #a94442;
+    border: 1px solid #ebccd1;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.success-general {
+    padding: 1rem;
+    background: #dff0d8;
+    color: #3c763d;
+    border: 1px solid #d6e9c6;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 768px) {
+    .card {
+        flex-direction: column;
+        max-width: 500px;
+    }
+
+    /* Hide logo column on mobile to save space */
+    .logo-column {
+        display: none;
+    }
+
+    .form-column {
+        padding: 2rem;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+    }
+}
