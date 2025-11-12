@@ -1,159 +1,50 @@
-<?php
-// Handle file upload
-if (isset($_POST['submit'])) {
-    $job = $_POST['job_position'];
-    $file = $_FILES['resume_file'];
-
-    if ($file['error'] == 0) {
-        $targetDir = "uploads/";
-        if (!is_dir($targetDir)) mkdir($targetDir);
-        $fileName = basename($file["name"]);
-        $targetFilePath = $targetDir . $fileName;
-
-        move_uploaded_file($file["tmp_name"], $targetFilePath);
-        header("Location: previewResume.php?job=" . urlencode($job) . "&file=" . urlencode($targetFilePath));
-        exit();
-    } else {
-        echo "<script>alert('Please select a valid file!');</script>";
-    }
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Upload Resume</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f7f7;
-    margin: 0;
-    padding: 0;
-}
-.header {
-    background-color: #3a7c7c;
-    color: white;
-    padding: 15px 30px;
-    font-size: 24px;
-    font-weight: bold;
-}
-.header a {
-    color: white;
-    text-decoration: underline;
-    font-size: 16px;
-}
-.container {
-    width: 400px;
-    margin: 80px auto;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    padding: 30px;
-    text-align: center;
-}
-.container h2 {
-    margin-bottom: 20px;
-    color: #000;
-}
-select, input[type="file"] {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-}
-.upload-box {
-    border: 2px dashed #8fbdbd;
-    border-radius: 8px;
-    padding: 25px;
-    color: #555;
-    margin-top: 10px;
-    background-color: #f9ffff;
-}
-button {
-    width: 45%;
-    padding: 10px;
-    margin: 15px 5px 0 5px;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-}
-.confirm-btn {
-    background-color: #27c327;
-}
-.cancel-btn {
-    background-color: #e74c3c;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag and Drop Resume Upload</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="header">
+        <a href="upload_resume.php" class="back-button">&larr; Back</a>
+        <h1 class="header-title">Resume Reader</h1>
+    </div>
 
-<div class="header">
-    <a href="#">Back</a> &nbsp;&nbsp; Resume Reader
-</div>
+    <div class="drag-container">
+        <h2>Upload Your Resume</h2>
+        <form action="upload_action.php" method="post" enctype="multipart/form-data">
+            <div class="drag-area" id="dragArea">
+                <p>Drag & Drop your resume here</p>
+                <p>or</p>
+                <input type="file" name="resume" id="fileInput" hidden>
+                <label for="fileInput" class="browse-btn">Browse File</label>
+            </div>
+            <br>
+            <button type="submit" class="confirm-btn">Upload</button>
+        </form>
+    </div>
 
+    <script>
+        const dragArea = document.getElementById("dragArea");
+        const fileInput = document.getElementById("fileInput");
 
-<div class="container">
-    <h2>Upload Resume</h2>
-    <form method="POST" enctype="multipart/form-data">
-        <label><b>Applied Job Position</b></label><br>
-        <select name="job_position" required>
-            <option value="">Select a job position</option>
-            <option>AI Engineer</option>
-            <option>Data Engineer</option>
-            <option>Software Developer</option>
-            <option>Web Designer</option>
-        </select><br><br>
+        dragArea.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            dragArea.classList.add("active");
+        });
 
-        <label><b>Upload File</b></label>
-        <div class="upload-box">
-            Drag & drop the resume here<br>PDF, DOCX up to 5MB<br><br>
-            <input type="file" name="resume_file" accept=".pdf,.docx" required>
+        dragArea.addEventListener("dragleave", () => {
+            dragArea.classList.remove("active");
+        });
 
-<script>
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-    const fileNameDisplay = document.getElementById('file-name');
-
-    // Click to browse
-    dropZone.addEventListener('click', () => fileInput.click());
-
-    // Display file name when selected
-    fileInput.addEventListener('change', () => {
-      fileNameDisplay.textContent = fileInput.files.length
-        ? fileInput.files[0].name
-        : '';
-    });
-
-    // Drag over highlight
-    dropZone.addEventListener('dragover', e => {
-      e.preventDefault();
-      dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('drag-over');
-    });
-
-    // Drop file
-    dropZone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropZone.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      fileInput.files = e.dataTransfer.files;
-      fileNameDisplay.textContent = file.name;
-    });
-  </script>
-        </div>
-
-        <button type="submit" name="submit" class="confirm-btn">Confirm</button>
-        <button type="reset" class="cancel-btn">Cancel</button>
-    </form>
-</div>
-
+        dragArea.addEventListener("drop", (event) => {
+            event.preventDefault();
+            fileInput.files = event.dataTransfer.files;
+            dragArea.classList.remove("active");
+            dragArea.querySelector("p").textContent = event.dataTransfer.files[0].name;
+        });
+    </script>
 </body>
 </html>
