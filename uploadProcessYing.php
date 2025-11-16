@@ -2,6 +2,17 @@
 session_start();
 include 'connection.php';
 
+// Fetch the current email from the URL
+if (isset($_GET['email'])) {
+    $current_email = $conn->real_escape_string($_GET['email']);
+} else {
+    // Redirect to uploadResumeYing.php if email is not provided
+    $_SESSION['upload_message'] = "Email is required to upload resume.";
+    $_SESSION['upload_error'] = true;
+    header("Location: uploadResumeYing.php");
+    exit();
+}
+
 // Check if form was submitted
 if (isset($_POST['submit']) && isset($_FILES['resume_file'])) {
 
@@ -55,12 +66,12 @@ if (isset($_POST['submit']) && isset($_FILES['resume_file'])) {
                     // The file was moved successfully, now save the *path* to the DB
                     // We assume the 'candidate' table has these columns.
                     // 'status' is set to 'Active' as a default for new uploads.
-                    $sql = "INSERT INTO candidate (job_id, resume_original, status, applied_date) VALUES (?, ?, 'Active', CURDATE())";
-                    
+                    $sql = "INSERT INTO candidate (job_id, resume_original, email_user, status, applied_date) VALUES (?, ?, ?, 'Active', CURDATE())";
+
                     if ($stmt = $conn->prepare($sql)) {
-                        // 'is' means integer for job_id, string for fileDestination
-                        $stmt->bind_param("is", $job_id, $fileDestination);
-                        
+                        // 'iss' means integer for job_id, string for fileDestination, string for email_user
+                        $stmt->bind_param("iss", $job_id, $fileDestination, $current_email);
+
                         if ($stmt->execute()) {
                             // Success!
                             $_SESSION['upload_message'] = "Resume uploaded successfully!";

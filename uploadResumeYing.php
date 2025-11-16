@@ -1,3 +1,5 @@
+<!-- Suppress PHP error messages -->
+<?php error_reporting(0); ?>
 <?php
 // Start session to handle success/error messages
 session_start();
@@ -43,7 +45,8 @@ $conn->close();
     <main class="main-container">
         <div class="upload-container">
             
-            <form action="uploadProcessYing.php" method="post" enctype="multipart/form-data" id="uploadForm">
+            <!-- Pass the current email to uploadProcessYing.php -->
+            <form action="uploadProcessYing.php?email=<?php echo urlencode($_GET['email']); ?>" method="post" enctype="multipart/form-data" id="uploadForm">
                 <h2>Upload Resume</h2>
 
                 <!-- Display Success/Error Alerts -->
