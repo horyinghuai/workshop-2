@@ -26,7 +26,7 @@ if ($result_departments = $conn->query($sql_departments)) {
     $result_departments->free();
 }
 
-$mysqli->close();
+$conn->close();
 
 echo json_encode($response);
 ?>
