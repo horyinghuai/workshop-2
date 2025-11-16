@@ -1,18 +1,33 @@
 <?php
 session_start();
+include 'connection.php';
 
-// Dummy login validation (replace with DB later)
-$validEmail = "admin@resumereader.com";
-$validPassword = "12345678";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-$email = $_POST["email"];
-$password = $_POST["password"];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
 
-if ($email === $validEmail && $password === $validPassword) {
-    $_SESSION["user"] = $email;
-    header("Location: dashboard.php");
-    exit();
-} else {
-    echo "<script>alert('Invalid email or password'); window.location.href='login.html';</script>";
+    // Query user table
+    $sql = "SELECT * FROM user WHERE email = '$email' AND password = '$password'";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows == 1) {
+
+        $row = $result->fetch_assoc();
+        
+        // Store session values
+        $_SESSION['email'] = $row['email'];
+        $_SESSION['name'] = $row['name'];
+
+        // Redirect to dashboard
+        header("Location: dashboard.php");
+        exit();
+
+    } else {
+        echo "<script>
+            alert('Invalid email or password!');
+            window.location.href='login.html';
+        </script>";
+    }
 }
 ?>
