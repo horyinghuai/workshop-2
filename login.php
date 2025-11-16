@@ -60,7 +60,7 @@ $conn->close();
         </form>
 
         <p class="register-text">Don’t have an account? 
-            <a href="register.html">Register here</a>
+            <a href="register.php">Register here</a>
         </p>
 
         <footer>Copyright 2025 | ResumeReader</footer>
