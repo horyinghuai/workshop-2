@@ -67,7 +67,7 @@ $conn->close();
             <p class="card-description">Easily submit new candidate resumes for review.</p>
         </a>
 
-        <a href="candidate_scoring.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
+        <a href="candidateScoring.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
             <div class="card-icon"><i class="fas fa-medal"></i></div>
             <h4 class="card-title">Candidate Scoring</h4>
             <p class="card-description">Evaluate and score applicants based on criteria.</p>

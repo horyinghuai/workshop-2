@@ -36,7 +36,8 @@ $conn->close();
 <body>
 
     <header class="header">
-        <a href="dashboard.php" class="back-link">
+        <!-- Pass the current email to dashboard.php in the back link -->
+        <a href="dashboard.php?email=<?php echo urlencode($_GET['email']); ?>" class="back-link">
             <i class="fas fa-chevron-left"></i> Back
         </a>
         <h1 class="header-title">Resume Reader</h1>

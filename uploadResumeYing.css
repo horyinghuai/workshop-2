@@ -36,7 +36,7 @@ body {
 .back-link {
     color: white;
     text-decoration: none;
-    font-size: 1rem;
+    font-size: 1.5rem;
     font-weight: 500;
     position: absolute;
     left: 2rem;
@@ -61,19 +61,32 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 3rem 1rem;
+    padding: 5rem 1rem;
     flex-grow: 1;
 }
 
 .upload-container {
     background: #ffffff;
     border-radius: 16px;
-    border: 1px solid #a2c1c2;
+    border: 30px solid #9fc2c6;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
     padding: 2.5rem;
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     text-align: center;
+    position: relative;
+}
+
+.upload-container::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 20px;
+    background-color: #d9e6e8; /* Light green border */
+    z-index: -1;
 }
 
 .upload-container h2 {
@@ -155,6 +168,7 @@ select#job_position {
     color: #3a7b7c;
     font-weight: 500;
     line-height: 1.5;
+    text-align: center;
 }
 
 /* --- Buttons --- */

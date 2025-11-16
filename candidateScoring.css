@@ -18,63 +18,61 @@ body {
 
 /* --- Header Section --- */
 .header {
-    background-color: #f4f7f6; /* Same as body background */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2rem;
-    border-bottom: 1px solid #e0e0e0; /* Subtle separator */
-    color: #333;
-    font-weight: 600;
-}
-
-.header-left, .header-right {
+    background-color: #3a7c7c;
+    color: white;
+    padding: 1.25rem 2rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    position: relative;
+    justify-content: center;
+    width: 100%;
 }
 
-.header-center {
+.back-link {
+    color: white;
+    text-decoration: none;
     font-size: 1.5rem;
-    font-weight: 700;
-    color: #3b5a5b; /* Dark teal for the title */
-}
-
-.back-btn {
+    font-weight: 500;
+    position: absolute;
+    left: 2rem;
     display: flex;
     align-items: center;
-    background: none;
-    border: none;
-    font-family: 'Inter', sans-serif;
-    font-size: 1rem;
-    color: #555;
-    cursor: pointer;
-    text-decoration: none;
+    gap: 0.5rem;
 }
 
-.back-btn i {
-    margin-right: 0.5rem;
+.back-link:hover {
+    text-decoration: underline;
 }
 
-.logout-btn {
-    background: none;
-    border: none;
-    font-family: 'Inter', sans-serif;
-    font-size: 1rem;
-    color: #007bff; /* Standard link blue */
-    cursor: pointer;
+.header-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0;
+    text-align: center;
+}
+
+.header .logout-link {
+    position: absolute;
+    right: 2rem;
+    font-size: 2rem; /* Increase font size by 100% */
     text-decoration: none;
+    color: white;
+}
+
+.logout-link:hover {
+    text-decoration: underline;
 }
 
 /* --- Main Content Layout --- */
 .main-content {
     display: flex;
     flex: 1; /* Allows content to grow and fill available space */
+    overflow: hidden; /* Prevents the entire screen from scrolling */
 }
 
 /* --- Sidebar / Filter Section --- */
 .filter-sidebar {
-    width: 280px; /* Fixed width for the sidebar */
+    width: calc(280px + 3cm); /* Increased width by 3cm */
     background-color: #e6eded; /* Light teal background */
     padding: 1.5rem;
     display: flex;
@@ -168,8 +166,8 @@ body {
 
 .filter-option input[type="checkbox"] {
     margin-right: 0.75rem;
-    width: 16px;
-    height: 16px;
+    width: 17.6px; /* Increased size by 10% */
+    height: 17.6px; /* Increased size by 10% */
     accent-color: #3b5a5b; /* Accent color for checkboxes */
 }
 
@@ -180,6 +178,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    overflow-x: auto; /* Enables horizontal scrolling for the table */
+    white-space: nowrap; /* Prevents table rows from wrapping */
 }
 
 /* --- Top Controls (Dropdown & Search) --- */
@@ -254,6 +254,8 @@ body {
     border-radius: 8px;
     overflow-x: auto; /* Enable horizontal scrolling on small screens */
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    display: inline-block; /* Ensures the table stays inline for horizontal scrolling */
+    min-width: 100%; /* Prevents the table from shrinking */
 }
 
 .candidate-table {

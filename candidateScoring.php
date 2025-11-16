@@ -12,19 +12,14 @@
 <body>
 
     <div class="header">
-        <div class="header-left">
-            <a href="register.php" class="back-btn">
-                <i class="fas fa-chevron-left"></i> Back
-            </a>
-        </div>
-        <div class="header-center">
-            Resume Reader
-        </div>
-        <div class="header-right">
-            <a href="logout.php" class="logout-btn">Log Out</a>
-        </div>
+        <!-- Pass the current email to dashboard.php in the back link -->
+        <a href="dashboard.php?email=<?php echo urlencode($_GET['email']); ?>" class="back-link">
+            <i class="fas fa-chevron-left"></i> Back
+        </a>
+        <h1 class="header-title">Resume Reader</h1>
+        <a href="logout.php" class="logout-link">Log Out</a>
     </div>
-
+    
     <div class="main-content">
         <div class="filter-sidebar">
             <div class="filter-header">

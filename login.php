@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         } else {
             echo "<script>
-                    alert('Wrong email or password');
+                    alert('Incorrect email or password. Please try again.');
                     window.location.href = 'login.html';
                   </script>";
             exit();
