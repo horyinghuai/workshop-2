@@ -110,7 +110,7 @@ $sql .= " ORDER BY $order_by";
 
 $candidates = [];
 
-if ($stmt = $mysqli->prepare($sql)) {
+if ($stmt = $conn->prepare($sql)) {
     if (!empty($params)) {
         $stmt->bind_param($param_types, ...$params);
     }
