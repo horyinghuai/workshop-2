@@ -1,33 +1,40 @@
 <?php
 session_start();
-include 'connection.php';
+require_once 'connection.php'; // Your database connection
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    $email = $_POST['email'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $conn->real_escape_string($_POST['email']);
     $password = $_POST['password'];
 
-    // Query user table
-    $sql = "SELECT * FROM user WHERE email = '$email' AND password = '$password'";
+    // Fetch user from database
+    $sql = "SELECT id, password FROM users WHERE email = '$email'";
     $result = $conn->query($sql);
 
-    if ($result->num_rows == 1) {
-
+    if ($result && $result->num_rows === 1) {
         $row = $result->fetch_assoc();
-        
-        // Store session values
-        $_SESSION['email'] = $row['email'];
-        $_SESSION['name'] = $row['name'];
-
-        // Redirect to dashboard
-        header("Location: dashboard.php");
-        exit();
-
+        // Assuming passwords are hashed using password_hash()
+        if (password_verify($password, $row['password'])) {
+            $_SESSION['user_id'] = $row['id'];
+            // Redirect to dashboard
+            header('Location: dashboard.php');
+            exit();
+        } else {
+            $error = "Incorrect password.";
+        }
     } else {
-        echo "<script>
-            alert('Invalid email or password!');
-            window.location.href='login.html';
-        </script>";
+        $error = "Email not found.";
     }
 }
+$conn->close();
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | ResumeReader</title>
+</head>
+<body>
+<?php if (!empty($error)) { echo "<p style='color:red;'>$error</p>"; } ?>
+
+</body>
+</html>
