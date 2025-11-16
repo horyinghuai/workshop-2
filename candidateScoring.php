@@ -150,9 +150,7 @@
                 data.job_positions.forEach(job => {
                     jobPositionOptions.innerHTML += `
                         <div class="filter-option">
-                            <label>
-                                <input type="checkbox" name="job_position" value="${job}"> ${job}
-                            </label>
+                            <button class="filter-button" onclick="filterByJob('${job}')">${job}</button>
                         </div>
                     `;
                 });
@@ -162,25 +160,29 @@
                 data.departments.forEach(dept => {
                     departmentOptions.innerHTML += `
                         <div class="filter-option">
-                            <label>
-                                <input type="checkbox" name="department" value="${dept}"> ${dept}
-                            </label>
+                            <button class="filter-button" onclick="filterByDepartment('${dept}')">${dept}</button>
                         </div>
                     `;
                 });
-
-                // Attach event listeners to new checkboxes
-                document.querySelectorAll('.filter-sidebar input[type="checkbox"]').forEach(checkbox => {
-                    checkbox.addEventListener('change', fetchCandidates);
-                });
-
             } catch (error) {
                 console.error('Error fetching dynamic filters:', error);
             }
         }
 
+        function filterByJob(jobName) {
+            const params = new URLSearchParams();
+            params.append('job_position', jobName);
+            fetchCandidates(params);
+        }
+
+        function filterByDepartment(departmentName) {
+            const params = new URLSearchParams();
+            params.append('department', departmentName);
+            fetchCandidates(params);
+        }
+
         // --- Fetch Candidates Function ---
-        async function fetchCandidates() {
+        async function fetchCandidates(extraParams = null) {
             const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
             const selectedJobPositions = Array.from(document.querySelectorAll('input[name="job_position"]:checked')).map(cb => cb.value);
             const selectedDepartments = Array.from(document.querySelectorAll('input[name="department"]:checked')).map(cb => cb.value);
@@ -196,6 +198,11 @@
             }
             if (sortBy) {
                 params.append('sort_by', sortBy);
+            }
+            if (extraParams) {
+                for (const [key, value] of extraParams) {
+                    params.append(key, value);
+                }
             }
 
             try {

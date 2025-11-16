@@ -82,11 +82,25 @@ if (isset($_GET['sort_by']) && !empty($_GET['sort_by'])) {
     }
 }
 
+// Add filters for job_position and department
+if (isset($_GET['job_position']) && !empty($_GET['job_position'])) {
+    $job_position = $_GET['job_position'];
+    $where_clauses[] = "job_position.job_name = ?";
+    $params[] = $job_position;
+    $param_types .= 's';
+}
 
-$sql = "SELECT name, contact_number, applied_job_position, department, applied_date, 
-               overall_score, education_score, skills_score, experience_score, 
-               achievements_score, language_score, status 
-        FROM candidate";
+if (isset($_GET['department']) && !empty($_GET['department'])) {
+    $department = $_GET['department'];
+    $where_clauses[] = "department.department_name = ?";
+    $params[] = $department;
+    $param_types .= 's';
+}
+
+$sql = "SELECT candidate.name, candidate.contact_number, job_position.job_name AS applied_job_position, department.department_name AS department, candidate.applied_date 
+        FROM candidate 
+        JOIN job_position ON candidate.job_id = job_position.job_id 
+        JOIN department ON job_position.department_id = department.department_id";
 
 if (!empty($where_clauses)) {
     $sql .= " WHERE " . implode(' AND ', $where_clauses);
