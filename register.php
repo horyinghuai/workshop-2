@@ -93,7 +93,7 @@ session_start();
             </form>
 
             <div class="footer-links">
-                <p>Have an account? <a href="login.php">Sign in here</a></p>
+                <p>Have an account? <a href="login.html">Sign in here</a></p>
                 <p class="copyright">Copyright 2025 | ResumeReader</p>
             </div>
         </div>
