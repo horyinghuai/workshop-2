@@ -9,17 +9,16 @@
     
     <link rel="stylesheet" href="candidateScoring.css">
 </head>
-<body>
-
-    <div class="header">
+<body> 
+    <header class="header">
         <!-- Pass the current email to dashboard.php in the back link -->
         <a href="dashboard.php?email=<?php echo urlencode($_GET['email']); ?>" class="back-link">
             <i class="fas fa-chevron-left"></i> Back
         </a>
         <h1 class="header-title">Resume Reader</h1>
         <a href="logout.php" class="logout-link">Log Out</a>
-    </div>
-    
+    </header>
+
     <div class="main-content">
         <div class="filter-sidebar">
             <div class="filter-header">

@@ -16,7 +16,6 @@ body {
 /* Google Font Import */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* --- Header Section --- */
 .header {
     background-color: #3a7c7c;
     color: white;
