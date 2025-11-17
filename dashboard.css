@@ -1,0 +1,116 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f8f8;
+    color: #333;
+}
+
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background-color: #3a7c7c;
+    color: white;
+    padding: 1.25rem 2rem;
+}
+
+.header .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.header .logout-link {
+    position: absolute;
+    right: 2rem;
+    font-size: 1.5rem; /* Increase font size by 100% */
+    text-decoration: none;
+    color: white;
+}
+
+.logout-link:hover {
+    text-decoration: underline;
+}
+
+.dashboard-container {
+    padding: 40px 5%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dashboard-header h2 {
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.dashboard-header p {
+    font-size: 1.1em;
+    color: #666;
+    margin-bottom: 40px;
+}
+
+.quick-actions-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 25px;
+    padding-bottom: 5px;
+    text-align: center;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 30px;
+}
+
+.action-card {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: block;
+    border: 1px solid #ddd;
+}
+
+.action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-icon {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #497672; 
+}
+
+.action-card:nth-child(1) .card-icon { color: #4CAF50; }
+.action-card:nth-child(2) .card-icon { color: #2196F3; }
+.action-card:nth-child(3) .card-icon { color: #FF9800; }
+.action-card:nth-child(4) .card-icon { color: #F44336; }
+
+
+.card-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin: 5px 0;
+}
+
+.card-description {
+    font-size: 0.9em;
+    color: #777;
+    margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+    .actions-grid {
+        grid-template-columns: 1fr; 
+    }
+}
