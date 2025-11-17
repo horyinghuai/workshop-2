@@ -120,7 +120,7 @@ body {
 .search-bar {
     display: flex;
     margin-bottom: 30px;
-    width: 50%; /* Adjust width as needed */
+    width: 100%; /* Adjust width as needed */
     min-width: 300px;
 }
 
