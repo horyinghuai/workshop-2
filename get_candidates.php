@@ -1,137 +1,158 @@
 <?php
-include 'connection.php'; // Include your database configuration
+include 'connection.php';
 
-header('Content-Type: application/json'); // Ensure JSON response
+header('Content-Type: application/json');
 
 $where_clauses = [];
 $params = [];
 $param_types = '';
 
-// --- Status Filter ---
-if (isset($_GET['status']) && is_array($_GET['status'])) {
+/* ---------------------------------------------------------------------------
+   STATUS FILTER
+--------------------------------------------------------------------------- */
+if (!empty($_GET['status']) && is_array($_GET['status'])) {
     $statuses = $_GET['status'];
-    if (!empty($statuses)) {
-        $placeholders = implode(',', array_fill(0, count($statuses), '?'));
-        $where_clauses[] = "candidate.status IN ($placeholders)"; // Prefixed with candidate.
-        foreach ($statuses as $status) {
-            $params[] = $status;
-            $param_types .= 's';
-        }
+    $placeholders = implode(',', array_fill(0, count($statuses), '?'));
+    $where_clauses[] = "c.status IN ($placeholders)";
+    foreach ($statuses as $s) {
+        $params[] = $s;
+        $param_types .= 's';
     }
 }
 
-// --- Job Position Filter ---
-if (isset($_GET['job_position']) && is_array($_GET['job_position'])) {
-    $job_positions = $_GET['job_position'];
-    if (!empty($job_positions)) {
-        $placeholders = implode(',', array_fill(0, count($job_positions), '?'));
-        $where_clauses[] = "job_position.job_name IN ($placeholders)"; // Prefixed with job_position.
-        foreach ($job_positions as $job) {
-            $params[] = $job;
-            $param_types .= 's';
-        }
+/* ---------------------------------------------------------------------------
+   JOB POSITION FILTER
+--------------------------------------------------------------------------- */
+if (!empty($_GET['job_position']) && is_array($_GET['job_position'])) {
+    $jobs = $_GET['job_position'];
+    $placeholders = implode(',', array_fill(0, count($jobs), '?'));
+    $where_clauses[] = "jp.job_name IN ($placeholders)";
+    foreach ($jobs as $j) {
+        $params[] = $j;
+        $param_types .= 's';
     }
 }
 
-// --- Department Filter ---
-if (isset($_GET['department']) && is_array($_GET['department'])) {
-    $departments = $_GET['department'];
-    if (!empty($departments)) {
-        $placeholders = implode(',', array_fill(0, count($departments), '?'));
-        $where_clauses[] = "department.department_name IN ($placeholders)"; // Prefixed with department.
-        foreach ($departments as $dept) {
-            $params[] = $dept;
-            $param_types .= 's';
-        }
+/* ---------------------------------------------------------------------------
+   DEPARTMENT FILTER
+--------------------------------------------------------------------------- */
+if (!empty($_GET['department']) && is_array($_GET['department'])) {
+    $depts = $_GET['department'];
+    $placeholders = implode(',', array_fill(0, count($depts), '?'));
+    $where_clauses[] = "d.department_name IN ($placeholders)";
+    foreach ($depts as $dpt) {
+        $params[] = $dpt;
+        $param_types .= 's';
     }
 }
 
-// --- Search Query ---
-if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
-    $search_term = '%' . trim($_GET['search']) . '%';
-    $where_clauses[] = "(candidate.name LIKE ? OR candidate.contact_number LIKE ?)"; // Prefixed
-    $params[] = $search_term;
-    $params[] = $search_term;
+/* ---------------------------------------------------------------------------
+   SEARCH FILTER (name / contact)
+--------------------------------------------------------------------------- */
+if (!empty($_GET['search'])) {
+    $search = '%' . trim($_GET['search']) . '%';
+    $where_clauses[] = "(c.name LIKE ? OR c.contact_number LIKE ?)";
+    $params[] = $search;
+    $params[] = $search;
     $param_types .= 'ss';
 }
 
-// --- Dropdown Filter (Sorting) ---
-$order_by = 'candidate.applied_date DESC'; // Default sort
-if (isset($_GET['sort_by']) && !empty($_GET['sort_by'])) {
-    $sort_by = $_GET['sort_by'];
-    switch ($sort_by) {
+/* ---------------------------------------------------------------------------
+   SORTING
+--------------------------------------------------------------------------- */
+$order_by = 'c.applied_date DESC'; // DEFAULT
+
+if (!empty($_GET['sort_by'])) {
+    switch ($_GET['sort_by']) {
         case 'Education':
-            $order_by = 'report.score_education DESC';
+            $order_by = 'r.score_education DESC';
             break;
         case 'Skills':
-            $order_by = 'report.score_skills DESC';
+            $order_by = 'r.score_skills DESC';
             break;
         case 'Experience':
-            $order_by = 'report.score_experience DESC';
+            $order_by = 'r.score_experience DESC';
             break;
         case 'Language':
-            $order_by = 'report.score_language DESC';
+            $order_by = 'r.score_language DESC';
             break;
-        case 'All': // Fall through to default overall_score
         default:
-            $order_by = 'report.score_overall DESC'; // Sort by overall score for 'All'
-            break;
+            $order_by = 'r.score_overall DESC';
     }
 }
 
-// --- NEW SQL QUERY ---
-// Selects candidate info, job/dept info, and report scores
-// Assumes report table links via `report.candidate_id = candidate.id`
-$sql = "SELECT 
-            candidate.candidate_id, 
-            candidate.name, 
-            candidate.contact_number, 
-            job_position.job_name AS applied_job_position, 
-            department.department_name AS department, 
-            candidate.applied_date,
-            candidate.status,
-            report.score_overall AS overall_score,
-            report.score_education AS education_score,
-            report.score_skills AS skills_score,
-            report.score_experience AS experience_score,
-            report.score_language AS language_score,
-            report.score_others AS others_score
-        FROM 
-            candidate 
-        JOIN 
-            job_position ON candidate.job_id = job_position.job_id 
-        JOIN 
-            department ON job_position.department_id = department.department_id
-        JOIN
-            report ON candidate.candidate_id = report.candidate_id";
+/* ---------------------------------------------------------------------------
+   SQL QUERY (Updated)
+   - Aliases: c = candidate, jp = job_position, d = department, r = report, u = users/staff
+   - Includes: staff_in_charge, resume_original, resume_formatted
+--------------------------------------------------------------------------- */
 
+$sql = "
+SELECT 
+    c.candidate_id AS id,
+    c.name,
+    c.contact_number,
+    jp.job_name AS applied_job_position,
+    d.department_name AS department,
+    c.applied_date,
+    c.status,
+    
+    /* report scores */
+    r.score_overall AS overall_score,
+    r.score_education AS education_score,
+    r.score_skills AS skills_score,
+    r.score_experience AS experience_score,
+    r.score_language AS language_score,
+    r.score_others AS others_score,
 
+    /* resume files */
+    c.resume_original,
+    c.resume_formatted,
+
+    /* staff name */
+    u.name AS staff_in_charge
+
+FROM candidate c
+JOIN job_position jp ON c.job_id = jp.job_id
+JOIN department d ON jp.department_id = d.department_id
+LEFT JOIN report r ON r.candidate_id = c.candidate_id
+LEFT JOIN user u ON c.email_user = u.email
+";
+
+/* WHERE clause */
 if (!empty($where_clauses)) {
     $sql .= " WHERE " . implode(' AND ', $where_clauses);
 }
 
+/* ORDER BY */
 $sql .= " ORDER BY $order_by";
 
 $candidates = [];
 
-// Use $conn, not $mysqli
+/* ---------------------------------------------------------------------------
+   EXECUTE QUERY
+--------------------------------------------------------------------------- */
+
 if ($stmt = $conn->prepare($sql)) {
+
     if (!empty($params)) {
         $stmt->bind_param($param_types, ...$params);
     }
+
     $stmt->execute();
     $result = $stmt->get_result();
 
     while ($row = $result->fetch_assoc()) {
         $candidates[] = $row;
     }
+
     $stmt->close();
 } else {
-    // Log error or handle it
-    error_log("Error preparing statement: " . $conn->error);
+    error_log("SQL ERROR: " . $conn->error);
 }
 
 $conn->close();
 
+/* OUTPUT JSON */
 echo json_encode($candidates);
 ?>
