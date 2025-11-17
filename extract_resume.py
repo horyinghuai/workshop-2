@@ -3,6 +3,33 @@ import json
 import re
 import PyPDF2
 import docx
+import spacy  # --- Import SpaCy (Still used for NER Name) ---
+
+# -----------------------------------------------------------------
+# --- IMPORTANT: One-Time Setup (run this in your terminal) ---
+#
+# 1. pip install spacy PyPDF2 python-docx
+# 2. python -m spacy download en_core_web_sm
+#
+# -----------------------------------------------------------------
+
+try:
+    nlp = spacy.load('en_core_web_sm')
+except OSError:
+    # This will be caught and sent as a JSON error if the model isn't downloaded
+    nlp = None
+
+# --- NEW: More robust section keywords ---
+SECTION_MAP = {
+    'objective': ('objective', 'summary', 'professional summary', 'profile'),
+    'education': ('education', 'qualifications', 'academic background'),
+    'skills': ('skills', 'technical skills', 'proficiencies'),
+    'experience': ('experience', 'work experience', 'employment history', 'professional experience'),
+    'achievements': ('achievements', 'awards', 'honors', 'accomplishments'),
+    'language': ('languages', 'language proficiency'),
+    'address': ('address', 'location', 'contact information') 
+    # 'contact information' might also contain phone/email, but NER handles those first.
+}
 
 def extract_text_from_pdf(file_path):
     """Extracts text from a PDF file."""
@@ -16,6 +43,7 @@ def extract_text_from_pdf(file_path):
         return f"Error reading PDF: {e}"
     return text
 
+
 def extract_text_from_docx(file_path):
     """Extracts text from a DOCX file."""
     text = ""
@@ -27,100 +55,145 @@ def extract_text_from_docx(file_path):
         return f"Error reading DOCX: {e}"
     return text
 
+
+# --- REMOVED: The 'clean_and_summarize' function is no longer needed ---
+
+
+def process_name(name_text):
+    """
+    Cleans extracted name text based on user requirements.
+    - 'F A R A H M A R T I N' -> 'Farah Martin'
+    - 'john doe' -> 'John Doe'
+    - 'Hor Ying Huai' -> 'Hor Ying Huai'
+    """
+    if name_text is None:
+        return None
+    
+    # Fix names with extra spaces (F A R A H -> FARAH)
+    name_text = re.sub(r'([A-Z])\s+([A-Z])', r'\1\2', name_text)
+    # Fix names that were spaced (F A R A H M A R T I N -> FARAH MARTIN)
+    name_text = re.sub(r'([A-Z])\s+([A-Z])', r'\1\2', name_text)
+    
+    # Standardize remaining whitespace and apply Title Case
+    name_text = re.sub(r'\s+', ' ', name_text).strip().title()
+    return name_text
+
 def extract_details(text):
-    """Extracts details using regex and section keywords."""
+    """Extracts details using regex, keywords, and NLP."""
     
-    # Simple regex patterns
-    email_pattern = r'[\w\.-]+@[\w\.-]+\.\w+'
-    phone_pattern = r'(\(?\+?\d{1,3}\)?[\s\.-]?)?\(?\d{3}\)?[\s\.-]?\d{3}[\s\.-]?\d{4}'
-    
-    # Find first matches
-    email = re.search(email_pattern, text)
-    phone = re.search(phone_pattern, text)
-    
-    # --- Simple Section Extraction ---
-    # This is naive. It finds a keyword (e.g., "Skills") and grabs the text 
-    # until the next keyword.
-    
-    # Normalize text for section matching
-    lower_text = text.lower()
-    
-    def get_section(start_keyword, end_keywords):
-        try:
-            start_index = lower_text.find(start_keyword)
-            if start_index == -1:
-                return None
-            
-            # Find the end of the section
-            end_index = len(text) # Default to end of document
-            for end_key in end_keywords:
-                found_end_index = lower_text.find(end_key, start_index + len(start_keyword))
-                if found_end_index != -1 and found_end_index < end_index:
-                    end_index = found_end_index
-                    
-            # Get the content of the section
-            section_content = text[start_index + len(start_keyword):end_index].strip(": \n")
-            # Clean up: remove excessive newlines and whitespace
-            return re.sub(r'\s{2,}', ' ', section_content).strip()
-        except Exception:
-            return None
+    if nlp is None:
+         return {"error": "SpaCy model 'en_core_web_sm' not found. Run: python -m spacy download en_core_web_sm"}
 
-    all_section_keywords = [
-        'objective', 'summary', 'profile', 
-        'education', 'qualifications', 
-        'skills', 'technical skills',
-        'experience', 'work experience', 'employment history',
-        'achievements', 'awards',
-        'languages'
-    ]
+    # This will hold the raw, uncleaned text for each section
+    raw_sections = {}
+    # This will hold the final, cleaned data
+    final_data = {}
     
-    # Define keywords that END a section
-    education_ends = ['skills', 'experience', 'projects', 'achievements', 'languages']
-    skills_ends = ['education', 'experience', 'projects', 'achievements', 'languages']
-    experience_ends = ['education', 'skills', 'projects', 'achievements', 'languages']
-    objective_ends = ['education', 'skills', 'experience', 'projects']
+    # This text will have sections removed as we find them
+    others_text = text
+
+    # --- 1. Extract Entities (Name, Email, Phone) ---
     
-    # Extract sections
-    education = get_section('education', education_ends)
-    skills = get_section('skills', skills_ends)
-    experience = get_section('experience', experience_ends)
-    if not experience:
-        experience = get_section('work experience', experience_ends)
+    # Email and Phone (Regex)
+    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+    phone_match = re.search(r'(\(?\+?\d{1,3}\)?[\s\.-]?)?\(?\d{3}\)?[\s\.-]?\d{3}[\s\.-]?\d{4}', text)
+    
+    if email_match:
+        final_data['email'] = email_match.group(0)
+        others_text = others_text.replace(email_match.group(0), "")
         
-    objective = get_section('objective', objective_ends)
-    if not objective:
-        objective = get_section('summary', objective_ends)
+    if phone_match:
+        final_data['contact_number'] = phone_match.group(0)
+        others_text = others_text.replace(phone_match.group(0), "")
 
-    # --- Simple Name Extraction ---
-    # This is a basic guess: assumes the first line might be the name
-    # if it doesn't contain an email or "@".
-    first_line = text.split('\n', 1)[0].strip()
-    name = first_line if '@' not in first_line and len(first_line) < 50 else None
-    if not name:
-        # Fallback: Find email, split it, capitalize parts
-        if email:
-            local_part = email.group(0).split('@')[0]
-            name = " ".join([part.capitalize() for part in re.split(r'[\._-]', local_part)])
+    # Name (NLP NER)
+    name = None
+    doc_for_name = nlp("\n".join(text.split('\n')[:5])) # Check first 5 lines
+    for ent in doc_for_name.ents:
+        if ent.label_ == "PERSON":
+            name = ent.text
+            break
+    
+    # Fallback if NER fails
+    if not name and email_match:
+        local_part = email_match.group(0).split('@')[0]
+        name = " ".join(re.split(r'[\._-]', local_part))
 
+    # Process and store the name
+    final_data['name'] = process_name(name)
+    if name: # Remove raw name from others_text
+        others_text = others_text.replace(name, "")
+
+
+    # --- 2. Extract Text Sections (New Robust Logic) ---
     
-    data = {
-        "name": name,
-        "email": email.group(0) if email else None,
-        "contact_number": phone.group(0) if phone else None,
-        "objective": objective,
-        "education": education,
-        "skills": skills,
-        "experience": experience,
-        "achievements": get_section('achievements', ['education', 'skills', 'experience']),
-        "language": get_section('languages', ['education', 'skills', 'experience']),
-        "full_text": text # Full text for debugging or storing in 'others'
-    }
+    lower_text = text.lower()
+    found_sections = [] # (start_index, section_name, keyword_length)
+
+    # Find the start index of all known sections
+    for section_name, keywords in SECTION_MAP.items():
+        for keyword in keywords:
+            start_index = lower_text.find(keyword)
+            if start_index != -1:
+                found_sections.append((start_index, section_name, len(keyword)))
+                # We only want the first match for each keyword *group*
+                break 
     
-    return data
+    # Sort sections by their start index
+    found_sections.sort(key=lambda x: x[0])
+
+    # Extract content between sections
+    for i, (start, name, length) in enumerate(found_sections):
+        # The content starts after the keyword
+        content_start = start + length
+        
+        # The content ends at the start of the next section
+        content_end = len(text)
+        if i + 1 < len(found_sections):
+            content_end = found_sections[i+1][0]
+            
+        # Get the raw text content
+        raw_content = text[content_start:content_end].strip(": \n")
+        
+        # Store raw content for "others" logic
+        raw_sections[name] = raw_content
+        
+        # Remove this raw content from "others_text"
+        others_text = others_text.replace(raw_content, "")
+
+    # --- 3. Assign Raw Section Text ---
+    # MODIFIED: No longer calls 'clean_and_summarize'. Assigns raw text.
+    
+    final_data['objective'] = raw_sections.get('objective')
+    final_data['education'] = raw_sections.get('education')
+    final_data['skills'] = raw_sections.get('skills')
+    final_data['experience'] = raw_sections.get('experience')
+    final_data['achievements'] = raw_sections.get('achievements')
+    final_data['language'] = raw_sections.get('language')
+    final_data['address'] = raw_sections.get('address')
+
+    # --- 4. Process "Others" section ---
+    # The 'others_text' has had all recognized sections removed.
+    # We just strip extra whitespace from what is left.
+    final_data['others'] = others_text.strip()
+    
+    # Add full text for debugging
+    final_data["full_text"] = text 
+    
+    # Fill any missing keys with None
+    all_keys = ["name", "email", "contact_number", "address", "objective", "education", "skills", "experience", "achievements", "language", "others", "full_text"]
+    for key in all_keys:
+        if key not in final_data:
+            final_data[key] = None
+
+    return final_data
+
 
 if __name__ == "__main__":
-    # The first argument (sys.argv[0]) is the script name.
-    # The second argument (sys.argv[1]) is the file path from PHP.
+    if nlp is None:
+        print(json.dumps({"error": "SpaCy model 'en_core_web_sm' not found. Run: python -m spacy download en_core_web_sm"}))
+        sys.exit(1)
+
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No file path provided."}))
         sys.exit(1)
@@ -143,4 +216,5 @@ if __name__ == "__main__":
 
     # Extract details and print as JSON
     extracted_data = extract_details(full_text)
+    
     print(json.dumps(extracted_data, indent=4))
