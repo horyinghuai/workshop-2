@@ -6,23 +6,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $conn->real_escape_string($_POST['email']);
     $password = $_POST['password'];
 
-    // Fetch user from database
-    $sql = "SELECT id, password FROM users WHERE email = '$email'";
+    // Use email as the primary key and handle incorrect login
+    $sql = "SELECT name, email, password FROM user WHERE email = '$email'";
     $result = $conn->query($sql);
 
     if ($result && $result->num_rows === 1) {
         $row = $result->fetch_assoc();
-        // Assuming passwords are hashed using password_hash()
         if (password_verify($password, $row['password'])) {
-            $_SESSION['user_id'] = $row['id'];
-            // Redirect to dashboard
-            header('Location: dashboard.php');
+            $_SESSION['user_name'] = $row['name'];
+            $_SESSION['user_email'] = $row['email'];
+
+            // Show welcome message and redirect
+            echo "<script>
+                    alert('Welcome {$row['name']}');
+                    window.location.href = 'dashboard.php?email={$row['email']}';
+                  </script>";
             exit();
         } else {
-            $error = "Incorrect password.";
+            echo "<script>
+                    alert('Incorrect email or password. Please try again.');
+                    window.location.href = 'login.html';
+                  </script>";
+            exit();
         }
     } else {
-        $error = "Email not found.";
+        echo "<script>
+                alert('Incorrect email or password. Please try again.');
+                window.location.href = 'login.html';
+              </script>";
+        exit();
     }
 }
 $conn->close();
@@ -60,7 +72,7 @@ $conn->close();
         </form>
 
         <p class="register-text">Don’t have an account? 
-            <a href="register.html">Register here</a>
+            <a href="register.php">Register here</a>
         </p>
 
         <footer>Copyright 2025 | ResumeReader</footer>

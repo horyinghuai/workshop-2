@@ -22,27 +22,22 @@
     <h3 class="quick-actions-title">Quick Actions</h3>
 
     <div class="actions-grid">
-        <a href="upload_resume.php" class="action-card">
+        <a href="upload_resume.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
             <div class="card-icon"><i class="fas fa-upload"></i></div>
             <h4 class="card-title">Upload Resume</h4>
             <p class="card-description">Easily submit new candidate resumes for review.</p>
         </a>
 
-        <a href="candidate_scoring.php" class="action-card">
+        <a href="candidate_scoring.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
             <div class="card-icon"><i class="fas fa-medal"></i></div>
             <h4 class="card-title">Candidate Scoring</h4>
             <p class="card-description">Evaluate and score applicants based on criteria.</p>
         </a>
 
-        <a href="job_positions.php" class="action-card">
+        <a href="job_positions.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
             <div class="card-icon"><i class="fas fa-building"></i></div>
-            <h4 class="card-title">
-                Job Positions
-                <?php if ($active_jobs_count > 0): ?>
-                    <span class="count-badge"><?php echo $active_jobs_count; ?> Active</span>
-                <?php endif; ?>
-            </h4>
-            <p class="card-description">Manage and view all active job listings.</p>
+            <h4 class="card-title">Job Positions</h4>
+            <p class="card-description">Manage and review job positions.</p>
         </a>
 
         <a href="analytics.php" class="action-card">

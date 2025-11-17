@@ -5,28 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume Reader</title>
     
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <!-- Link to your CSS file -->
     <link rel="stylesheet" href="candidateScoring.css">
 </head>
 <body>
 
     <div class="header">
-        <div class="header-left">
-            <a href="register.php" class="back-btn">
-                <i class="fas fa-chevron-left"></i> Back
-            </a>
-        </div>
-        <div class="header-center">
-            Resume Reader
-        </div>
-        <div class="header-right">
-            <a href="logout.php" class="logout-btn">Log Out</a>
-        </div>
+        <!-- Pass the current email to dashboard.php in the back link -->
+        <a href="dashboard.php?email=<?php echo urlencode($_GET['email']); ?>" class="back-link">
+            <i class="fas fa-chevron-left"></i> Back
+        </a>
+        <h1 class="header-title">Resume Reader</h1>
+        <a href="logout.php" class="logout-link">Log Out</a>
     </div>
-
+    
     <div class="main-content">
         <div class="filter-sidebar">
             <div class="filter-header">
@@ -34,7 +27,6 @@
                 <button class="reset-btn" id="resetFilters">Reset</button>
             </div>
 
-            <!-- Status Filter (Static) -->
             <div class="filter-group">
                 <button class="filter-title" data-target="status-options">
                     Status <i class="fas fa-chevron-right"></i>
@@ -63,24 +55,20 @@
                 </div>
             </div>
 
-            <!-- Job Position Filter (Dynamic) -->
             <div class="filter-group">
                 <button class="filter-title" data-target="job-position-options">
                     Job Position <i class="fas fa-chevron-right"></i>
                 </button>
                 <div class="filter-options" id="job-position-options">
-                    <!-- Checkboxes will be loaded here by JavaScript -->
-                </div>
+                    </div>
             </div>
 
-            <!-- Department Filter (Dynamic) -->
             <div class="filter-group">
                 <button class="filter-title" data-target="department-options">
                     Department <i class="fas fa-chevron-right"></i>
                 </button>
                 <div class="filter-options" id="department-options">
-                    <!-- Checkboxes will be loaded here by JavaScript -->
-                </div>
+                    </div>
             </div>
         </div>
 
@@ -92,7 +80,6 @@
                         <option value="Education">Education</option>
                         <option value="Skills">Skills</option>
                         <option value="Experience">Experience</option>
-                        <option value="Achievements">Achievements</option>
                         <option value="Language">Language</option>
                     </select>
                 </div>
@@ -115,14 +102,13 @@
                             <th>Education Score</th>
                             <th>Skills Score</th>
                             <th>Experience Score</th>
-                            <th>Achievements Score</th>
                             <th>Language Score</th>
+                            <th>Others Score</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="candidateTableBody">
-                        <!-- Candidate rows will be loaded here by JavaScript -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </div>
@@ -148,6 +134,7 @@
                 const jobPositionOptions = document.getElementById('job-position-options');
                 jobPositionOptions.innerHTML = ''; // Clear existing
                 data.job_positions.forEach(job => {
+                    // FIX: Create checkboxes, not buttons
                     jobPositionOptions.innerHTML += `
                         <div class="filter-option">
                             <label>
@@ -160,6 +147,7 @@
                 const departmentOptions = document.getElementById('department-options');
                 departmentOptions.innerHTML = ''; // Clear existing
                 data.departments.forEach(dept => {
+                    // FIX: Create checkboxes, not buttons
                     departmentOptions.innerHTML += `
                         <div class="filter-option">
                             <label>
@@ -168,12 +156,6 @@
                         </div>
                     `;
                 });
-
-                // Attach event listeners to new checkboxes
-                document.querySelectorAll('.filter-sidebar input[type="checkbox"]').forEach(checkbox => {
-                    checkbox.addEventListener('change', fetchCandidates);
-                });
-
             } catch (error) {
                 console.error('Error fetching dynamic filters:', error);
             }
@@ -222,8 +204,8 @@
                             <td>${candidate.education_score}</td>
                             <td>${candidate.skills_score}</td>
                             <td>${candidate.experience_score}</td>
-                            <td>${candidate.achievements_score}</td>
                             <td>${candidate.language_score}</td>
+                            <td>${candidate.others_score}</td>
                             <td><span class="status-badge status-${candidate.status}">${candidate.status}</span></td>
                         </tr>
                     `;
@@ -239,9 +221,15 @@
         document.getElementById('searchInput').addEventListener('input', fetchCandidates);
         document.getElementById('scoreDropdown').addEventListener('change', fetchCandidates);
         
+        // FIX: Add event listeners to the checkbox groups to re-fetch on change
+        document.getElementById('status-options').addEventListener('change', fetchCandidates);
+        document.getElementById('job-position-options').addEventListener('change', fetchCandidates);
+        document.getElementById('department-options').addEventListener('change', fetchCandidates);
+
+
         // Initial fetch when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchDynamicFilters(); // Load dynamic checkboxes first
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchDynamicFilters(); // Load dynamic checkboxes first
             fetchCandidates(); // Then load candidates
         });
 
