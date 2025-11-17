@@ -1,20 +1,9 @@
 <?php
-// Handle form submit
+$error = "";
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_FILES['resume']) && $_FILES['resume']['error'] === 0) {
-
-        // Save uploaded file
-        $targetDir = "uploads/";
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0777, true);
-        }
-
-        $targetFile = $targetDir . basename($_FILES["resume"]["name"]);
-        move_uploaded_file($_FILES["resume"]["tmp_name"], $targetFile);
-
-        // Redirect to preview page
-        header("Location: preview.php?file=" . urlencode($targetFile));
-        exit;
+    if (empty($_POST['resume_file'])) {
+        $error = "No file chosen, Please choose the file";
     }
 }
 ?>
@@ -24,73 +13,171 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <title>Resume Reader</title>
-<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        margin: 0;
+        background: #f7f7f7;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Top Bar */
+    .top-bar {
+        background: #4a8a8a;
+        color: white;
+        padding: 18px 30px;
+        display: flex;
+        align-items: center;
+        font-size: 22px;
+        font-weight: 600;
+    }
+
+    .top-bar a {
+        text-decoration: none;
+        color: white;
+        font-size: 22px;
+        margin-right: 20px;
+    }
+
+    /* Main Container */
+    .center-box {
+        width: 450px;
+        margin: 60px auto;
+        background: #ffffff;
+        border-radius: 15px;
+        padding: 40px;
+        border: 12px solid #8fbcbc;
+        text-align: center;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    h2 {
+        margin-top: 0;
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    .label {
+        text-align: left;
+        margin-bottom: 6px;
+        font-weight: 600;
+        margin-top: 18px;
+    }
+
+    select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #c3d8d8;
+        background: #d4e7e7;
+        font-size: 15px;
+        outline: none;
+    }
+
+    .choose-btn {
+        margin-top: 18px;
+        width: 100%;
+        padding: 14px;
+        background: #3f7c7c;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .choose-btn:hover {
+        background: #356868;
+    }
+
+    .file-text {
+        margin-top: 6px;
+        font-size: 14px;
+        color: #777;
+    }
+
+    .btn-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+
+    .confirm-btn {
+        background: #1ec748;
+        padding: 12px 35px;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 17px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .cancel-btn {
+        background: #d33;
+        padding: 12px 35px;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 17px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .error {
+        margin-top: 10px;
+        color: red;
+        font-weight: 600;
+    }
+
+</style>
 </head>
+
 <body>
 
+<!-- Top Bar -->
 <div class="top-bar">
-    <a href="#" class="back-btn">← Back</a>
-    <h1>Resume Reader</h1>
+    <a href="#">← Back</a> Resume Reader
 </div>
 
-<div class="upload-wrapper">
-    <div class="upload-card">
+<!-- Form Container -->
+<div class="center-box">
+    <h2>Upload Resume</h2>
 
-        <h2>Upload Resume</h2>
+    <form method="POST">
+        
+        <div class="label">Applied Job Position</div>
+        <select required>
+            <option value="" disabled selected>Select a job position</option>
+            <option value="Software Engineer">Software Engineer</option>
+            <option value="Data Analyst">Data Analyst</option>
+            <option value="Designer">Designer</option>
+        </select>
 
-        <form action="" method="POST" enctype="multipart/form-data">
+        <div class="label">Upload File</div>
 
-            <label class="label-title">Applied Job Position</label>
-            <select name="job_position" class="dropdown">
-                <option>Data Engineer</option>
-                <option>Data Analyst</option>
-                <option>Software Engineer</option>
-                <option>AI Engineer</option>
-            </select>
+        <!-- Choose Resume File button -->
+        <button type="button" class="choose-btn" onclick="window.location='dragdropResume.php'">
+            📂 Choose Resume File
+        </button>
 
-            <label class="label-title">Upload File</label>
+        <div class="file-text">No file chosen</div>
 
-            <div class="drag-area" id="dragArea">
-                <p>Drag & drop the resume here<br>PDF, DOCX up to 5MB</p>
-                <input type="file" name="resume" id="resumeInput" hidden>
-            </div>
+        <input type="hidden" name="resume_file" id="resume_input" value="">
 
-            <div class="buttons">
-                <button type="submit" class="confirm-btn">Confirm</button>
-                <button type="button" class="cancel-btn" onclick="window.history.back();">Cancel</button>
-            </div>
+        <div class="btn-row">
+            <button type="submit" class="confirm-btn">Confirm</button>
+            <button type="button" class="cancel-btn" onclick="window.location='index.php'">Cancel</button>
+        </div>
 
-        </form>
+        <?php if ($error): ?>
+        <div class="error"><?= $error ?></div>
+        <?php endif; ?>
 
-    </div>
+    </form>
 </div>
-
-<script>
-// Click to open file explorer
-document.getElementById("dragArea").addEventListener("click", () => {
-    document.getElementById("resumeInput").click();
-});
-
-// Drag and Drop handling
-const dragArea = document.getElementById("dragArea");
-
-dragArea.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dragArea.classList.add("drag-over");
-});
-
-dragArea.addEventListener("dragleave", () => {
-    dragArea.classList.remove("drag-over");
-});
-
-dragArea.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dragArea.classList.remove("drag-over");
-
-    const file = e.dataTransfer.files[0];
-    document.getElementById("resumeInput").files = e.dataTransfer.files;
-});
-</script>
 
 </body>
 </html>
