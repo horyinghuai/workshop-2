@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resume Reader</title>
+<title>Upload Resume</title>
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -70,75 +70,33 @@ button {
 </style>
 </head>
 <body>
+  <header class="header">
+    <a href="#" class="back-button">&larr; Back</a>
+    <h1 class="header-title">Resume Reader</h1>
+  </header>
 
-<div class="header">
-    <a href="#">Back</a> &nbsp;&nbsp; Resume Reader
-</div>
-
-<div class="upload-section">
-      <button class="upload-btn" onclick="window.location.href='upload.html'">
-        <i class="fa fa-upload"></i> Choose Resume File
-      </button>
-      <p class="file-name">No file chosen</p>
-    </div>
-
-<div class="container">
+  <div class="upload-container">
     <h2>Upload Resume</h2>
-    <form method="POST" enctype="multipart/form-data">
-        <label><b>Applied Job Position</b></label><br>
-        <select name="job_position" required>
-            <option value="">Select a job position</option>
-            <option>AI Engineer</option>
-            <option>Data Engineer</option>
-            <option>Software Developer</option>
-            <option>Web Designer</option>
-        </select><br><br>
+    <form action="drag_upload.html" method="get">
+      <label>Applied Job Position</label><br>
+      <select name="job_position" class="job-select">
+        <option>Select a job position</option>
+        <option>Software Engineer</option>
+        <option>Data Analyst</option>
+        <option>UI/UX Designer</option>
+      </select><br><br>
 
-        <label><b>Upload File</b></label>
-        <div class="upload-box">
-            Drag & drop the resume here<br>PDF, DOCX up to 5MB<br><br>
-            <input type="file" name="resume_file" accept=".pdf,.docx" required>
-        </div>
+      <label>Upload File</label><br>
+      <button type="submit" class="choose-btn">
+        📎 Choose Resume File
+      </button>
+      <p class="note">No file chosen</p>
 
-    <script>
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-    const fileNameDisplay = document.getElementById('file-name');
-
-    // Click to browse
-    dropZone.addEventListener('click', () => fileInput.click());
-
-    // Display file name when selected
-    fileInput.addEventListener('change', () => {
-      fileNameDisplay.textContent = fileInput.files.length
-        ? fileInput.files[0].name
-        : '';
-    });
-
-    // Drag over highlight
-    dropZone.addEventListener('dragover', e => {
-      e.preventDefault();
-      dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('drag-over');
-    });
-
-    // Drop file
-    dropZone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropZone.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      fileInput.files = e.dataTransfer.files;
-      fileNameDisplay.textContent = file.name;
-    });
-  </script>
-
-        <button type="submit" name="submit" class="confirm-btn">Confirm</button>
-        <button type="reset" class="cancel-btn">Cancel</button>
+      <div class="action-buttons">
+        <button type="submit" class="confirm-btn">Confirm</button>
+        <button type="button" class="cancel-btn">Cancel</button>
+      </div>
     </form>
-</div>
-
+  </div>
 </body>
 </html>

@@ -1,83 +1,111 @@
-/* ===============================
-   Preview Resume Page Styles
-   =============================== */
-
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f7f7;
     margin: 0;
-    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #eef5f5;
 }
 
-/* ===== HEADER ===== */
+/* HEADER */
 .header {
-    background-color: #3a7c7c;
+    background: #2d6d6d;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.header h1 {
     color: white;
-    padding: 15px 30px;
-    font-size: 24px;
+    font-size: 32px;
+}
+
+.back-btn {
+    position: absolute;
+    left: 20px;
+    top: 25px;
+    color: white;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+/* MAIN CONTAINER */
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 30px;
+    gap: 20px;
+}
+
+/* LEFT PANEL */
+.left-panel, .right-panel {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.left-panel h2, .right-panel h2 {
+    margin-bottom: 10px;
+    color: #2d6d6d;
+    font-size: 28px;
     font-weight: bold;
 }
 
-.header a {
+/* Upload area */
+.upload-btn {
+    background: #2d6d6d;
     color: white;
-    text-decoration: underline;
-    font-size: 16px;
-}
-
-/* ===== MAIN CONTAINER ===== */
-.main-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-    gap: 25px;
-}
-
-/* ===== RESUME BOXES ===== */
-.resume-box {
-    background-color: white;
-    padding: 20px;
-    border-radius: 15px;
-    width: 40%;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.preview {
-    text-align: center;
-}
-
-.preview img {
-    border-radius: 50%;
-}
-
-.right-box input,
-.right-box textarea {
-    width: 100%;
-    padding: 8px;
-    margin-top: 6px;
-    margin-bottom: 10px;
+    padding: 10px 15px;
     border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-}
-
-/* ===== DOWNLOAD BUTTON ===== */
-.download-btn {
-    background-color: #3a7c7c;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
+    display: inline-block;
     cursor: pointer;
-    float: right;
-    transition: 0.3s ease;
 }
 
-.download-btn:hover {
-    background-color: #2f6b6b;
+.submit-btn {
+    background: #1d4747;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-left: 10px;
+    border: none;
+    cursor: pointer;
 }
 
-/* ===== HEADINGS ===== */
-h3 {
-    color: #3a7c7c;
-    margin-bottom: 10px;
+.preview-box {
+    width: 100%;
+    height: 500px;
+    margin-top: 20px;
+    background: #c7dede;
+    border-radius: 10px;
+}
+
+.preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.placeholder {
+    padding: 20px;
+    text-align: center;
+    color: #476969;
+}
+
+/* RIGHT PANEL FORM */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    color: #2d6d6d;
+}
+
+.form-group input, textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #aaa;
+    font-size: 15px;
 }

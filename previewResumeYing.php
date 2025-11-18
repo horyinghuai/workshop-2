@@ -7,6 +7,12 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
     die("No candidate ID provided.");
 }
 
+// Ensure 'email' key exists in the GET array
+$email = isset($_GET['email']) ? $_GET['email'] : null;
+if ($email === null) {
+    die("No email provided.");
+}
+
 $candidate_id = intval($_GET['id']);
 
 // Fetch candidate data
@@ -80,7 +86,7 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex items-center">
                 <!-- Back Button (Points to upload page) -->
-                <a href="uploadResumeYing.php" class="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                <a href="uploadResumeYing.php?email=<?php echo urlencode($_GET['email']); ?>&candidate_id=<?php echo urlencode($_GET['id']); ?>" class="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
                     <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     <span class="font-semibold">Back</span>
                 </a>

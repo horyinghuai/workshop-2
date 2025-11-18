@@ -26,7 +26,7 @@ body {
 .header .logout-link {
     position: absolute;
     right: 2rem;
-    font-size: 2rem; /* Increase font size by 100% */
+    font-size: 1.5rem; /* Increase font size by 100% */
     text-decoration: none;
     color: white;
 }
