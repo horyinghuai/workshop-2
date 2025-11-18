@@ -9,7 +9,7 @@ if (isset($_POST['search_term'])) {
     
     // SQL Query to fetch departments matching the search term
     // We use LIKE and the % wildcard for partial matching
-    $sql = "SELECT department_name, description 
+    $sql = "SELECT * 
             FROM department 
             WHERE department_name LIKE ? OR description LIKE ? 
             ORDER BY department_name ASC";
@@ -30,8 +30,8 @@ if (isset($_POST['search_term'])) {
                     <div class="table-cell data">' . htmlspecialchars($row["department_name"]) . '</div>
                     <div class="table-cell description data">' . htmlspecialchars($row["description"]) . '</div>
                     <div class="table-cell action data">
-                        <button class="edit-btn"><i class="fas fa-edit"></i> Edit</button>
-                        <button class="delete-btn"><i class="fas fa-trash-alt"></i> Delete</button>
+                        <button class="edit-btn" data-id="' . $row["department_id"] . '"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="delete-btn" data-id="' . $row["department_id"] . '"><i class="fas fa-trash-alt"></i> Delete</button>
                     </div>
                 </div>';
         }
