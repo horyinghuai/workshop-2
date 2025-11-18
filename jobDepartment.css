@@ -34,7 +34,7 @@ body {
     align-items: center;
     background-color: var(--primary-color);
     color: var(--white);
-    padding: 15px 20px;
+    padding: 1.25rem 2rem;
     border-bottom: 5px solid var(--secondary-color);
     /* NEW: Use grid to enforce three balanced columns and simplify centering */
     display: grid; 
@@ -187,10 +187,10 @@ body {
     border-right: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Data Row Styles */
+/* Data Row Styles 
 .table-row:nth-child(even) {
-    background-color: var(--secondary-color); /* Alternating row color */
-}
+    background-color: var(--secondary-color); 
+}*/
 
 /* Action Column Button Styling */
 .table-cell.action.data {
