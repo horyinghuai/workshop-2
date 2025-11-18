@@ -71,7 +71,7 @@ body {
 
 /* --- Sidebar / Filter Section --- */
 .filter-sidebar {
-    width: 300px; 
+    width: 250px; 
     background-color: #9fc2c6; /* Light teal background */
     padding: 1.5rem;
     display: flex;
@@ -449,9 +449,9 @@ body {
 }
 
 /* Hover states (subtle) */
-.btn-original:hover { background: rgba(11, 83, 83, 0.06); }
-.btn-formatted:hover { background: rgba(122, 90, 0, 0.06); }
-.btn-report:hover { opacity: 0.95; }
+.btn-original:hover { background: #075b5b; color: #fff;}
+.btn-formatted:hover { background: #075b5b; color: #fff;}
+.btn-report:hover { background: #fff; color: #075b5b; }
 
 /* Ensure status badge spacing doesn't break table */
 .status-btn { font-size: 0.95rem; }
