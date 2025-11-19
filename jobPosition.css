@@ -304,7 +304,8 @@ body {
 }
 
 .modal-content input[type="text"],
-.modal-content textarea {
+.modal-content textarea,
+.modal-content select {
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
