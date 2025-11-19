@@ -8,7 +8,7 @@ if ($conn->connect_error) {
     die("Database connection failed in jobDepartment.php: " . $conn->connect_error);
 }
 
-// 1. SQL Query to fetch department data
+// 1. SQL Query to fetch job data
 $sql = "SELECT jp.*, d.department_name FROM job_position jp INNER JOIN department d ON jp.department_id = d.department_id ORDER BY d.department_name ASC;";
 $result = $conn->query($sql);
 
@@ -19,7 +19,7 @@ $job_rows_html = '';
 if ($result->num_rows > 0) {
     // Loop through each row fetched from the database
     while ($row = $result->fetch_assoc()) {
-        // Use PHP to dynamically generate the HTML for each department row
+        // Use PHP to dynamically generate the HTML for each job row
         $job_rows_html .= '
             <div class="table-row">
                 <div class="table-cell data">' . htmlspecialchars($row["department_name"]) . '</div>
@@ -37,7 +37,7 @@ if ($result->num_rows > 0) {
             </div>';
     }
 } else {
-    // Message if no departments are found
+    // Message if no job are found
     $job_rows_html = '
         <div class="table-row no-data">
             <div class="table-cell data" colspan="3">No departments found.</div>
@@ -273,13 +273,13 @@ $conn->close();
             openModal(); // Use the new function
         });
 
-        // Open Modal for Editing (simplified for example)
+        // Open Modal for Editing 
         $('#job-list').on('click', '.edit-btn', function() {
             // 1. Get the parent row of the clicked button
             var $row = $(this).closest('.table-row');
 
             // 2. Get the unique ID from the button's data-id attribute
-            var currentId = $(this).data('id');
+            var currentId = $(this).data('data-id');
             var currentDeptId = $(this).data('dept-id');
 
             // 3. Extract Department Name (It's the first .table-cell.data in the row)
