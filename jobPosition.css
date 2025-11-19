@@ -58,6 +58,27 @@ body {
     justify-content: flex-end; /* Align right links to the right edge of their grid column */
 }
 
+.header left, .back-link {
+ color: white;
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: 500;
+    position: absolute;
+    left: 2rem;
+    display: flex;
+    align-items: center;
+
+    transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.back-link:hover {
+    /* Lift the text up by 2 pixels */
+    transform: translateY(-2px) scale(1.05); 
+    
+    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+
 .header h1 {
     font-size: 1.5rem;
     font-weight: 400;

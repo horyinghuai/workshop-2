@@ -55,8 +55,9 @@ $conn->close();
 <body>
     <header class="header">
         <div class="header-left">
-            <i class="fas fa-arrow-left"></i>
-            <span>Back</span>
+              <a href="dashboard.php" class="back-link">
+            <i class="fas fa-chevron-left"></i> Back
+        </a>
         </div>
         <h1 class="logo">Resume Reader</h1>
         <div class="header-right">
@@ -95,7 +96,7 @@ $conn->close();
             <h2 id="modalTitle"></h2>
             <form id="departmentForm" action="cud_department.php" method="POST">
                 <input type="hidden" id="departmentId" name="department_id" value="">
-                <input type="hidden" id="actionType" name="action_type" value="add">
+                <input type="hidden" id="actionType" name="action_type" value="">
 
                 <div class="form-group">
                     <label for="departmentNameInput">Department Name:</label>

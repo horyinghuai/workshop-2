@@ -63,8 +63,9 @@ $conn->close();
 <body>
     <header class="header">
         <div class="header-left">
-            <i class="fas fa-arrow-left"></i>
-            <span>Back</span>
+             <a href="dashboard.php" class="back-link">
+            <i class="fas fa-chevron-left"></i> Back
+        </a>
         </div>
         <h1 class="logo">Resume Reader</h1>
         <div class="header-right">
@@ -107,10 +108,10 @@ $conn->close();
     </main>
     <div id="jobModal" class="modal-overlay">
         <div class="modal-content">
-            <h2 id="modalTitle">Add Job</h2>
+            <h2 id="modalTitle"></h2>
             <form id="jobForm" action="cud_job.php" method="POST">
                 <input type="hidden" id="jobId" name="job_id" value="">
-                <input type="hidden" id="actionType" name="action_type" value="add">
+                <input type="hidden" id="actionType" name="action_type" value="">
 
                 <div class="form-group">
                     <label for="departmentSelect">Department Name:</label>
@@ -155,7 +156,7 @@ $conn->close();
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-confirm" id="confirmBtn">Confirm</button>
+                    <button type="submit" class="btn btn-confirm" id="confirmBtn"></button>
                     <button type="button" class="btn btn-cancel" id="cancelBtn">Cancel</button>
                 </div>
             </form>
