@@ -44,6 +44,7 @@ input {
     font-size: 15px;
     border: 1px solid #ccc;
     border-radius: 5px;
+    box-sizing: border-box;
 }
 
 .forgot {
@@ -51,6 +52,12 @@ input {
     margin-bottom: 20px;
     font-size: 14px;
     text-decoration: none;
+    color: #007bff;
+    text-align: right;
+}
+
+.forgot:hover {
+    text-decoration: underline;
 }
 
 .login-btn {
@@ -101,6 +108,7 @@ input {
     width: 100%; 
     height: 100%;
     background: rgba(0,0,0,0.35);
+    z-index: 1000;
 }
 
 .modal-content {
@@ -110,21 +118,30 @@ input {
     border-radius: 12px;
     text-align: center;
     border: 4px solid #8cb3b3;
+    box-sizing: border-box;
 }
 
 .modal-content h3 {
     margin-bottom: 15px;
+    margin-top: 0;
+}
+
+.modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 .confirm-btn {
     width: 100%;
     padding: 10px;
-    background: #4CAF50;
+    background: #5cb85c;
     color: #fff;
     border: none;
-    margin-top: 10px;
     border-radius: 6px;
     cursor: pointer;
+    font-weight: bold;
 }
 
 .cancel-btn {
@@ -133,9 +150,9 @@ input {
     background: #d9534f;
     color: #fff;
     border: none;
-    margin-top: 10px;
     border-radius: 6px;
     cursor: pointer;
+    font-weight: bold;
 }
 
 .resend-link {
@@ -144,6 +161,7 @@ input {
     font-size: 14px;
     text-decoration: underline;
     cursor: pointer;
+    color: #007bff;
 }
 
 .sent-to-text {
@@ -153,33 +171,19 @@ input {
 }
 
 .error-msg {
-    color: #d9534f; /* Red for errors */
+    color: #d9534f;
     font-weight: bold;
     margin-bottom: 10px;
     font-size: 14px;
+    text-align: left;
 }
 
-/* Ensure the confirm/cancel buttons match the design in the second image */
-.modal-content .confirm-btn {
-    background: #5cb85c; /* Green */
-    color: white;
-    margin-bottom: 5px; /* Add space between buttons */
-}
-
-.modal-content .cancel-btn {
-    background: #d9534f; /* Red */
-    color: white;
-    margin-top: 0;
-}
-
-/* Updated logo placeholder for visual consistency */
 .logo-placeholder {
     width: 350px;
     height: 350px;
-    background-color: #96b7b7; /* Match your image background */
+    background-color: #96b7b7;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 12px;
 }
-
