@@ -92,10 +92,9 @@ body {
 }
 
 .header-right a:hover {
- /* 1. Lift the text up by 2 pixels */
+ /* Lift the text up by 2 pixels */
     transform: translateY(-2px) scale(1.05); 
     
-    /* Optional: Brighten the shadow slightly for a 'glow' effect */
     text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
@@ -136,7 +135,7 @@ body {
 .search-bar {
     display: flex;
     margin-bottom: 30px;
-    width: 100%; /* Adjust width as needed */
+    width: 100%; 
     min-width: 300px;
 }
 
@@ -164,10 +163,9 @@ body {
 }
 
 /* 2. MEDIA QUERY: Activate Scrolling Only on Smaller Screens */
-/* This breakpoint (1000px) is just an example—use whatever fits your overall table design */
 @media (max-width: 1000px) {
     
-    /* Force the table to its maximum required width (1700px) to activate overflow */
+    /* Force the table to its maximum required width (1500px) to activate overflow */
     .job-table {
         width: 1500px; 
     }
@@ -236,10 +234,6 @@ body {
     border-right: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Data Row Styles 
-.table-row:nth-child(even) {
-    background-color: var(--secondary-color); 
-}*/
 
 /* Action Column Button Styling */
 .table-cell.action.data {

@@ -92,7 +92,7 @@ $conn->close();
     </main>
     <div id="departmentModal" class="modal-overlay">
         <div class="modal-content">
-            <h2 id="modalTitle">Add Department</h2>
+            <h2 id="modalTitle"></h2>
             <form id="departmentForm" action="cud_department.php" method="POST">
                 <input type="hidden" id="departmentId" name="department_id" value="">
                 <input type="hidden" id="actionType" name="action_type" value="add">
@@ -108,7 +108,7 @@ $conn->close();
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-confirm" id="confirmBtn">Confirm</button>
+                    <button type="submit" class="btn btn-confirm" id="confirmBtn"></button>
                     <button type="button" class="btn btn-cancel" id="cancelBtn">Cancel</button>
                 </div>
             </form>
@@ -145,7 +145,7 @@ $(document).ready(function() {
             url: 'search_department.php', // The new file we created to handle the request
             type: 'POST',
             data: { search_term: searchTerm }, // Send the search term to the PHP file
-            // Before sending (optional: for user feedback)
+            // Before sending 
             beforeSend: function() {
                 $('#department-list').html('<div class="table-row"><div class="table-cell data" style="width: 100%; text-align: center;">Searching...</div></div>');
             },
@@ -182,7 +182,6 @@ $(document).ready(function() {
     });
 });
 
-// Add jQuery functionality for the modal inside $(document).ready()
 // --- MODAL FUNCTIONALITY (ANIMATED) ---
 
 // Function to close the modal
@@ -220,7 +219,7 @@ $('.add-department-btn').click(function() {
     openModal(); // Use the new function
 });
 
-// Open Modal for Editing (simplified for example)
+// Open Modal for Editing 
 $('#department-list').on('click', '.edit-btn', function() {
    // 1. Get the parent row of the clicked button
     var $row = $(this).closest('.table-row');
@@ -298,7 +297,7 @@ $('#deleteModal').click(function(e) {
     }
 });
 
-// --- NOTIFICATION FUNCTIONALITY (Add this to the start of the $(document).ready function) ---
+// --- NOTIFICATION FUNCTIONALITY ---
 
 function displayNotification() {
     const urlParams = new URLSearchParams(window.location.search);
