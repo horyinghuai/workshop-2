@@ -73,7 +73,7 @@ $conn->close();
             <p class="card-description">Evaluate and score applicants based on criteria.</p>
         </a>
 
-        <a href="job_positions.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
+        <a href="jobPositions.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
             <div class="card-icon"><i class="fas fa-building"></i></div>
             <h4 class="card-title">Job Positions & Departments</h4>
             <p class="card-description">Manage and review positions and departments.</p>
