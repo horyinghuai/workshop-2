@@ -85,9 +85,6 @@
 
 
 <script>
-// NOTE: For a real application, the code generation and verification MUST be done on the server (PHP).
-// Using client-side generation like this is INSECURE as a user can view the code in the console.
-// This client-side code is for demonstration of the flow only!
 
 let sentCode = "";
 let currentEmail = "";
@@ -114,19 +111,12 @@ function sendCode() {
         return;
     }
 
-    // 💡 SERVER-SIDE LOGIC REQUIRED: 
-    // In a real app, an AJAX call would go here to:
-    // 1. Check if the email exists in the database.
-    // 2. Generate a random, time-limited token/code.
-    // 3. Store the token/code and the email in a temporary table.
-    // 4. Send the code via email to the user.
-    // --- DEMO CODE START ---
     sentCode = Math.floor(100000 + Math.random() * 900000);
     sessionStorage.setItem("code", sentCode);
     
     // For local testing:
     console.log("DEMO CODE SENT (Check Console): " + sentCode); 
-    // --- DEMO CODE END ---
+
 
     // Transition to Step 2 Modal
     const maskedEmail = currentEmail.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => a + '*'.repeat(b.length-2) + b.slice(-2) + c);
