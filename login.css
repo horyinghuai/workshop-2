@@ -64,15 +64,31 @@ input {
     cursor: pointer;
 }
 
-.register-text {
-    margin-top: 20px;
-    font-size: 14px;
+.footer-links {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
 }
 
-footer {
-    margin-top: 50px;
-    font-size: 12px;
-    color: gray;
+.footer-links p {
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
+.footer-links a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+.copyright {
+    color: #888;
+    font-size: 0.8rem;
+    margin-top: 1rem;
 }
 
 /* Modal Windows */

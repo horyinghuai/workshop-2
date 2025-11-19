@@ -93,7 +93,10 @@ $conn->close();
                 </div>
 
                 <div class="button-container">
-                    <button type="submit" name="submit" class="confirm-btn">Confirm</button>
+                    <button type="submit" name="submit" class="confirm-btn">
+                        Confirm
+                    </button>
+                    
                     <!-- This button just goes back in browser history -->
                     <button type="button" class="cancel-btn" onclick="window.history.back();">Cancel</button>
                 </div>
