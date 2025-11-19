@@ -60,7 +60,7 @@ $conn->close();
         </div>
         <h1 class="logo">Resume Reader</h1>
         <div class="header-right">
-            <a href="#">Job Position</a>
+            <a href="jobPosition.php">Job Position</a>
             <a href="#">Department</a>
             <a href="#" class="logout">Log Out</a>
         </div>

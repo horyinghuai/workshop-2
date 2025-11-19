@@ -13,7 +13,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: Arial, sans-serif;
 }
 
 body {
@@ -61,6 +61,9 @@ body {
 .header h1 {
     font-size: 1.5rem;
     font-weight: 400;
+    padding: 15px;
+    margin-top: 1px;
+    margin-right: 15px;
     justify-self: center; /* Center the title perfectly within its 'auto' column */
 }
 
@@ -79,8 +82,21 @@ body {
     color: var(--white);
     text-decoration: none;
     padding: 0 15px;
-    font-size: 0.95rem;
+    font-size: 1rem;
     border-right: 1px solid rgba(255, 255, 255, 0.5);
+
+   transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
+
+   position: relative; 
+    display: inline-block; /* Essential for transform to work correctly on inline elements */
+}
+
+.header-right a:hover {
+ /* 1. Lift the text up by 2 pixels */
+    transform: translateY(-2px) scale(1.05); 
+    
+    /* Optional: Brighten the shadow slightly for a 'glow' effect */
+    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
 .header-right a:last-child {
@@ -88,9 +104,9 @@ body {
 }
 
 /* Highlight 'Department' link */
-.header-right a:nth-child(2) {
+.header-right a:nth-child(1) {
     font-weight: bold;
-    text-decoration: underline;
+    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
 /* --- Main Content Area --- */

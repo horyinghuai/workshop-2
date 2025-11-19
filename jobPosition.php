@@ -69,7 +69,7 @@ $conn->close();
         <h1 class="logo">Resume Reader</h1>
         <div class="header-right">
             <a href="#">Job Position</a>
-            <a href="#">Department</a>
+            <a href="jobDepartment.php">Department</a>
             <a href="#" class="logout">Log Out</a>
         </div>
     </header>

@@ -81,6 +81,19 @@ body {
     padding: 0 15px;
     font-size: 0.95rem;
     border-right: 1px solid rgba(255, 255, 255, 0.5);
+
+    transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
+
+   position: relative; 
+    display: inline-block; /* Essential for transform to work correctly on inline elements */
+}
+
+.header-right a:hover {
+ /* 1. Lift the text up by 2 pixels */
+    transform: translateY(-2px) scale(1.05); 
+    
+    /* Optional: Brighten the shadow slightly for a 'glow' effect */
+    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
 .header-right a:last-child {
@@ -90,7 +103,7 @@ body {
 /* Highlight 'Department' link */
 .header-right a:nth-child(2) {
     font-weight: bold;
-    text-decoration: underline;
+    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
 /* --- Main Content Area --- */
