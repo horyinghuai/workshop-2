@@ -25,7 +25,7 @@
             <label>Password</label>
             <input type="password" name="password" required>
 
-            <a href="#" class="forgot" onclick="openEmailModal()">Forgot Password?</a>
+            <a href="javascript:void(0)" class="forgot" onclick="openEmailModal()">Forgot Password?</a>
 
             <button type="submit" class="login-btn">Login</button>
         </form>
@@ -62,7 +62,7 @@
 
         <button onclick="checkCode()" class="confirm-btn">Confirm</button>
         <button onclick="closeCodeModal()" class="cancel-btn">Cancel</button>
-        <a href="#" onclick="resendCode()" class="resend-link">Resend Code</a>
+        <a href="javascript:void(0)" onclick="resendCode()" class="resend-link">Resend Code</a>
     </div>
 </div>
 
@@ -89,7 +89,8 @@
 let sentCode = "";
 let currentEmail = "";
 
-// --- Step 1: Open Email Input Modal ---
+// --- Helper Functions to Control Modal Display ---
+
 function openEmailModal() {
     // Reset inputs and errors when opening
     document.getElementById("fpEmail").value = '';
@@ -101,7 +102,17 @@ function closeEmailModal() {
     document.getElementById("emailModal").style.display = "none";
 }
 
-// --- Step 2: Send Code (Triggered from Step 1) ---
+function closeCodeModal() {
+    document.getElementById("codeModal").style.display = "none";
+}
+
+function closeUpdateModal() {
+    document.getElementById("updateModal").style.display = "none";
+}
+
+
+// --- Step 1: Send Code (Move to Step 2) ---
+
 function sendCode() {
     currentEmail = document.getElementById("fpEmail").value.trim();
     document.getElementById("emailError").innerHTML = '';
@@ -111,28 +122,38 @@ function sendCode() {
         return;
     }
 
+    // 💡 INSECURE DEMO CODE: For a live application, this must be done on the server.
+    // This is just to demonstrate the front-end flow.
     sentCode = Math.floor(100000 + Math.random() * 900000);
     sessionStorage.setItem("code", sentCode);
     
-    // For local testing:
     console.log("DEMO CODE SENT (Check Console): " + sentCode); 
 
 
     // Transition to Step 2 Modal
-    const maskedEmail = currentEmail.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => a + '*'.repeat(b.length-2) + b.slice(-2) + c);
+    // Mask the email for display
+    const emailParts = currentEmail.split('@');
+    const maskedUser = emailParts[0].length > 4 ? 
+        emailParts[0].slice(0, 2) + '***' + emailParts[0].slice(-2) : 
+        emailParts[0].slice(0, 1) + '***';
+
+    const maskedEmail = maskedUser + '@' + emailParts[1];
+
     document.getElementById("emailDisplay").innerHTML = 
         `A verification code has been sent to <b>${maskedEmail}</b>`;
 
-    document.getElementById("verifyCode").value = ''; // Clear code input
-    document.getElementById("codeError").innerHTML = ''; // Clear code error
+    document.getElementById("verifyCode").value = '';
+    document.getElementById("codeError").innerHTML = ''; 
     closeEmailModal();
     document.getElementById("codeModal").style.display = "flex";
 }
 
-// --- Step 2: Check Code ---
+
+// --- Step 2: Check Code (Move to Step 3) ---
+
 function checkCode() {
     let userCode = document.getElementById("verifyCode").value.trim();
-    let correctCode = sessionStorage.getItem("code"); // Insecure for live app!
+    let correctCode = sessionStorage.getItem("code"); 
     document.getElementById("codeError").innerHTML = '';
 
     if (userCode !== correctCode) {
@@ -148,17 +169,14 @@ function checkCode() {
     document.getElementById("updateModal").style.display = "flex";
 }
 
-function closeCodeModal() {
-    document.getElementById("codeModal").style.display = "none";
-}
-
 function resendCode() {
-    // Simple way to regenerate the code for the demo
     sendCode();
     alert("A new code has been sent. Check your console for the demo code!");
 }
 
-// --- Step 3: Update Password ---
+
+// --- Step 3: Update Password (Final Step) ---
+
 function updatePassword() {
     let pass1 = document.getElementById("newPassword").value;
     let pass2 = document.getElementById("confirmPassword").value;
@@ -174,7 +192,7 @@ function updatePassword() {
         return;
     }
 
-    // ✅ This is the correct way to call the PHP backend to update the password securely
+    // Call the PHP backend to update the password securely
     fetch("update_password.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -184,19 +202,14 @@ function updatePassword() {
     .then(data => {
         alert(data); // Display success or error message from PHP
         closeUpdateModal();
-        // Clear local storage items after success/attempt
         sessionStorage.removeItem("code"); 
-        // Optionally redirect or just let user login
+        // Redirect back to login screen
         // window.location.href = "login.html"; 
     })
     .catch(error => {
         document.getElementById("updateError").innerHTML = "An error occurred during password update.";
         console.error('Error:', error);
     });
-}
-
-function closeUpdateModal() {
-    document.getElementById("updateModal").style.display = "none";
 }
 </script>
 
