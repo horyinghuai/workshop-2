@@ -145,3 +145,41 @@ input {
     text-decoration: underline;
     cursor: pointer;
 }
+
+.sent-to-text {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.error-msg {
+    color: #d9534f; /* Red for errors */
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+/* Ensure the confirm/cancel buttons match the design in the second image */
+.modal-content .confirm-btn {
+    background: #5cb85c; /* Green */
+    color: white;
+    margin-bottom: 5px; /* Add space between buttons */
+}
+
+.modal-content .cancel-btn {
+    background: #d9534f; /* Red */
+    color: white;
+    margin-top: 0;
+}
+
+/* Updated logo placeholder for visual consistency */
+.logo-placeholder {
+    width: 350px;
+    height: 350px;
+    background-color: #96b7b7; /* Match your image background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+}
+
