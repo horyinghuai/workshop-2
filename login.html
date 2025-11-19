@@ -21,11 +21,9 @@
             <input type="email" name="email" placeholder="Email" required>
 
             <label>Password</label>
-            <div class="password-container">
-                <input type="password" name="password" id="password" required>
-            </div>
+            <input type="password" name="password" required>
 
-            <a href="#" class="forgot" onclick="showForgot()">Forgot Password?</a>
+            <a href="#" class="forgot" onclick="openEmailModal()">Forgot Password?</a>
 
             <button type="submit" class="login-btn">Login</button>
         </form>
@@ -38,21 +36,36 @@
     </div>
 </div>
 
-<!-- Forgot Password Window -->
-<div id="forgotModal" class="modal">
+<!-- ⚪ STEP 1 — Enter Email -->
+<div id="emailModal" class="modal">
     <div class="modal-content">
         <h3>Forgot Password</h3>
-        <p>Verification code sent to ***@gmail.com</p>
+
+        <label>Email</label>
+        <input type="email" id="fpEmail" placeholder="Enter your email">
+
+        <button onclick="sendCode()" class="confirm-btn">Confirm</button>
+        <button onclick="closeEmailModal()" class="cancel-btn">Cancel</button>
+    </div>
+</div>
+
+<!-- 🟡 STEP 2 — Enter Verification Code -->
+<div id="codeModal" class="modal">
+    <div class="modal-content">
+        <h3>Verification Code</h3>
+
+        <p id="emailDisplay"></p>
 
         <label>Verification Code</label>
         <input type="text" id="verifyCode">
 
-        <button onclick="showUpdatePassword()" class="confirm-btn">Confirm</button>
-        <button onclick="closeForgot()" class="cancel-btn">Cancel</button>
+        <button onclick="checkCode()" class="confirm-btn">Confirm</button>
+        <button onclick="closeCodeModal()" class="cancel-btn">Cancel</button>
+        <a href="#" onclick="resendCode()" class="resend-link">Resend Code</a>
     </div>
 </div>
 
-<!-- Update Password Window -->
+<!-- 🟢 STEP 3 — Update Password -->
 <div id="updateModal" class="modal">
     <div class="modal-content">
         <h3>Update New Password</h3>
@@ -63,25 +76,91 @@
         <label>Confirm New Password</label>
         <input type="password" id="confirmPassword">
 
-        <button onclick="passwordUpdated()" class="confirm-btn">Confirm</button>
-        <button onclick="closeUpdate()" class="cancel-btn">Cancel</button>
+        <button onclick="updatePassword()" class="confirm-btn">Confirm</button>
+        <button onclick="closeUpdateModal()" class="cancel-btn">Cancel</button>
     </div>
 </div>
 
-<script>
-function showForgot(){ document.getElementById("forgotModal").style.display="flex"; }
-function closeForgot(){ document.getElementById("forgotModal").style.display="none"; }
 
-function showUpdatePassword(){
-    document.getElementById("forgotModal").style.display="none";
-    document.getElementById("updateModal").style.display="flex";
+<script>
+let sentCode = "";
+let currentEmail = "";
+
+function openEmailModal() {
+    document.getElementById("emailModal").style.display = "flex";
 }
 
-function closeUpdate(){ document.getElementById("updateModal").style.display="none"; }
+function closeEmailModal() {
+    document.getElementById("emailModal").style.display = "none";
+}
 
-function passwordUpdated(){
-    alert("Password updated successfully. Please use the new password to login.");
-    closeUpdate();
+function sendCode() {
+    currentEmail = document.getElementById("fpEmail").value;
+
+    if (currentEmail.trim() === "") {
+        alert("Please enter your email.");
+        return;
+    }
+
+    // Generate 6-digit code
+    sentCode = Math.floor(100000 + Math.random() * 900000);
+
+    sessionStorage.setItem("code", sentCode);
+    sessionStorage.setItem("email", currentEmail);
+
+    document.getElementById("emailDisplay").innerHTML = 
+        "A verification code has been sent to <b>" + currentEmail + "</b>";
+
+    closeEmailModal();
+    document.getElementById("codeModal").style.display = "flex";
+}
+
+function checkCode() {
+    let userCode = document.getElementById("verifyCode").value;
+    let correctCode = sessionStorage.getItem("code");
+
+    if (userCode !== correctCode) {
+        alert("Incorrect verification code!");
+        return;
+    }
+
+    closeCodeModal();
+    document.getElementById("updateModal").style.display = "flex";
+}
+
+function closeCodeModal() {
+    document.getElementById("codeModal").style.display = "none";
+}
+
+function resendCode() {
+    sendCode();
+    alert("A new code has been sent.");
+}
+
+function updatePassword() {
+    let pass1 = document.getElementById("newPassword").value;
+    let pass2 = document.getElementById("confirmPassword").value;
+
+    if (pass1 !== pass2) {
+        alert("Passwords do not match!");
+        return;
+    }
+
+    // Send to PHP to update DB
+    fetch("update_password.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `email=${currentEmail}&password=${pass1}`
+    })
+    .then(res => res.text())
+    .then(data => {
+        alert(data);
+        window.location.href = "login.html";
+    });
+}
+
+function closeUpdateModal() {
+    document.getElementById("updateModal").style.display = "none";
 }
 </script>
 

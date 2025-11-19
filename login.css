@@ -109,3 +109,58 @@ footer {
 .cancel-btn {
     background: #ccc;
 }
+
+.modal {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.35);
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    width: 380px;
+    border-radius: 12px;
+    text-align: center;
+    border: 4px solid #8cb3b3;
+}
+
+.modal-content h3 {
+    margin-bottom: 15px;
+}
+
+.confirm-btn {
+    width: 100%;
+    padding: 10px;
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    margin-top: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.cancel-btn {
+    width: 100%;
+    padding: 10px;
+    background: #d9534f;
+    color: #fff;
+    border: none;
+    margin-top: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.resend-link {
+    margin-top: 10px;
+    display: block;
+    font-size: 14px;
+    text-decoration: underline;
+    cursor: pointer;
+}
