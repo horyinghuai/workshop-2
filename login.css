@@ -91,11 +91,6 @@ input {
     margin-top: 1rem;
 }
 
-/* ---------------------------------------------------- */
-/* 🔐 MODAL SYSTEM (Fixed + cleaned, no layout changes) */
-/* ---------------------------------------------------- */
-
-/* Modal Windows */
 .modal {
     display: none !important;
     justify-content: center;
