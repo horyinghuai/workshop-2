@@ -1,31 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Login | ResumeReader</title>
-    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="login.css" />
     <style>
-        .modal {
-            display: none; /* JS will override */
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            top: 0; 
-            left: 0;
-            width: 100%; 
-            height: 100%;
-            background: rgba(0,0,0,0.35);
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 25px;
-            width: 380px;
-            border-radius: 12px;
-            text-align: center;
-            border: 4px solid #8cb3b3;
-        }
+      /* Modal common styling */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0,0,0,0.3);
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: #fff;
+        padding: 24px 36px;
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+        width: 380px;
+        position: relative;
+        font-family: Arial, sans-serif;
+      }
+
+      .modal-content h3 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        font-weight: 700;
+        font-size: 20px;
+        text-align: center;
+      }
+
+      .modal-content label {
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        display: block;
+        color: #333;
+      }
+
+      .modal-content input[type="email"],
+      .modal-content input[type="text"],
+      .modal-content input[type="password"] {
+        padding: 10px 12px;
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid #b0b0b0;
+        background-color: #d6e7e8;
+        font-size: 14px;
+        box-sizing: border-box;
+        margin-bottom: 18px;
+      }
+
+      /* Show/Hide password icon container */
+      .input-password-container {
+        position: relative;
+      }
+      .input-password-container input {
+        padding-right: 40px !important;
+      }
+      .toggle-password {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        font-size: 18px;
+        color: #777;
+      }
+
+      /* Confirm and Cancel buttons */
+      .confirm-btn,
+      .cancel-btn {
+        cursor: pointer;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 10px 24px;
+        margin-right: 12px;
+      }
+
+      .confirm-btn {
+        background-color: #25b03f; /* bright green */
+        color: white;
+      }
+      .confirm-btn:hover {
+        background-color: #1f9234;
+      }
+
+      .cancel-btn {
+        background-color: #d22f2f; /* red */
+        color: white;
+      }
+      .cancel-btn:hover {
+        background-color: #a32525;
+      }
+
+      /* Buttons container for horizontal alignment */
+      .modal-buttons {
+        display: flex;
+        justify-content: center;
+        margin-top: 12px;
+      }
+
+      /* Text under Verification Code */
+      .sent-to-text {
+        font-size: 12px;
+        color: #b44343;
+        text-align: center;
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+
+      .resend-link {
+        font-size: 12px;
+        color: #25b03f;
+        cursor: pointer;
+        text-align: center;
+        display: block;
+        margin-top: 10px;
+        text-decoration: underline;
+      }
+
+      .error-msg {
+        color: #d22f2f;
+        font-size: 12px;
+        margin-bottom: 8px;
+        font-weight: 600;
+        text-align: center;
+      }
     </style>
 </head>
 <body>
@@ -59,117 +170,185 @@
     </div>
 </div>
 
-<!-- Forgot Password Modals -->
-<div id="emailModal" class="modal">
+<!-- Forgot Password Email Modal -->
+<div id="emailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="emailModalTitle" >
     <div class="modal-content">
-        <h3>Forgot Password</h3>
+        <h3 id="emailModalTitle">Forgot Password</h3>
+
         <div id="emailError" class="error-msg"></div>
-        <label>Email</label>
-        <input type="email" id="fpEmail" placeholder="Enter your email">
-        <button onclick="sendCode()" class="confirm-btn">Confirm</button>
-        <button onclick="closeEmailModal()" class="cancel-btn">Cancel</button>
+        <label for="fpEmail">Email</label>
+        <input type="email" id="fpEmail" placeholder="Email" autocomplete="email">
+
+        <div class="modal-buttons">
+          <button onclick="sendCode()" class="confirm-btn" type="button">Confirm</button>
+          <button onclick="closeEmailModal()" class="cancel-btn" type="button">Cancel</button>
+        </div>
     </div>
 </div>
 
-<div id="codeModal" class="modal">
+<!-- Verification Code Modal -->
+<div id="codeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="codeModalTitle" >
     <div class="modal-content">
-        <h3>Verification Code</h3>
-        <p id="emailDisplay" class="sent-to-text">A verification code has been sent to your email.</p>
+        <h3 id="codeModalTitle">Forgot Password</h3>
+
+        <p id="emailDisplay" class="sent-to-text"></p>
         <div id="codeError" class="error-msg"></div>
-        <label>Verification Code</label>
-        <input type="text" id="verifyCode" maxlength="6" placeholder="6-digit code">
-        <button onclick="checkCode()" class="confirm-btn">Confirm</button>
-        <button onclick="closeCodeModal()" class="cancel-btn">Cancel</button>
+
+        <label for="verifyCode">Verification Code</label>
+        <input type="text" id="verifyCode" maxlength="6" placeholder="Verification Code" autocomplete="one-time-code">
+
+        <div class="modal-buttons">
+          <button onclick="checkCode()" class="confirm-btn" type="button">Confirm</button>
+          <button onclick="closeCodeModal()" class="cancel-btn" type="button">Cancel</button>
+        </div>
+
         <a href="javascript:void(0)" onclick="resendCode()" class="resend-link">Resend Code</a>
     </div>
 </div>
 
-<div id="updateModal" class="modal">
+<!-- Update New Password Modal -->
+<div id="updateModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="updateModalTitle" >
     <div class="modal-content">
-        <h3>Update New Password</h3>
+        <h3 id="updateModalTitle">Update New Password</h3>
+
         <div id="updateError" class="error-msg"></div>
-        <label>New Password</label>
-        <input type="password" id="newPassword">
-        <label>Confirm New Password</label>
-        <input type="password" id="confirmPassword">
-        <button onclick="updatePassword()" class="confirm-btn">Confirm</button>
-        <button onclick="closeUpdateModal()" class="cancel-btn">Cancel</button>
+
+        <label for="newPassword">New Password</label>
+        <div class="input-password-container">
+          <input type="password" id="newPassword" autocomplete="new-password" placeholder="New Password">
+          <span class="toggle-password" onclick="togglePassword('newPassword')">&#128065;</span>
+        </div>
+
+        <label for="confirmPassword">Confirm New Password</label>
+        <div class="input-password-container">
+          <input type="password" id="confirmPassword" autocomplete="new-password" placeholder="Confirm New Password">
+          <span class="toggle-password" onclick="togglePassword('confirmPassword')">&#128065;</span>
+        </div>
+
+        <div class="modal-buttons">
+          <button onclick="updatePassword()" class="confirm-btn" type="button">Confirm</button>
+          <button onclick="closeUpdateModal()" class="cancel-btn" type="button">Cancel</button>
+        </div>
     </div>
 </div>
+
 
 <script>
 let sentCode = "";
 let currentEmail = "";
 
-// Show / hide modals
-function showModal(id){document.getElementById(id).style.display="flex";}
-function hideModal(id){document.getElementById(id).style.display="none";}
+// --- HELPER: Show / Hide Modals ---
+function showModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = "flex";
+}
 
-// Open Email modal
-function openEmailModal(){
-    currentEmail="";
-    document.getElementById("fpEmail").value='';
-    document.getElementById("emailError").innerText='';
+function hideModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = "none";
+}
+
+// --- STEP 1: Open Email Modal ---
+function openEmailModal() {
+    currentEmail = "";
+    document.getElementById("fpEmail").value = '';
+    document.getElementById("emailError").innerText = '';
     showModal("emailModal");
 }
 
-// Send code
-function sendCode(){
-    currentEmail=document.getElementById("fpEmail").value.trim();
-    const errorEl=document.getElementById("emailError");
-    errorEl.innerText='';
-    if(!currentEmail||!currentEmail.includes('@')){errorEl.innerText="Please enter a valid email address.";return;}
-    sentCode=Math.floor(100000+Math.random()*900000).toString();
-    sessionStorage.setItem("code",sentCode);
-    console.log("Demo code sent: "+sentCode);
-    const emailParts=currentEmail.split('@');
-    const maskedUser=emailParts[0].length>4?emailParts[0].slice(0,2)+'***'+emailParts[0].slice(-2):emailParts[0].slice(0,1)+'***';
-    const maskedEmail=maskedUser+'@'+emailParts[1];
-    document.getElementById("emailDisplay").innerHTML=`A verification code has been sent to <b>${maskedEmail}</b>`;
-    document.getElementById("verifyCode").value='';
-    document.getElementById("codeError").innerText='';
+// --- STEP 1: Send Code ---
+function sendCode() {
+    const emailInput = document.getElementById("fpEmail");
+    currentEmail = emailInput.value.trim();
+    const errorEl = document.getElementById("emailError");
+    errorEl.innerText = '';
+
+    if (!currentEmail || !currentEmail.includes('@')) {
+        errorEl.innerText = "Please enter a valid email address.";
+        return;
+    }
+    
+    // DEMO: generate random 6-digit code
+    sentCode = Math.floor(100000 + Math.random() * 900000).toString();
+    sessionStorage.setItem("code", sentCode);
+    console.log("Demo code sent: " + sentCode);
+
+    document.getElementById("emailDisplay").innerText = "Verification code sent to ***" + currentEmail.split("@")[1];
+    document.getElementById("codeError").innerText = "";
     hideModal("emailModal");
     showModal("codeModal");
 }
 
-// Check code
-function checkCode(){
-    const userCode=document.getElementById("verifyCode").value.trim();
-    const errorEl=document.getElementById("codeError");
-    errorEl.innerText='';
-    if(userCode!==sessionStorage.getItem("code")){errorEl.innerText="Incorrect verification code!";return;}
-    document.getElementById("newPassword").value='';
-    document.getElementById("confirmPassword").value='';
-    document.getElementById("updateError").innerText='';
+// --- STEP 2: Check Code ---
+function checkCode() {
+    const codeInput = document.getElementById("verifyCode").value.trim();
+    const savedCode = sessionStorage.getItem("code");
+    const errorEl = document.getElementById("codeError");
+    errorEl.innerText = '';
+
+    if (!codeInput || codeInput.length !== 6) {
+        errorEl.innerText = "Please enter a valid 6-digit code.";
+        return;
+    }
+
+    if (codeInput !== savedCode) {
+        errorEl.innerText = "Incorrect verification code.";
+        return;
+    }
+
     hideModal("codeModal");
     showModal("updateModal");
 }
 
-// Resend code
-function resendCode(){sendCode();alert("A new code has been sent! Check console for demo code.");}
-
-// Update password
-function updatePassword(){
-    const pass1=document.getElementById("newPassword").value;
-    const pass2=document.getElementById("confirmPassword").value;
-    const errorEl=document.getElementById("updateError");
-    errorEl.innerText='';
-    if(pass1.length<6){errorEl.innerText="Password must be at least 6 characters.";return;}
-    if(pass1!==pass2){errorEl.innerText="Passwords do not match!";return;}
-    fetch("update_password.php",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:`email=${encodeURIComponent(currentEmail)}&password=${encodeURIComponent(pass1)}`})
-    .then(res=>res.text()).then(data=>{alert(data);hideModal("updateModal");sessionStorage.removeItem("code");})
-    .catch(err=>{console.error(err);errorEl.innerText="An error occurred. Try again later.";});
+// --- STEP 2: Resend Code ---
+function resendCode() {
+    if (!currentEmail) return;
+    sentCode = Math.floor(100000 + Math.random() * 900000).toString();
+    sessionStorage.setItem("code", sentCode);
+    console.log("Demo code resent: " + sentCode);
+    alert("Verification code resent.");
 }
 
-// Close modals
-function closeEmailModal(){hideModal("emailModal");}
-function closeCodeModal(){hideModal("codeModal");}
-function closeUpdateModal(){hideModal("updateModal");}
+// --- STEP 3: Update Password ---
+function updatePassword() {
+    const newPass = document.getElementById("newPassword").value.trim();
+    const confirmPass = document.getElementById("confirmPassword").value.trim();
+    const errorEl = document.getElementById("updateError");
+    errorEl.innerText = '';
 
-// Close modal if clicked outside
-window.onclick=function(event){
-    const modals=["emailModal","codeModal","updateModal"];
-    modals.forEach(id=>{if(event.target===document.getElementById(id)){hideModal(id);}});
+    if (!newPass || !confirmPass) {
+        errorEl.innerText = "Please fill out both password fields.";
+        return;
+    }
+    if (newPass !== confirmPass) {
+        errorEl.innerText = "Passwords do not match.";
+        return;
+    }
+
+    // Here add your password update logic, e.g., API call
+    alert("Password updated successfully for " + currentEmail);
+    hideModal("updateModal");
+}
+
+// --- Modal Close Handlers ---
+function closeEmailModal() {
+    hideModal("emailModal");
+}
+function closeCodeModal() {
+    hideModal("codeModal");
+}
+function closeUpdateModal() {
+    hideModal("updateModal");
+}
+
+// --- Password Visibility Toggle ---
+function togglePassword(id) {
+    const field = document.getElementById(id);
+    if (field.type === "password") {
+        field.type = "text";
+    } else {
+        field.type = "password";
+    }
 }
 </script>
 
