@@ -147,6 +147,28 @@ body {
     background-color: #307a79;
 }
 
+/* 2. MEDIA QUERY: Activate Scrolling Only on Smaller Screens */
+/* This breakpoint (1000px) is just an example—use whatever fits your overall table design */
+@media (max-width: 1000px) {
+    
+    /* Force the table to its maximum required width (1700px) to activate overflow */
+    .job-table {
+        width: 1500px; 
+    }
+
+    /* Enable horizontal scrollbar on the wrapper */
+    .table-scroll-wrapper {
+        overflow-x: auto; 
+        overflow-y: hidden;
+        
+        /* Ensure the wrapper displays correctly with the scrollbar */
+        padding-bottom: 10px; 
+        margin: 0 -20px; 
+        padding: 0 20px 10px;
+    }
+}
+
+
 /* --- Department Table (CSS Grid) --- */
 .job-table {
     border: 1px solid var(--primary-color);
@@ -158,14 +180,16 @@ body {
     grid-template-columns: 
         150px  /* Department */
         150px  /* Job Position */
-        250px  /* Description */
+        260px  /* Description */
         220px  /* Education */
         150px  /* Skills */
         120px  /* Experience */
         120px  /* Language */
         150px  /* Others */
-        200px; /* Action */
+        180px; /* Action */
     border-bottom: 1px solid var(--secondary-color);
+
+    
 }
 
 .table-row:last-child {
