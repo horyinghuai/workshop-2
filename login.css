@@ -178,7 +178,7 @@ input {
 .logo-placeholder {
     width: 350px;
     height: 350px;
-    background-color: #96b7b7; /* Match your image background */
+    background-color: #ffffff; /* Match your image background */
     display: flex;
     justify-content: center;
     align-items: center;
