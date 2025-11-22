@@ -71,7 +71,7 @@ $conn->close();
         <div class="header-right">
             <a href="#">Job Position</a>
             <a href="jobDepartment.php">Department</a>
-            <a href="#" class="logout">Log Out</a>
+            <a href="logout.php" class="logout">Log Out</a>
         </div>
     </header>
 
@@ -280,7 +280,7 @@ $conn->close();
             var $row = $(this).closest('.table-row');
 
             // 2. Get the unique ID from the button's data-id attribute
-            var currentId = $(this).data('data-id');
+            var currentId = $(this).data('id');
             var currentDeptId = $(this).data('dept-id');
 
             // 3. Extract Department Name (It's the first .table-cell.data in the row)

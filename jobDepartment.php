@@ -63,7 +63,7 @@ $conn->close();
         <div class="header-right">
             <a href="jobPosition.php">Job Position</a>
             <a href="#">Department</a>
-            <a href="#" class="logout">Log Out</a>
+            <a href="logout.php" class="logout">Log Out</a>
         </div>
     </header>
 

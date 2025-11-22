@@ -27,7 +27,7 @@ if (isset($_POST['action_type'])) {
             // INSERT (Add New Department)
             $sql = "INSERT INTO job_position (department_id, job_name, description, education, skills, experience, language, others) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssssss", $deptId, $name, $description, $education, $skills, $experience, $language, $others);
+            $stmt->bind_param("isssssss", $deptId, $name, $description, $education, $skills, $experience, $language, $others);
             $message = "Job added successfully!";
         } else { // action === 'edit'
             // UPDATE (Edit Existing Department)
