@@ -17,14 +17,13 @@ body {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 .header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
     background-color: #3a7c7c;
     color: white;
     padding: 1.25rem 2rem;
-    display: flex;
-    align-items: center;
-    position: relative;
-    justify-content: center;
-    width: 100%;
 }
 
 .back-link {
