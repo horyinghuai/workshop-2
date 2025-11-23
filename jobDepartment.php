@@ -40,6 +40,9 @@ if ($result->num_rows > 0) {
 
 // 3. Close the database connection
 $conn->close();
+
+// --- CAPTURE CURRENT EMAIL FOR NAVIGATION ---
+$currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,13 +58,13 @@ $conn->close();
 <body>
     <header class="header">
         <div class="header-left">
-              <a href="dashboard.php" class="back-link">
+             <a href="dashboard.php?email=<?php echo urlencode($currentEmail); ?>" class="back-link">
             <i class="fas fa-chevron-left"></i> Back
         </a>
         </div>
         <h1 class="logo">Resume Reader</h1>
         <div class="header-right">
-            <a href="jobPosition.php">Job Position</a>
+            <a href="jobPosition.php?email=<?php echo urlencode($currentEmail); ?>">Job Position</a>
             <a href="#">Department</a>
             <a href="logout.php" class="logout">Log Out</a>
         </div>

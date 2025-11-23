@@ -3,7 +3,7 @@ session_start();
 include 'connection.php';
 
 // Check if ID is provided
-if (!isset($_GET['id']) || empty($_GET['id'])) {
+if (!isset($_GET['candidate_id']) || empty($_GET['candidate_id'])) {
     die("No candidate ID provided.");
 }
 
@@ -13,7 +13,7 @@ if ($email === null) {
     die("No email provided.");
 }
 
-$candidate_id = intval($_GET['id']);
+$candidate_id = intval($_GET['candidate_id']);
 $redirect_url = "uploadResumeYing.php?email=" . urlencode($email) . "&candidate_id=" . urlencode($candidate_id);
 
 // --- 1. HANDLE DELETE ACTION (FROM CANCEL BUTTON) ---
@@ -60,7 +60,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     }
 }
 
-// --- 2. HANDLE UPDATE ACTION (FROM CONFIRM BUTTON) ---
+// --- 2. HANDLE UPDATE ACTION & TRIGGER ML/AI ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_update'])) {
     // Collect data from form
     $u_name = $_POST['name'];
@@ -98,19 +98,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_update'])) {
         
         if ($stmt->execute()) {
             
-            // --- NEW: TRIGGER MACHINE LEARNING SCRIPT ---
+            // --- NEW: TRIGGER MACHINE LEARNING & LLM SCRIPT ---
             // Escape the argument to prevent command injection
             $escaped_id = escapeshellarg($candidate_id);
             
-            // Execute python script. 2>&1 redirects errors to output so we can see them if needed
-            // NOTE: Ensure 'python' is in your system PATH, or use full path e.g. 'C:\\Python39\\python.exe'
+            // Execute python script. 2>&1 redirects errors to output
+            // NOTE: Use your full python path if 'python' command fails in XAMPP
+            // e.g. $command = "C:\\Python311\\python.exe generate_report.py $escaped_id 2>&1";
             $command = "python generate_report.py $escaped_id 2>&1";
             $output = shell_exec($command);
 
             // Optional: Log output for debugging
-            // error_log("Python Output: " . $output);
+            // error_log("ML Output: " . $output);
 
-            $_SESSION['upload_message'] = "Candidate data updated and AI Report Generated!";
+            $_SESSION['upload_message'] = "Data Updated. ML Scoring & AI Analysis Completed!";
             $_SESSION['upload_error'] = false;
             
             // Redirect to uploadResumeYing.php
@@ -237,7 +238,8 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
                     </a>
                 </div>
                 
-                <div class="p-4 sm:p-6 h-[1000px]"> <?php if ($original_file_ext == 'pdf'): ?>
+                <div class="p-4 sm:p-6 h-[1000px]"> 
+                    <?php if ($original_file_ext == 'pdf'): ?>
                         <iframe src="<?php echo e($candidate['resume_original']); ?>" class="w-full h-full border rounded-lg">
                             Your browser does not support PDFs. <a href="<?php echo e($candidate['resume_original']); ?>">Download PDF</a>
                         </iframe>
@@ -338,9 +340,7 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
 
     <script>
         function confirmDelete() {
-            // Show confirmation popup
             if (confirm("Are you sure? This will delete this candidate's record permanently.")) {
-                // If user clicks OK, redirect to delete action
                 const currentUrl = new URL(window.location.href);
                 currentUrl.searchParams.set('action', 'delete');
                 window.location.href = currentUrl.toString();
