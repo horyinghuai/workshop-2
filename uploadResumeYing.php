@@ -102,15 +102,23 @@ $conn->close();
 
                 <div class="form-group">
                     <label>Upload File</label>
-                    <div id="file-input-container">
+                    <div id="file-input-container" class="file-btn-row">
                         <button type="button" class="file-choose-btn" id="chooseFileBtn">
                             <i class="fas fa-upload"></i> Choose Resume File
+                        </button>
+
+                        <button type="button" id="removeFileBtn" class="remove-file-btn hidden">
+                            <i class="fas fa-times"></i>
                         </button>
                     </div>
                     <div class="drop-zone hidden" id="dropZone">
                         <p>Drag & drop the resume here<br>PDF, DOCX up to 5MB</p>
                     </div>
                     <input type="file" name="resume_file" id="resumeFile" class="hidden" required accept=".pdf,.docx">
+                    <!-- Add this right below the drop zone -->
+                    <button type="button" id="removeFileBtn" class="remove-file-btn hidden">
+                        <i class="fas fa-times"></i> Remove File
+                    </button>
                 </div>
 
                 <div class="button-container">
@@ -122,103 +130,130 @@ $conn->close();
     </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('uploadForm');
-            const chooseFileBtn = document.getElementById('chooseFileBtn');
-            const fileInputContainer = document.getElementById('file-input-container');
-            const dropZone = document.getElementById('dropZone');
-            const resumeFile = document.getElementById('resumeFile');
-            
-            const overlay = document.getElementById('loadingOverlay');
-            const bar = document.getElementById('progressBar');
-            const txt = document.getElementById('progressText');
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('uploadForm');
+        const chooseFileBtn = document.getElementById('chooseFileBtn');
+        const fileInputContainer = document.getElementById('file-input-container');
+        const dropZone = document.getElementById('dropZone');
+        const resumeFile = document.getElementById('resumeFile');
+        const removeFileBtn = document.getElementById('removeFileBtn');
 
-            // --- REAL TIME UPLOAD LOGIC ---
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                // Basic validation
-                if(resumeFile.files.length === 0 || document.getElementById('job_position').value === "") {
-                    alert("Please select a job and a resume file.");
-                    return;
-                }
+        const overlay = document.getElementById('loadingOverlay');
+        const bar = document.getElementById('progressBar');
+        const txt = document.getElementById('progressText');
 
-                overlay.style.display = 'flex';
-                bar.style.width = '0%';
-                txt.innerText = '0%';
-                
-                // Generate unique process ID
-                const processId = Date.now() + Math.floor(Math.random() * 1000);
-                const formData = new FormData(form);
-                formData.append('process_id', processId);
+        /* -------------------------
+           REAL-TIME UPLOAD LOGIC
+        -------------------------- */
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
 
-                // Start Polling
-                const pollInterval = setInterval(() => {
-                    fetch('check_progress.php?id=' + processId)
-                        .then(res => res.text())
-                        .then(val => {
-                            let p = parseInt(val);
-                            if(p > 0 && p <= 100) {
-                                bar.style.width = p + '%';
-                                txt.innerText = p + '%';
-                            }
-                        });
-                }, 800); // Check every 0.8s
+            if (resumeFile.files.length === 0 || document.getElementById('job_position').value === "") {
+                alert("Please select a job and a resume file.");
+                return;
+            }
 
-                // Send Data
-                fetch('uploadProcessYing.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    clearInterval(pollInterval);
-                    if (data.status === 'success') {
-                        bar.style.width = '100%';
-                        txt.innerText = '100%';
-                        // Small delay to see 100%
-                        setTimeout(() => {
-                            window.location.href = `previewResumeYing.php?candidate_id=${data.candidate_id}&email=${encodeURIComponent(data.email)}`;
-                        }, 500);
-                    } else {
-                        alert("Error: " + data.message);
-                        overlay.style.display = 'none';
-                    }
-                })
-                .catch(err => {
-                    clearInterval(pollInterval);
-                    alert("System Error: " + err);
+            overlay.style.display = 'flex';
+            bar.style.width = '0%';
+            txt.innerText = '0%';
+
+            const processId = Date.now() + Math.floor(Math.random() * 1000);
+            const formData = new FormData(form);
+            formData.append('process_id', processId);
+
+            const pollInterval = setInterval(() => {
+                fetch('check_progress.php?id=' + processId)
+                    .then(res => res.text())
+                    .then(val => {
+                        let p = parseInt(val);
+                        if (p > 0 && p <= 100) {
+                            bar.style.width = p + '%';
+                            txt.innerText = p + '%';
+                        }
+                    });
+            }, 800);
+
+            fetch('uploadProcessYing.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                clearInterval(pollInterval);
+                if (data.status === 'success') {
+                    bar.style.width = '100%';
+                    txt.innerText = '100%';
+                    setTimeout(() => {
+                        window.location.href = `previewResumeYing.php?candidate_id=${data.candidate_id}&email=${encodeURIComponent(data.email)}`;
+                    }, 500);
+                } else {
+                    alert("Error: " + data.message);
                     overlay.style.display = 'none';
-                });
+                }
+            })
+            .catch(err => {
+                clearInterval(pollInterval);
+                alert("System Error: " + err);
+                overlay.style.display = 'none';
             });
+        });
 
-            // File Selection UI Logic (Same as before)
-            chooseFileBtn.addEventListener('click', () => {
-                fileInputContainer.classList.add('hidden');
-                dropZone.classList.remove('hidden');
-            });
-            dropZone.addEventListener('click', () => resumeFile.click());
-            resumeFile.addEventListener('change', () => {
-                if (resumeFile.files.length > 0) {
-                    handleFile(resumeFile.files[0]);
-                }
-            });
-            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
-            dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('active'); });
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault(); dropZone.classList.remove('active');
-                if (e.dataTransfer.files.length > 0) {
-                    resumeFile.files = e.dataTransfer.files;
-                    handleFile(e.dataTransfer.files[0]);
-                }
-            });
-            function handleFile(file) {
-                chooseFileBtn.innerHTML = `<i class="fas fa-check"></i> ${file.name}`;
-                fileInputContainer.classList.remove('hidden');
-                dropZone.classList.add('hidden');
+        /* -------------------------
+           FILE UI LOGIC
+        -------------------------- */
+        chooseFileBtn.addEventListener('click', () => {
+            fileInputContainer.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+        });
+
+        dropZone.addEventListener('click', () => resumeFile.click());
+
+        resumeFile.addEventListener('change', () => {
+            if (resumeFile.files.length > 0) {
+                handleFile(resumeFile.files[0]);
             }
         });
-    </script>
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('active');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('active');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            if (e.dataTransfer.files.length > 0) {
+                resumeFile.files = e.dataTransfer.files;
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            chooseFileBtn.innerHTML = `<i class="fas fa-check"></i> ${file.name}`;
+            fileInputContainer.classList.remove('hidden');
+            dropZone.classList.add('hidden');
+            removeFileBtn.classList.remove('hidden');
+        }
+
+        /* -------------------------
+           REMOVE FILE BUTTON
+        -------------------------- */
+        removeFileBtn.addEventListener('click', () => {
+            resumeFile.value = "";
+            chooseFileBtn.innerHTML = `<i class="fas fa-upload"></i> Choose Resume File`;
+
+            fileInputContainer.classList.remove('hidden');
+            dropZone.classList.add('hidden');
+
+            removeFileBtn.classList.add('hidden');
+        });
+
+    });
+</script>
 
 </body>
 </html>

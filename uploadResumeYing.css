@@ -228,3 +228,23 @@ select#job_position {
     color: #d93a3a;
     border: 1px solid #f9c6c6;
 }
+
+.file-btn-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.remove-file-btn {
+    margin-left: auto;
+    padding: 15px 15px;
+    background: #c0392b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.remove-file-btn:hover {
+    background: #a93226;
+}
