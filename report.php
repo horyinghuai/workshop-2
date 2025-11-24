@@ -8,9 +8,9 @@ if (!isset($_GET['candidate_id']) || empty($_GET['candidate_id'])) {
 }
 
 $candidate_id = intval($_GET['candidate_id']);
-$email = isset($_GET['email']) ? $_GET['email'] : ''; // Current logged in user email for navigation
+$email = isset($_GET['email']) ? $_GET['email'] : ''; 
 
-// 2. Fetch Data (Join CANDIDATE and REPORT tables)
+// 2. Fetch Data
 $sql = "SELECT c.*, r.* FROM CANDIDATE c 
         LEFT JOIN REPORT r ON c.candidate_id = r.candidate_id 
         WHERE c.candidate_id = ?";
@@ -34,12 +34,10 @@ if ($stmt = $conn->prepare($sql)) {
 
 $conn->close();
 
-// Helper to safely display text
 function e($val) {
     return htmlspecialchars($val ?? '');
 }
 
-// Helper to format score (if null, show N/A)
 function showScore($val) {
     return ($val !== null) ? number_format($val, 2) : "N/A";
 }
@@ -50,67 +48,26 @@ function showScore($val) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
     <title>Candidate Report</title>
-=======
-    <title>Resume Reader | Candidate Report</title>
->>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f0f4f4; }
-        
-        /* Header Style */
-        .header-bar {
-            background-color: #457b7d; /* Teal color matching image */
-            color: white;
-        }
-
-        /* Left Column (Resume) Styles */
-        .resume-col {
-            background-color: #dbecea; /* Light teal/blue */
-            color: #333;
-        }
+        .header-bar { background-color: #457b7d; color: white; }
+        .resume-col { background-color: #dbecea; color: #333; }
         .resume-col label { color: #333; font-weight: 700; }
-        
-        /* Right Column (Report) Styles */
-        .report-col {
-            background-color: #2F3E46; /* Dark Slate/Teal */
-            color: white;
-        }
+        .report-col { background-color: #2F3E46; color: white; }
         .report-col label { color: white; font-weight: 700; }
-        .report-col .download-btn {
-            background-color: #9dbeb9; 
-            color: #2F3E46;
-        }
-
-        /* Common Input Styles */
+        .report-col .download-btn { background-color: #9dbeb9; color: #2F3E46; }
         input[readonly], textarea[readonly] {
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 8px 12px;
-            width: 100%;
-            color: #333;
-            font-size: 0.95rem;
-            outline: none;
+            background-color: white; border: 1px solid #ccc; border-radius: 6px;
+            padding: 8px 12px; width: 100%; color: #333; font-size: 0.95rem; outline: none;
         }
-        
         textarea { resize: none; height: 80px; }
-        
-        /* Label alignment */
-        .field-row {
-            display: grid;
-            grid-template-columns: 140px 1fr;
-            gap: 10px;
-            align-items: start;
-            margin-bottom: 12px;
-        }
-        .field-row label {
-            padding-top: 8px; /* Align text with input */
-        }
+        .field-row { display: grid; grid-template-columns: 140px 1fr; gap: 10px; alignItems: start; margin-bottom: 12px; }
+        .field-row label { padding-top: 8px; }
     </style>
 </head>
 <body>
@@ -172,10 +129,6 @@ function showScore($val) {
             <div class="field-row">
                 <label>Experience</label>
                 <textarea readonly style="height:120px"><?php echo e($data['experience']); ?></textarea>
-            </div>
-            <div class="field-row">
-                <label>Achievements</label>
-                <textarea readonly><?php echo e($data['achievements']); ?></textarea>
             </div>
             <div class="field-row">
                 <label>Language</label>
