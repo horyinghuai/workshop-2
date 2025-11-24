@@ -34,6 +34,7 @@
             z-index: 1000;
         }
 
+<<<<<<< HEAD
         .modal-content {
             background: white;
             padding: 40px;
@@ -45,6 +46,12 @@
             /* Important for tooltip positioning */
             position: relative; 
         }
+=======
+.right-box {
+    width: 50%;
+    padding: 150px;
+}
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
 
         .modal-content h3 { margin-top: 0; margin-bottom: 10px; font-size: 24px; text-align: center;}
         .modal-content label { text-align: left; margin-bottom: 5px; margin-top: 20px;}
@@ -94,6 +101,7 @@
             z-index: 5;
         }
 
+<<<<<<< HEAD
         .info-box {
             display: none; /* Hidden by default */
             position: absolute;
@@ -116,3 +124,103 @@
             padding-left: 20px;
             margin: 0;
         }
+=======
+.copyright {
+    color: #888;
+    font-size: 0.8rem;
+    margin-top: 1rem;
+}
+
+.modal {
+    display: none !important;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0; 
+    left: 0;
+    width: 100%; 
+    height: 100%;
+    background: rgba(0,0,0,0.35);
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    width: 380px;
+    border-radius: 12px;
+    text-align: center;
+    border: 4px solid #8cb3b3;
+}
+
+.modal-content h3 {
+    margin-bottom: 15px;
+}
+
+.confirm-btn {
+    width: 100%;
+    padding: 10px;
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    margin-top: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.cancel-btn {
+    width: 100%;
+    padding: 10px;
+    background: #d9534f;
+    color: #fff;
+    border: none;
+    margin-top: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.resend-link {
+    margin-top: 10px;
+    display: block;
+    font-size: 14px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.sent-to-text {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.error-msg {
+    color: #d9534f; /* Red for errors */
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+/* Ensure the confirm/cancel buttons match the design in the second image */
+.modal-content .confirm-btn {
+    background: #5cb85c; /* Green */
+    color: white;
+    margin-bottom: 5px; /* Add space between buttons */
+}
+
+.modal-content .cancel-btn {
+    background: #d9534f; /* Red */
+    color: white;
+    margin-top: 0;
+}
+
+/* Updated logo placeholder for visual consistency */
+.logo-placeholder {
+    width: 350px;
+    height: 350px;
+    background-color: #96b7b7; /* Match your image background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+}
+
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f

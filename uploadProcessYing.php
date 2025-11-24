@@ -71,9 +71,109 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Create Formatted File
                     $formatted_content = "--- EXTRACTED RESUME DATA ---\n\nName: " . ($extracted_data['name'] ?? 'N/A') . "\nEmail: " . ($extracted_data['email'] ?? 'N/A') . "\nContact: " . ($extracted_data['contact_number'] ?? 'N/A') . "\n\n--- SKILLS ---\n" . ($extracted_data['skills'] ?? 'N/A') . "\n\n--- EXPERIENCE ---\n" . ($extracted_data['experience'] ?? 'N/A');
                     
+<<<<<<< HEAD
+                    if ($stmt_insert = $conn->prepare($sql_insert)) {
+                        $stmt_insert->bind_param("iss", $job_id, $fileDestination, $current_email);
+
+                        if ($stmt_insert->execute()) {
+                            // --- 2. Get the new candidate_id ---
+                            $candidate_id = $conn->insert_id;
+                            $stmt_insert->close();
+
+                            // --- 3. Call Python NLP Script ---
+                            // Use escapeshellarg to prevent command injection
+                            $command = $python_path . ' ' . escapeshellarg($script_path) . ' ' . escapeshellarg($fileDestination);
+                            $json_output = shell_exec($command);
+                            
+                            $extracted_data = null;
+                            if ($json_output) {
+                                $extracted_data = json_decode($json_output, true);
+                            }
+
+                            if ($extracted_data && !isset($extracted_data['error'])) {
+                                // --- 4. Create Formatted Resume File ---
+                                $formatted_content = "--- EXTRACTED RESUME DATA ---\n\n";
+                                $formatted_content .= "Name: " . ($extracted_data['name'] ?? 'N/A') . "\n";
+                                $formatted_content .= "Email: " . ($extracted_data['email'] ?? 'N/A') . "\n";
+                                $formatted_content .= "Contact: " . ($extracted_data['contact_number'] ?? 'N/A') . "\n\n";
+                                $formatted_content .= "--- OBJECTIVE ---\n" . ($extracted_data['objective'] ?? 'N/A') . "\n\n";
+                                $formatted_content .= "--- EDUCATION ---\n" . ($extracted_data['education'] ?? 'N/A') . "\n\n";
+                                $formatted_content .= "--- SKILLS ---\n" . ($extracted_data['skills'] ?? 'N/A') . "\n\n";
+                                $formatted_content .= "--- EXPERIENCE ---\n" . ($extracted_data['experience'] ?? 'N/A') . "\n\n";
+                                $formatted_content .= "--- ACHIEVEMENTS ---\n" . ($extracted_data['achievements'] ?? 'N/A') . "\n\n";
+                                $formatted_content .= "--- LANGUAGES ---\n" . ($extracted_data['language'] ?? 'N/A') . "\n\n";
+
+                                $formatted_filename = 'formatted_' . $candidate_id . '_' . time() . '.txt';
+                                $formatted_filepath = $upload_dir . $formatted_filename;
+                                file_put_contents($formatted_filepath, $formatted_content);
+
+                                // --- 5. Update the Database Record ---
+                                $sql_update = "UPDATE candidate SET 
+                                    name = ?, 
+                                    gender = ?, 
+                                    email = ?, 
+                                    contact_number = ?, 
+                                    address = ?, 
+                                    objective = ?, 
+                                    education = ?, 
+                                    skills = ?, 
+                                    experience = ?, 
+                                    achievements = ?, 
+                                    language = ?, 
+                                    others = ?, 
+                                    resume_formatted = ?
+                                WHERE candidate_id = ?";
+                                
+                                if($stmt_update = $conn->prepare($sql_update)) {
+                                    $gender = $extracted_data['gender'] ?? null; // Python script doesn't extract this yet
+                                    $address = $extracted_data['address'] ?? null; // Python script doesn't extract this yet
+                                    $full_text = $extracted_data['full_text'] ?? null;
+
+                                    $stmt_update->bind_param("sssssssssssssi",
+                                        $extracted_data['name'],
+                                        $gender,
+                                        $extracted_data['email'],
+                                        $extracted_data['contact_number'],
+                                        $address,
+                                        $extracted_data['objective'],
+                                        $extracted_data['education'],
+                                        $extracted_data['skills'],
+                                        $extracted_data['experience'],
+                                        $extracted_data['achievements'],
+                                        $extracted_data['language'],
+                                        $full_text, // Storing full text in 'others'
+                                        $formatted_filepath,
+                                        $candidate_id
+                                    );
+                                    $stmt_update->execute();
+                                    $stmt_update->close();
+                                }
+                                
+                                // --- 6. Redirect to Preview Page ---
+                                $_SESSION['upload_message'] = "Resume uploaded and processed successfully!";
+                                $_SESSION['upload_error'] = false;
+                                header("Location: previewResumeYing.php?candidate_id=" . $candidate_id . "&email=" . urlencode($current_email));
+                                $conn->close();
+                                exit();
+
+                            } else {
+                                // NLP failed, but file is uploaded. Redirect anyway.
+                                $_SESSION['upload_message'] = "Resume uploaded, but text extraction failed. Please review manually.";
+                                $_SESSION['upload_error'] = true;
+                                header("Location: previewResumeYing.php?candidate_id=" . $candidate_id . "&email=" . urlencode($current_email));
+                                $conn->close();
+                                exit();
+                            }
+                        }
+                    }
+                    // Handle INSERT fail
+                    $_SESSION['upload_message'] = "File uploaded, but database record failed: " . $conn->error;
+                    $_SESSION['upload_error'] = true;
+=======
                     $formatted_filename = 'formatted_' . $candidate_id . '_' . time() . '.txt';
                     $formatted_filepath = $upload_dir . $formatted_filename;
                     file_put_contents($formatted_filepath, $formatted_content);
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
 
                     // Update DB
                     $sql_update = "UPDATE candidate SET name=?, gender=?, email=?, contact_number=?, address=?, objective=?, education=?, skills=?, experience=?, achievements=?, language=?, others=?, resume_formatted=? WHERE candidate_id=?";

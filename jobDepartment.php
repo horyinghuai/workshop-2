@@ -2,6 +2,8 @@
 // Include the database connection file
 include 'connection.php';
 
+<<<<<<< HEAD
+=======
 // Redirect to login if user not logged in
 if (!isset($_GET['email'])) {
     header('Location: login.php');
@@ -23,6 +25,7 @@ if ($result && $result->num_rows === 1) {
     exit();
 }
 
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
 // Check if the connection was successful (though connection.php handles the die() case)
 if ($conn->connect_error) {
     // This line is mostly redundant if connection.php works, but good for safety
@@ -59,7 +62,10 @@ if ($result->num_rows > 0) {
         </div>';
 }
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
 // 3. Close the database connection
 $conn->close();
 
