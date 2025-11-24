@@ -24,6 +24,7 @@ body {
 .right-box {
     width: 50%;
     padding: 40px 60px;
+    margin-top: 140px; 
 }
 
 h1 {
