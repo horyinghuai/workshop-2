@@ -8,7 +8,7 @@ import time
 import re
 import warnings
 
-# --- FIX FOR PYLANCE IMPORT ERROR ---
+# --- FIX FOR IMPORT ERROR ---
 import urllib3
 # Disable "InsecureRequestWarning" since we use verify=False for Localhost/XAMPP
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -17,7 +17,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # --- DEBUG: CONFIRM NEW CODE IS RUNNING ---
-print("LOADED: generate_report.py (Fixed Imports + Gemini 2.0 Flash)")
+print("LOADED: process_report.py (Fixed Imports + Job Context)")
 
 # --- CONFIGURATION ---
 DB_CONFIG = {
@@ -28,7 +28,7 @@ DB_CONFIG = {
 }
 
 # --- GEMINI API CONFIGURATION ---
-# Using Gemini 2.0 Flash as requested
+# Using Gemini 1.5 Pro as requested
 GEMINI_API_KEY = "AIzaSyCinubaFIEIxXJ8EqqMHgd_uF74HNvknbw" 
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
@@ -59,7 +59,7 @@ def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
 
 # UPDATED: Scoring now compares Candidate Text vs Job Requirement Text
-def calculate_hybrid_score(candidate_text, job_requirement_text):
+def calculate_hybrid_score(candidate_text, job_requirement_text, field_name):
     # 1. Safety Checks
     if not candidate_text or len(str(candidate_text)) < 3: return 10.0
     if not job_requirement_text or len(str(job_requirement_text)) < 3: return 80.0 # If no requirement, assume good fit
@@ -67,9 +67,27 @@ def calculate_hybrid_score(candidate_text, job_requirement_text):
     c_text = str(candidate_text).lower()
     j_text = str(job_requirement_text).lower()
     
-    # 2. Exact Keyword Matching (40% weight)
+    # --- 1. EDUCATION HIERARCHY LOGIC ---
+    if field_name == 'education':
+        edu_levels = {'phd': 5, 'doctorate': 5, 'master': 4, 'bachelor': 3, 'degree': 3, 'diploma': 2, 'certificate': 1}
+        
+        cand_level = 0
+        req_level = 0
+        
+        for edu, val in edu_levels.items():
+            if edu in c_text and val > cand_level: cand_level = val
+            if edu in j_text and val > req_level: req_level = val
+            
+        # Bonus if candidate level >= requirement level
+        if cand_level > req_level:
+            return 100.0 # Overqualified is a perfect score for "minimum requirement"
+        elif cand_level == req_level:
+            return 95.0
+        elif cand_level < req_level and cand_level > 0:
+            return 60.0 # Underqualified but has some education
+    
+    # --- 2. SKILL / GENERAL KEYWORD MATCHING ---
     # Split job requirements by comma or spaces to get key terms
-    # e.g., "Python, SQL, Excel" -> ['python', 'sql', 'excel']
     job_keywords = [k.strip() for k in re.split(r'[,|\n]', j_text) if len(k.strip()) > 2]
     
     match_count = 0
@@ -83,7 +101,7 @@ def calculate_hybrid_score(candidate_text, job_requirement_text):
     else:
         keyword_score = 100.0 # No specific keywords required
 
-    # 3. Semantic Similarity (TF-IDF) (60% weight)
+    # --- 3. SEMANTIC RELEVANCE (For "Other relevant skills") ---
     try:
         documents = [j_text, c_text]
         tfidf = TfidfVectorizer(stop_words='english')
@@ -96,10 +114,11 @@ def calculate_hybrid_score(candidate_text, job_requirement_text):
         ml_score = keyword_score # Fallback if TF-IDF fails
 
     # 4. Weighted Final Score
-    final_score = (keyword_score * 0.4) + (ml_score * 0.6)
+    final_score = (keyword_score * 0.5) + (ml_score * 0.5)
     
-    # Bonus for detail richness (if they wrote a lot, likely better context)
-    if len(c_text.split()) > 50: final_score += 5
+    # Boost score slightly if semantic match is high even if keywords miss (Candidate has relevant alternatives)
+    if keyword_score < 50 and ml_score > 60:
+        final_score += 15 
     
     return round(min(99.0, max(10.0, final_score)), 2)
 
@@ -111,11 +130,14 @@ def generate_llm_comment(field_name, candidate_text, job_requirement_text, score
     # Construct a context-aware prompt
     prompt = (
         f"Role: HR Recruiter. \n"
-        f"Task: Evaluate a candidate's {field_name} against a specific job requirement.\n\n"
-        f"Job Requirement for {field_name}: \"{job_requirement_text}\"\n"
-        f"Candidate's {field_name}: \"{candidate_text}\"\n\n"
-        f"The calculated match score is {score}/100. "
-        f"Write a concise professional comment (max 30 words) evaluating how well the candidate meets this specific requirement."
+        f"Task: Compare Candidate vs Job Requirement for '{field_name}'.\n\n"
+        f"Job Requirement: \"{job_requirement_text}\"\n"
+        f"Candidate Data: \"{candidate_text}\"\n\n"
+        f"Match Score: {score}/100.\n"
+        f"Instructions:\n"
+        f"1. If candidate meets/exceeds requirements (e.g. Master vs Diploma), praise them.\n"
+        f"2. If candidate lacks specific skills but has RELEVANT alternatives, state: 'Lacks [X] but possesses relevant skills in [Y].'\n"
+        f"3. Keep it under 40 words."
     )
 
     payload = {
@@ -161,21 +183,43 @@ def generate_llm_comment(field_name, candidate_text, job_requirement_text, score
     # Fallback
     return f"Candidate provided details. Match score: {score}/100. (AI Analysis Unavailable)"
 
+# --- UPDATED CONFIDENCE LOGIC ---
 def calculate_confidence(row):
-    confidence = 50.0
+    confidence = 0.0 # Start at 0
+    
+    # Increased Thresholds significantly to make 99% hard to get
     weights = {
-        'experience': {'threshold': 20, 'points': 20}, 
-        'education': {'threshold': 10, 'points': 10},
-        'skills': {'threshold': 5, 'points': 10},
-        'language': {'threshold': 2, 'points': 5},
-        'others': {'threshold': 5, 'points': 4}
+        'experience': {'threshold': 50, 'points': 35}, 
+        'education': {'threshold': 15, 'points': 20},
+        'skills': {'threshold': 10, 'points': 20},
+        'language': {'threshold': 5, 'points': 10},
+        'others': {'threshold': 10, 'points': 10}
     }
+    
+    # Bonus: Is the resume balanced?
+    sections_present = 0
+
     for field, criteria in weights.items():
         content = str(row.get(field, ""))
-        word_count = len(content.split()) if content and content.lower() != 'none' else 0
-        if word_count >= criteria['threshold']: confidence += criteria['points']
-        elif word_count > 0: confidence += (criteria['points'] / 2)
-    return round(min(99.0, confidence), 2)
+        # Filter out "None" or "N/A"
+        if content.lower() in ['none', 'n/a', ''] or len(content) < 3:
+            word_count = 0
+        else:
+            word_count = len(content.split())
+            sections_present += 1
+        
+        if word_count >= criteria['threshold']:
+            confidence += criteria['points']
+        elif word_count > 0:
+            # Linear scaling: e.g. if you have 25/50 words, you get half points
+            ratio = word_count / criteria['threshold']
+            confidence += (criteria['points'] * ratio)
+
+    # Penalty if sections are missing
+    if sections_present < 3:
+        confidence -= 15
+
+    return round(min(99.0, max(10.0, confidence)), 2)
 
 def process_candidate(candidate_id, pid=None):
     update_progress(pid, 5) 
@@ -220,8 +264,8 @@ def process_candidate(candidate_id, pid=None):
             # Data from Job Position (Requirement)
             job_content = job_reqs.get(field, "")
             
-            # Calculate Score based on FIT
-            scores[field] = calculate_hybrid_score(cand_content, job_content)
+            # Pass field_name to apply Education Hierarchy Logic
+            scores[field] = calculate_hybrid_score(cand_content, job_content, field)
             
             # Generate Comment comparing Candidate vs Job
             comments[field] = generate_llm_comment(field, cand_content, job_content, scores[field])

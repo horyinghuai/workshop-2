@@ -23,9 +23,8 @@ if ($result && $result->num_rows === 1) {
     exit();
 }
 
-// Check if the connection was successful (though connection.php handles the die() case)
+// Check if the connection was successful
 if ($conn->connect_error) {
-    // This line is mostly redundant if connection.php works, but good for safety
     die("Database connection failed in jobDepartment.php: " . $conn->connect_error);
 }
 
@@ -199,7 +198,6 @@ $(document).ready(function() {
     });
 
     // Optional: Initial load function to show all results (this is already handled by PHP)
-    // You could use this to reset the search if the input is cleared
     $('#search-input').on('keyup', function() {
         if ($(this).val().trim() === '') {
             performSearch();
@@ -229,7 +227,6 @@ function openModal() {
     $('#departmentModal').css('display', 'flex');
     
     // 2. After the browser renders 'display: flex', add the class to trigger the smooth transition
-    // A small delay (or wrap in setTimeout(..., 10) or nextTick logic) is often needed to force the transition
     setTimeout(function() {
         $('#departmentModal').addClass('modal-show');
     }, 10);
@@ -247,34 +244,33 @@ $('.add-department-btn').click(function() {
 // Open Modal for Editing 
 $('#department-list').on('click', '.edit-btn', function() {
    // 1. Get the parent row of the clicked button
-    var $row = $(this).closest('.table-row');
-    
-    // 2. Get the unique ID from the button's data-id attribute
-    var currentId = $(this).data('id'); 
+   var $row = $(this).closest('.table-row');
+   
+   // 2. Get the unique ID from the button's data-id attribute
+   var currentId = $(this).data('id'); 
 
-    // 3. Extract Department Name (It's the first .table-cell.data in the row)
-    // We use .eq(0) to target the first cell and .text().trim() to clean the data
-    var currentName = $row.find('.table-cell.data').eq(0).text().trim();
-    
-    // 4. Extract Description (It's the table-cell with class .description.data)
-    var currentDesc = $row.find('.table-cell.description.data').text().trim();
-    
-    // --- Populate the modal fields ---
-    
-    // Hidden ID field (Crucial for the UPDATE query in crud_department.php)
-    $('#departmentId').val(currentId);
-    
-    // Visible fields
-    $('#departmentNameInput').val(currentName);
-    $('#departmentDescriptionInput').val(currentDesc);
-    
-    // Set modal title and action type
-    $('#modalTitle').text('Edit Department: ' + currentName);
-    $('#actionType').val('edit');
-    $('#confirmBtn').text('Save Changes');
-    
-    // Open the modal with animation
-    openModal();
+   // 3. Extract Department Name (It's the first .table-cell.data in the row)
+   var currentName = $row.find('.table-cell.data').eq(0).text().trim();
+   
+   // 4. Extract Description (It's the table-cell with class .description.data)
+   var currentDesc = $row.find('.table-cell.description.data').text().trim();
+   
+   // --- Populate the modal fields ---
+   
+   // Hidden ID field (Crucial for the UPDATE query in crud_department.php)
+   $('#departmentId').val(currentId);
+   
+   // Visible fields
+   $('#departmentNameInput').val(currentName);
+   $('#departmentDescriptionInput').val(currentDesc);
+   
+   // Set modal title and action type
+   $('#modalTitle').text('Edit Department: ' + currentName);
+   $('#actionType').val('edit');
+   $('#confirmBtn').text('Save Changes');
+   
+   // Open the modal with animation
+   openModal();
 });
 
 // Close Modal handlers
@@ -345,7 +341,7 @@ function displayNotification() {
         
         $box.slideDown(300);
         
-        // Remove the parameters from the URL after display (optional, keeps URL clean)
+        // Remove the parameters from the URL after display
         history.replaceState(null, null, window.location.pathname);
 
         // Auto-hide after 5 seconds

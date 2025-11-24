@@ -86,26 +86,6 @@ body {
     text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
-.header left, .back-link {
- color: white;
-    text-decoration: none;
-    font-size: 1.5rem;
-    font-weight: 500;
-    position: absolute;
-    left: 2rem;
-    display: flex;
-    align-items: center;
-
-    transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
-}
-
-.back-link:hover {
-    /* Lift the text up by 2 pixels */
-    transform: translateY(-2px) scale(1.05); 
-    
-    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
-}
-
 .header-left span {
     font-size: 1.1rem;
     cursor: pointer;
@@ -213,18 +193,19 @@ body {
     border-bottom: none;
 }
 
+/* Standard Cell Styling */
 .table-cell {
     padding: 15px;
     border-right: 1px solid var(--secondary-color);
     display: flex;
-    align-items: center;
+    align-items: center; /* Vertical Center for everything */
 }
 
 .table-cell:last-child {
     border-right: none;
 }
 
-/* Table Header Styles */
+/* Table Header Styles (TH) */
 .header-row {
     background-color: var(--primary-color);
     color: var(--white);
@@ -235,19 +216,30 @@ body {
 
 .header-row .table-cell {
     border-right: 1px solid rgba(255, 255, 255, 0.3);
+    /* UPDATED: Center both horizontally and vertically */
+    justify-content: center; 
+    align-items: center;
+    text-align: center;
 }
 
-/* UPDATED: Action Column Header */
+/* UPDATED: Action Column Header Specifics */
 .header-row .table-cell.action {
-    padding: 0; /* Removing padding as requested */
-    justify-content: center; /* Keeps the text "Action" centered */
+    padding: 0; 
+    /* justify-content: center inherited from .header-row .table-cell */
+}
+
+/* UPDATED: All Data Cells (TD) */
+.table-cell.data {
+    /* Horizontal Left, Vertical Center */
+    justify-content: flex-start; 
+    align-items: center;
+    text-align: left;
 }
 
 /* UPDATED: Action Column Data (Buttons) */
+/* Applying specific gap for buttons, but inheriting alignment from .table-cell.data (left/center) */
 .table-cell.action.data {
-    justify-content: center; /* Horizontally Center */
-    gap: 10px; /* Space between buttons */
-    /* Vertically center is inherited from .table-cell's align-items: center */
+    gap: 10px;
 }
 
 .edit-btn, .delete-btn {
@@ -273,16 +265,6 @@ body {
 .edit-btn:hover, .delete-btn:hover {
     opacity: 0.8;
 }
-
-/* Ensure data text is top-aligned for better readability in multi-line cells */
-.table-cell.data {
-    align-items: flex-start;
-}
-/* IMPORTANT: Override vertical alignment for Action Buttons back to center */
-.table-cell.action.data {
-    align-items: center;
-}
-
 
 /* -------------------- Modal/Popup Styling -------------------- */
 
