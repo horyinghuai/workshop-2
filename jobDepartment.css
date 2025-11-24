@@ -61,14 +61,13 @@ body {
     text-align: center;
 }
 
-/* (The rest of the header styling for links, icons, etc. remains the same) */
 .header-left i {
     margin-right: 10px;
     font-size: 1.5rem;
 }
 
-.header left, .back-link {
- color: white;
+.header-left .back-link {
+    color: white;
     text-decoration: none;
     font-size: 1.5rem;
     font-weight: 500;
@@ -101,7 +100,7 @@ body {
 
     transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
 
-   position: relative; 
+    position: relative; 
     display: inline-block; 
 }
 
@@ -218,12 +217,17 @@ body {
     border-right: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* UPDATED: Action Column Header */
+.header-row .table-cell.action {
+    padding: 0; /* Removing padding as requested */
+    justify-content: center; /* Keeps the text "Action" centered */
+}
 
-
-/* Action Column Button Styling */
+/* UPDATED: Action Column Data (Buttons) */
 .table-cell.action.data {
-    justify-content: space-around;
-    flex-wrap: wrap; /* Allow buttons to wrap if space is tight */
+    justify-content: center; /* Horizontally Center */
+    gap: 10px; /* Space between buttons */
+    /* Vertically center is inherited from .table-cell's align-items: center */
 }
 
 .edit-btn, .delete-btn {
@@ -253,6 +257,10 @@ body {
 /* Ensure data text is top-aligned for better readability in multi-line cells */
 .table-cell.data {
     align-items: flex-start;
+}
+/* IMPORTANT: Override vertical alignment for Action Buttons back to center */
+.table-cell.action.data {
+    align-items: center;
 }
 
 
