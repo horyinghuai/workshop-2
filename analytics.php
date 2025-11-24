@@ -97,7 +97,7 @@ $mysqli->close();
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Resume Reader - Dashboard</title>
+  <title>Resume Reader - Analytics</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
