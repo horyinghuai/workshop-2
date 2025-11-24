@@ -64,7 +64,12 @@ session_start();
                         <input type="password" id="password" name="password">
                         <i class="fas fa-info-circle info-icon" id="toggleInfo" title="Password requirements"></i>
                         <div class="info-box" id="infoBox">
-                            <p><?php echo nl2br($_SESSION['password_requirements'] ?? ''); ?></p>
+                            <p>
+                                <?php 
+                                echo nl2br($_SESSION['password_requirements'] 
+                                    ?? "• At least 8 characters\n• At least one uppercase letter\n• At least one lowercase letter\n• At least one number"); 
+                                ?>
+                            </p>
                         </div>
                     </div>
                     <span class="error-message">

@@ -1,96 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Preview Resume</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f7f7;
-    margin: 0;
-    padding: 0;
-}
-.header {
-    background-color: #3a7c7c;
-    color: white;
-    padding: 15px 30px;
-    font-size: 24px;
-    font-weight: bold;
-}
-.header a {
-    color: white;
-    text-decoration: underline;
-    font-size: 16px;
-}
-.main-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-    gap: 25px;
-}
-.resume-box {
-    background-color: white;
-    padding: 20px;
-    border-radius: 15px;
-    width: 40%;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-.preview {
-    text-align: center;
-}
-.right-box input, .right-box textarea {
-    width: 100%;
-    padding: 8px;
-    margin-top: 6px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-}
-.download-btn {
-    background-color: #3a7c7c;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    float: right;
-}
-</style>
+    <link rel="stylesheet" href="previewResume.css">
+    <title>Resume Reader</title>
 </head>
+
 <body>
 
 <div class="header">
-    <a href="UploadResume.html">Back</a> &nbsp;&nbsp; Resume Reader
+    <a href="#" class="back-btn">← Back</a>
+    <h1>Resume Reader</h1>
 </div>
 
-<div class="main-container">
-    <div class="resume-box preview">
-        <h3>Resume</h3>
-        <img src="https://via.placeholder.com/150" alt="Profile Photo" style="border-radius:50%;"><br><br>
-        <p><b>RICHARD SANCHEZ</b><br>MARKETING MANAGER</p>
-        <hr>
-        <p><b>Profile:</b><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>
-        <p><b>Education:</b><br>UTeM - Bachelor of Computer Science</p>
+<div class="container">
+
+    <!-- LEFT SIDE → Resume Preview -->
+    <div class="left-panel">
+        <h2>Resume</h2>
+
+        <!-- Upload Button -->
+        <form method="POST" enctype="multipart/form-data">
+            <label class="upload-btn">
+                Choose Resume File
+                <input type="file" name="resumeFile" accept=".pdf,.doc,.docx" required hidden>
+            </label>
+            <button type="submit" class="submit-btn">Upload</button>
+        </form>
+
+        <div class="preview-box">
+            <?php if ($resumePath != ""): ?>
+                <iframe src="<?= $resumePath ?>" class="preview-frame"></iframe>
+            <?php else: ?>
+                <div class="placeholder">Resume preview will appear here.</div>
+            <?php endif; ?>
+        </div>
+
     </div>
 
-    <div class="resume-box right-box">
-        <button class="download-btn">Download</button>
-        <h3>Resume Details</h3>
-        <label><b>Name</b></label>
-        <input type="text" value="Arun">
-        <label><b>Gender</b></label>
-        <input type="text" value="Male">
-        <label><b>Email</b></label>
-        <input type="email" value="arun@gmail.com">
-        <label><b>Contact Number</b></label>
-        <input type="text" value="012-3456789">
-        <label><b>Address</b></label>
-        <textarea rows="3">1, Jalan Bunga 5, Taman Matahari, 76540 Merlimau, Melaka.</textarea>
-        <label><b>Objective</b></label>
-        <textarea rows="3">Seeking an AI Engineer position to apply experience in machine learning to help build real-world AI solutions.</textarea>
-        <label><b>Education</b></label>
-        <textarea rows="2">Graduated from UTeM in Bachelor of Computer Science (Artificial Intelligence)</textarea>
+    <!-- RIGHT SIDE → Extracted Fields -->
+    <div class="right-panel">
+        <h2>Resume</h2>
+
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" value="<?= $parsed['name'] ?>">
+        </div>
+
+        <div class="form-group">
+            <label>Gender</label>
+            <input type="text" value="<?= $parsed['gender'] ?>">
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="text" value="<?= $parsed['email'] ?>">
+        </div>
+
+        <div class="form-group">
+            <label>Contact Number</label>
+            <input type="text" value="<?= $parsed['contact'] ?>">
+        </div>
+
+        <div class="form-group">
+            <label>Address</label>
+            <textarea><?= $parsed['address'] ?></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Objective</label>
+            <textarea><?= $parsed['objective'] ?></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Education</label>
+            <textarea><?= $parsed['education'] ?></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Skills</label>
+            <textarea><?= $parsed['skills'] ?></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Experience</label>
+            <textarea><?= $parsed['experience'] ?></textarea>
+        </div>
+
     </div>
 </div>
 

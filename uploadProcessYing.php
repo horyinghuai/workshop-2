@@ -133,7 +133,7 @@ if (isset($_POST['submit']) && isset($_FILES['resume_file'])) {
                                 // --- 6. Redirect to Preview Page ---
                                 $_SESSION['upload_message'] = "Resume uploaded and processed successfully!";
                                 $_SESSION['upload_error'] = false;
-                                header("Location: previewResumeYing.php?id=" . $candidate_id . "&email=" . urlencode($current_email));
+                                header("Location: previewResumeYing.php?candidate_id=" . $candidate_id . "&email=" . urlencode($current_email));
                                 $conn->close();
                                 exit();
 
@@ -141,7 +141,7 @@ if (isset($_POST['submit']) && isset($_FILES['resume_file'])) {
                                 // NLP failed, but file is uploaded. Redirect anyway.
                                 $_SESSION['upload_message'] = "Resume uploaded, but text extraction failed. Please review manually.";
                                 $_SESSION['upload_error'] = true;
-                                header("Location: previewResumeYing.php?id=" . $candidate_id . "&email=" . urlencode($current_email));
+                                header("Location: previewResumeYing.php?candidate_id=" . $candidate_id . "&email=" . urlencode($current_email));
                                 $conn->close();
                                 exit();
                             }

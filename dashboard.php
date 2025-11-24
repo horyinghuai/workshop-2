@@ -46,10 +46,11 @@ $conn->close();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+
 <header class="header">
-    <h1 class="logo">Resume Reader</h1>
-    <a href="logout.php" class="logout-link">Log Out</a>
-</header>
+        <h1 class="header-title">Resume Reader</h1>
+        <a href="logout.php" class="logout-link">Log Out</a>
+    </header>
 
 <main class="dashboard-container">
     <section class="dashboard-header">
@@ -73,10 +74,10 @@ $conn->close();
             <p class="card-description">Evaluate and score applicants based on criteria.</p>
         </a>
 
-        <a href="job_positions.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
+        <a href="jobPosition.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
             <div class="card-icon"><i class="fas fa-building"></i></div>
-            <h4 class="card-title">Job Positions</h4>
-            <p class="card-description">Manage and review job positions.</p>
+            <h4 class="card-title">Job Positions & Departments</h4>
+            <p class="card-description">Manage and review positions and departments.</p>
         </a>
 
         <a href="analytics.php?email=<?php echo urlencode($current_email); ?>" class="action-card">

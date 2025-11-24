@@ -23,14 +23,13 @@ body {
 
 /* --- Header --- */
 .header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
     background-color: #3a7c7c;
     color: white;
     padding: 1.25rem 2rem;
-    display: flex;
-    align-items: center;
-    position: relative;
-    justify-content: center;
-    width: 100%;
 }
 
 .back-link {
@@ -190,7 +189,8 @@ select#job_position {
     cursor: pointer;
     transition: opacity 0.3s;
     flex: 1;
-    max-width: 200px;
+    max-width: 250px;
+    margin-top: 20px;
 }
 
 .confirm-btn {
