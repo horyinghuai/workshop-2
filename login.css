@@ -24,6 +24,7 @@ body {
 .right-box {
     width: 50%;
     padding: 40px 60px;
+    margin-top: 140px; 
 }
 
 h1 {
@@ -153,33 +154,30 @@ input {
 }
 
 .error-msg {
-    color: #d9534f; /* Red for errors */
+    color: #d9534f;
     font-weight: bold;
     margin-bottom: 10px;
     font-size: 14px;
 }
 
-/* Ensure the confirm/cancel buttons match the design in the second image */
 .modal-content .confirm-btn {
-    background: #5cb85c; /* Green */
+    background: #5cb85c;
     color: white;
-    margin-bottom: 5px; /* Add space between buttons */
+    margin-bottom: 5px;
 }
 
 .modal-content .cancel-btn {
-    background: #d9534f; /* Red */
+    background: #d9534f;
     color: white;
     margin-top: 0;
 }
 
-/* Updated logo placeholder for visual consistency */
 .logo-placeholder {
     width: 350px;
     height: 350px;
-    background-color: #96b7b7; /* Match your image background */
+    background-color: #96b7b7;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 12px;
 }
-
