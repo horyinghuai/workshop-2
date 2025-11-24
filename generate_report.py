@@ -2,13 +2,15 @@ import sys
 import mysql.connector
 import json
 import pandas as pd
-import kagglehub
 import os
 import requests
 import time
 import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+# --- DEBUG: CONFIRM NEW CODE IS RUNNING ---
+print("LOADED: process_report.py (Gemini 1.5 Pro Version)")
 
 # --- CONFIGURATION ---
 DB_CONFIG = {
@@ -18,9 +20,17 @@ DB_CONFIG = {
     'database': 'resume_reader'
 }
 
-HF_API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
-# REPLACE WITH YOUR TOKEN
-HF_API_TOKEN = "" 
+# --- GEMINI API CONFIGURATION ---
+# Using Gemini 1.5 Pro as requested
+GEMINI_API_KEY = "AIzaSyCinubaFIEIxXJ8EqqMHgd_uF74HNvknbw" 
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={GEMINI_API_KEY}"
+
+# --- DEBUG LOGGING FUNCTION ---
+def log_gemini_error(msg):
+    try:
+        with open("gemini_error_log.txt", "a") as f:
+            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {msg}\n")
+    except: pass
 
 # --- PROGRESS FUNCTION ---
 def update_progress(pid, percent):
@@ -74,56 +84,84 @@ def calculate_hybrid_score(text, field_name):
     return round(min(99.0, max(10.0, final_score)), 2)
 
 def generate_llm_comment(field_name, text, score):
-    if not text or len(str(text)) < 5: return "No details provided for this section."
+    # 1. Validation Check
+    if not text or len(str(text)) < 5: 
+        return "No details provided for this section."
 
-    headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
-    
+    # 2. Construct Payload with Safety Settings Disabled
+    # (Fixes "Fallback" issues caused by personal data filters)
     prompt = (
         f"You are an HR Recruiter. Review the candidate's {field_name}: \"{text}\". "
         f"The calculated relevance score is {score}/100. "
-        f"Write a detailed, professional evaluation of about 60 words explaining this score and the candidate's strengths."
+        f"Write a professional evaluation (max 40 words) explaining this score."
     )
-    
+
     payload = {
-        "inputs": prompt, 
-        "parameters": {
-            "max_new_tokens": 250,
-            "temperature": 0.7,
-            "return_full_text": False,
-            "wait_for_model": True
-        }
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }],
+        "safetySettings": [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+        ]
     }
     
-    for attempt in range(5): 
+    headers = {'Content-Type': 'application/json'}
+
+    # 3. Call Gemini API (Retries included)
+    for attempt in range(3): 
         try:
-            response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=60) 
-            result = response.json()
+            response = requests.post(GEMINI_URL, headers=headers, json=payload, timeout=30)
             
-            if isinstance(result, list) and 'generated_text' in result[0]:
-                return result[0]['generated_text'].strip()
-            elif isinstance(result, dict) and 'error' in result:
-                err = result['error'].lower()
-                if 'loading' in err:
-                    time.sleep(20) 
-                    continue
+            if response.status_code == 200:
+                result = response.json()
+                # Extract text
+                if 'candidates' in result and len(result['candidates']) > 0:
+                    content = result['candidates'][0]['content']['parts'][0]['text']
+                    return content.strip()
                 else:
-                    print(f"API Error (Attempt {attempt}): {err}")
-                    time.sleep(2)
-                    continue
+                    log_gemini_error(f"Field: {field_name} - Empty candidates. Response: {result}")
+            else:
+                # Log specific error code
+                log_gemini_error(f"Field: {field_name} - HTTP {response.status_code}: {response.text}")
+                time.sleep(1)
+                
         except Exception as e:
-            time.sleep(2)
+            log_gemini_error(f"Field: {field_name} - Exception: {str(e)}")
+            time.sleep(1)
 
+    # 4. Fallback only if strictly necessary
     word_count = len(text.split())
-    quality_text = "excellent" if score > 80 else "sufficient"
-    return (f"System generated assessment: The candidate provided {word_count} words regarding their {field_name}. "
-            f"Based on keyword analysis, the proficiency level appears to be {quality_text} (Score: {score}). "
-            f"Detailed AI commentary is currently unavailable due to connection limits.")
+    return (f"Candidate provided {word_count} words for {field_name}. "
+            f"Proficiency score: {score}/100. (AI Service Unavailable - Check gemini_error_log.txt)")
 
+# UPDATED: Dynamic Confidence Calculation
 def calculate_confidence(row):
-    # REMOVED: achievements
-    fields = ['education', 'skills', 'experience']
-    filled = sum(1 for f in fields if len(str(row.get(f, ""))) > 5)
-    return round(min(98.5, 85.0 + (filled * 4.0)), 2)
+    confidence = 50.0 # Base confidence
+    
+    weights = {
+        'experience': {'threshold': 20, 'points': 20}, 
+        'education': {'threshold': 10, 'points': 10},
+        'skills': {'threshold': 5, 'points': 10},
+        'language': {'threshold': 2, 'points': 5},
+        'others': {'threshold': 5, 'points': 4}
+    }
+
+    for field, criteria in weights.items():
+        content = str(row.get(field, ""))
+        if content.lower() == 'none' or content == "":
+            word_count = 0
+        else:
+            word_count = len(content.split())
+        
+        if word_count >= criteria['threshold']:
+            confidence += criteria['points']
+        elif word_count > 0:
+            confidence += (criteria['points'] / 2)
+
+    return round(min(99.0, confidence), 2)
 
 def process_candidate(candidate_id, pid=None):
     update_progress(pid, 5) 
@@ -141,7 +179,6 @@ def process_candidate(candidate_id, pid=None):
         try: import kagglehub
         except: pass
 
-        # REMOVED: achievements
         fields = ['education', 'skills', 'experience', 'language', 'others']
         scores = {}
         comments = {}
@@ -154,6 +191,7 @@ def process_candidate(candidate_id, pid=None):
             scores[field] = calculate_hybrid_score(content, field)
             comments[field] = generate_llm_comment(field, content, scores[field])
             
+            # Pro is slower than Flash, allow 2s pause to be safe
             time.sleep(2) 
             
             current_p += step
@@ -168,7 +206,6 @@ def process_candidate(candidate_id, pid=None):
         cursor.execute("SELECT report_id FROM report WHERE candidate_id = %s", (candidate_id,))
         exists = cursor.fetchone()
 
-        # REMOVED: score_achievements, ai_comments_achievements
         if exists:
             sql = """UPDATE report SET score_overall=%s, ai_comments_overall=%s, score_education=%s, ai_comments_education=%s, score_skills=%s, ai_comments_skills=%s, score_experience=%s, ai_comments_experience=%s, score_language=%s, ai_comments_language=%s, score_others=%s, ai_comments_others=%s, ai_confidence_level=%s WHERE candidate_id=%s"""
         else:
@@ -191,6 +228,7 @@ def process_candidate(candidate_id, pid=None):
         print(json.dumps({"status": "success", "score": scores['overall']}))
 
     except Exception as e:
+        log_gemini_error(f"CRITICAL SCRIPT ERROR: {str(e)}")
         print(json.dumps({"status": "error", "message": str(e)}))
     finally:
         cursor.close()

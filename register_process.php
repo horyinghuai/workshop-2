@@ -33,10 +33,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     if (empty($email)) { $_SESSION['email_err'] = "Please enter your email."; $has_errors = true; }
     elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) { $_SESSION['email_err'] = "Invalid email format."; $has_errors = true; }
 
-    // Password Validation
-    if (empty($password)) { $_SESSION['password_err'] = "Please enter a password."; $has_errors = true; }
-    elseif (strlen($password) < 6) { $_SESSION['password_err'] = "At least 6 characters required."; $has_errors = true; }
-    // (Add your regex checks here if needed)
+    // Password Validation (updated to match update_password.php)
+    if (empty($password)) {
+        $_SESSION['password_err'] = "Please enter a password.";
+        $has_errors = true;
+    } elseif (strlen($password) < 6) {
+        $_SESSION['password_err'] = "Password must have at least 6 characters.";
+        $has_errors = true;
+    } elseif (!preg_match('/[A-Z]/', $password)) {
+        $_SESSION['password_err'] = "Password must include at least one uppercase letter.";
+        $has_errors = true;
+    } elseif (!preg_match('/[a-z]/', $password)) {
+        $_SESSION['password_err'] = "Password must include at least one lowercase letter.";
+        $has_errors = true;
+    } elseif (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password)) {
+        $_SESSION['password_err'] = "Password must include at least one symbol.";
+        $has_errors = true;
+    }
+
+    if ($password != $confirm_password) {
+        $_SESSION['confirm_err'] = "Passwords do not match.";
+        $has_errors = true;
+    }
 
     if ($password != $confirm_password) { $_SESSION['confirm_err'] = "Passwords do not match."; $has_errors = true; }
 
