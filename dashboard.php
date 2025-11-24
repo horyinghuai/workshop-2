@@ -46,10 +46,11 @@ $conn->close();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+
 <header class="header">
-    <h1 class="logo">Resume Reader</h1>
-    <a href="logout.php" class="logout-link">Log Out</a>
-</header>
+        <h1 class="header-title">Resume Reader</h1>
+        <a href="logout.php" class="logout-link">Log Out</a>
+    </header>
 
 <main class="dashboard-container">
     <section class="dashboard-header">

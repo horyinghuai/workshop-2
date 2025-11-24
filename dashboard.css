@@ -16,11 +16,27 @@ body {
     padding: 1.25rem 2rem;
 }
 
-.header .logo {
+.back-link {
+    color: white;
+    text-decoration: none;
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: 500;
+    position: absolute;
+    left: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.header-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0;
     text-align: center;
-    flex-grow: 1;
 }
 
 .header .logout-link {
