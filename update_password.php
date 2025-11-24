@@ -1,54 +1,53 @@
 <?php
 // update_password.php
-session_start();
-header('Content-Type: text/plain');
+header('Content-Type: application/json; charset=utf-8');
+require_once 'connection.php'; 
 
-// Database connection
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "resume_reader";
+$email = isset($_POST['email']) ? trim($_POST['email']) : '';
+$password = isset($_POST['password']) ? $_POST['password'] : '';
+$confirm_password = isset($_POST['confirm_password']) ? $_POST['confirm_password'] : '';
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-$email = $_SESSION['reset_email'] ?? '';
-$code = $_SESSION['reset_code'] ?? '';
-$expiry = $_SESSION['reset_expiry'] ?? 0;
-
-$inputPassword = $_POST['password'] ?? '';
-$inputCode = $_POST['code'] ?? '';
-
-if (!$email || !$code || time() > $expiry) {
-    echo "Verification code expired or not valid.";
+// 1. Basic Email Check
+if (empty($email)) {
+    echo json_encode(['success' => false, 'error' => 'Invalid session. Please try again.']);
     exit;
 }
 
-// Optional: Check if code matches (if you sent the code to frontend)
-if (isset($_POST['code']) && $inputCode != $code) {
-    echo "Incorrect verification code.";
+// 2. STRICT PASSWORD VALIDATION (As requested)
+$error_msg = "";
+
+if (empty($password)) {
+    $error_msg = "Please enter a password.";
+} elseif (strlen($password) < 6) {
+    $error_msg = "Password must have at least 6 characters.";
+} elseif (!preg_match('/[A-Z]/', $password)) {
+    $error_msg = "Password must include at least one uppercase letter.";
+} elseif (!preg_match('/[a-z]/', $password)) {
+    $error_msg = "Password must include at least one lowercase letter.";
+} elseif (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password)) {
+    $error_msg = "Password must include at least one symbol.";
+} elseif (empty($confirm_password)) {
+    $error_msg = "Please confirm your password.";
+} elseif ($password != $confirm_password) {
+    $error_msg = "Passwords do not match.";
+}
+
+// If there is any error, stop and send it back to JS
+if (!empty($error_msg)) {
+    echo json_encode(['success' => false, 'error' => $error_msg]);
     exit;
 }
 
-// Hash password
-$hashedPassword = password_hash($inputPassword, PASSWORD_DEFAULT);
+// 3. Update Database
+$hashed = password_hash($password, PASSWORD_DEFAULT);
 
-// Update password in DB
-$stmt = $conn->prepare("UPDATE users SET password=? WHERE email=?");
-$stmt->bind_param("ss", $hashedPassword, $email);
+$stmt = $conn->prepare("UPDATE user SET password = ? WHERE email = ?");
+$stmt->bind_param("ss", $hashed, $email);
 
 if ($stmt->execute()) {
-    echo "Password updated successfully! You can now log in.";
-    // Clear session
-    unset($_SESSION['reset_email']);
-    unset($_SESSION['reset_code']);
-    unset($_SESSION['reset_expiry']);
+    echo json_encode(['success' => true]);
 } else {
-    echo "Failed to update password. Try again.";
+    echo json_encode(['success' => false, 'error' => 'Database update failed.']);
 }
-
 $stmt->close();
-$conn->close();
 ?>

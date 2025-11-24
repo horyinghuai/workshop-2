@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Resume Reader</title>
+    <title>Resume Reader | Candidate Scoring</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <link rel="stylesheet" href="candidateScoring.css" />
@@ -67,8 +67,9 @@
         width: 680px;
         max-width: calc(100% - 4rem);
         border-radius: 20px;
-        background: #9dc3c2; /* outer teal */
-        padding: 1rem;
+        background: #9fc2c6; /* outer teal */
+        padding: 1.5rem;
+        height: 400px;
     }
 
     .status-modal {
@@ -93,7 +94,8 @@
         font-size: 1.1rem;
         color: #1f3a3a;
         display: block;
-        margin-bottom: .75rem;
+        margin-bottom: 1rem;
+        margin-top: 2.5rem;
     }
 
     .status-modal select {
@@ -119,6 +121,9 @@
         border-radius: 10px;
         font-size: 1.05rem;
         cursor: pointer;
+        width: 40%;
+        margin-top: 3rem;
+        margin-left: 1rem;
     }
 
     .status-modal .btn-cancel {
@@ -129,6 +134,9 @@
         border-radius: 10px;
         font-size: 1.05rem;
         cursor: pointer;
+        width: 40%;
+        margin-top: 3rem;
+        margin-right: 1rem;
     }
 
     /* Delete Selected button style */
