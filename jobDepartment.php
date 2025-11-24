@@ -2,6 +2,27 @@
 // Include the database connection file
 include 'connection.php';
 
+// Redirect to login if user not logged in
+if (!isset($_GET['email'])) {
+    header('Location: login.php');
+    exit();
+}
+
+$current_email = $conn->real_escape_string($_GET['email']);
+
+// Fetch user details based on email
+$sql = "SELECT name FROM user WHERE email = '$current_email'";
+$result = $conn->query($sql);
+
+if ($result && $result->num_rows === 1) {
+    $row = $result->fetch_assoc();
+    $user_name = $row['name'];
+} else {
+    // Redirect to login if email is invalid
+    header('Location: login.php');
+    exit();
+}
+
 // Check if the connection was successful (though connection.php handles the die() case)
 if ($conn->connect_error) {
     // This line is mostly redundant if connection.php works, but good for safety
@@ -37,6 +58,7 @@ if ($result->num_rows > 0) {
             <div class="table-cell data" colspan="3">No departments found.</div>
         </div>';
 }
+
 
 // 3. Close the database connection
 $conn->close();
