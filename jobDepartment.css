@@ -55,18 +55,44 @@ body {
 }
 
 .header h1 {
+<<<<<<< HEAD
     font-size: 1.5rem;
     font-weight: 400;
     padding: 15px;
     margin-top: 1px;
     margin-right: 15px;
     justify-self: center; /* Center the title perfectly within its 'auto' column */
+=======
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0;
+    text-align: center;
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
 }
 
-/* (The rest of the header styling for links, icons, etc. remains the same) */
 .header-left i {
     margin-right: 10px;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+}
+
+.header-left .back-link {
+    color: white;
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: 500;
+    position: absolute;
+    left: 2rem;
+    display: flex;
+    align-items: center;
+
+    transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.back-link:hover {
+    /* Lift the text up by 2 pixels */
+    transform: translateY(-2px) scale(1.05); 
+    
+    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
 .header left, .back-link {
@@ -98,12 +124,20 @@ body {
     color: var(--white);
     text-decoration: none;
     padding: 0 15px;
+<<<<<<< HEAD
     font-size: 1rem;
+=======
+    font-size: 1.5rem;
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
     border-right: 1px solid rgba(255, 255, 255, 0.5);
 
     transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
 
+<<<<<<< HEAD
    position: relative; 
+=======
+    position: relative; 
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
     display: inline-block; 
 }
 
@@ -220,12 +254,21 @@ body {
     border-right: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+<<<<<<< HEAD
 
+=======
+/* UPDATED: Action Column Header */
+.header-row .table-cell.action {
+    padding: 0; /* Removing padding as requested */
+    justify-content: center; /* Keeps the text "Action" centered */
+}
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
 
-/* Action Column Button Styling */
+/* UPDATED: Action Column Data (Buttons) */
 .table-cell.action.data {
-    justify-content: space-around;
-    flex-wrap: wrap; /* Allow buttons to wrap if space is tight */
+    justify-content: center; /* Horizontally Center */
+    gap: 10px; /* Space between buttons */
+    /* Vertically center is inherited from .table-cell's align-items: center */
 }
 
 .edit-btn, .delete-btn {
@@ -256,6 +299,13 @@ body {
 .table-cell.data {
     align-items: flex-start;
 }
+<<<<<<< HEAD
+=======
+/* IMPORTANT: Override vertical alignment for Action Buttons back to center */
+.table-cell.action.data {
+    align-items: center;
+}
+>>>>>>> 43cf7b0f09f54ba665eb0705918e6ca6f0ee6d4f
 
 
 /* -------------------- Modal/Popup Styling -------------------- */
