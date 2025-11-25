@@ -38,7 +38,7 @@ $department_rows_html = '';
 // 2. Check for results and build the table rows
 if ($result->num_rows > 0) {
     // Loop through each row fetched from the database
-    while($row = $result->fetch_assoc()) {
+    while ($row = $result->fetch_assoc()) {
         // Use PHP to dynamically generate the HTML for each department row
         $department_rows_html .= '
             <div class="table-row">
@@ -66,6 +66,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -75,12 +76,13 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
+
 <body>
     <header class="header">
         <div class="header-left">
-             <a href="dashboard.php?email=<?php echo urlencode($currentEmail); ?>" class="back-link">
-            <i class="fas fa-chevron-left"></i> Back
-        </a>
+            <a href="dashboard.php?email=<?php echo urlencode($currentEmail); ?>" class="back-link">
+                <i class="fas fa-chevron-left"></i> Back
+            </a>
         </div>
         <h1 class="logo">Resume Reader</h1>
         <div class="header-right">
@@ -108,7 +110,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 <div class="table-cell description">Description</div>
                 <div class="table-cell action">Action</div>
             </div>
-            
+
             <div id="department-list">
                 <?php echo $department_rows_html; ?>
             </div>
@@ -119,6 +121,10 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             <h2 id="modalTitle"></h2>
             <form id="departmentForm" action="cud_department.php" method="POST">
                 <input type="hidden" id="departmentId" name="department_id" value="">
+                <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
+
+                <input type="hidden" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
+
                 <input type="hidden" id="actionType" name="action_type" value="">
 
                 <div class="form-group">
@@ -140,71 +146,249 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
     </div>
 
     <div id="deleteModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 400px; padding: 25px;">
-        <h2 style="color: #dc3545; margin-bottom: 15px;">Confirm Deletion</h2>
-        <p style="text-align: center; margin-bottom: 25px;">
-            Are you sure you want to delete the department: 
-            <strong id="departmentToDeleteName"></strong>?
-            This action cannot be undone.
-        </p>
-        
-        <form id="deleteForm" action="cud_department.php" method="POST">
-            <input type="hidden" name="action_type" value="delete">
-            <input type="hidden" id="deleteDepartmentId" name="department_id" value="">
+        <div class="modal-content" style="max-width: 400px; padding: 25px;">
+            <h2 style="color: #dc3545; margin-bottom: 15px;">Confirm Deletion</h2>
+            <p style="text-align: center; margin-bottom: 25px;">
+                Are you sure you want to delete the department:
+                <strong id="departmentToDeleteName"></strong>?
+                This action cannot be undone.
+            </p>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-confirm" style="background-color: #3a7c7c;">Yes, Delete</button>
-                <button type="button" class="btn btn-cancel" id="cancelDeleteBtn">Cancel</button>
-            </div>
-        </form>
+            <form id="deleteForm" action="cud_department.php" method="POST">
+                <input type="hidden" name="action_type" value="delete">
+                <input type="hidden" id="deleteDepartmentId" name="department_id" value="">
+                <?php $currentEmail = isset($_GET['email']) ? $_GET['email'] : ''; ?>
+
+                <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
+
+                <input  type="hidden" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-confirm" style="background-color: #3a7c7c;">Yes, Delete</button>
+                    <button type="button" class="btn btn-cancel" id="cancelDeleteBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
     <script>
-$(document).ready(function() {
-    // Function to handle the search logic
-    function performSearch() {
-        var searchTerm = $('#search-input').val(); // Get the value from the search input
+        $(document).ready(function() {
+            // Function to handle the search logic
+            function performSearch() {
+                var searchTerm = $('#search-input').val(); // Get the value from the search input
 
-        $.ajax({
-            url: 'search_department.php', // The new file we created to handle the request
-            type: 'POST',
-            data: { search_term: searchTerm }, // Send the search term to the PHP file
-            // Before sending 
-            beforeSend: function() {
-                $('#department-list').html('<div class="table-row"><div class="table-cell data" style="width: 100%; text-align: center;">Searching...</div></div>');
-            },
-            // On success, update the content
-            success: function(response) {
-                // Replace the content of the department list with the new rows from the PHP file
-                $('#department-list').html(response); 
-            },
-            // On error
-            error: function() {
-                alert('An error occurred during the search.');
+                $.ajax({
+                    url: 'search_department.php', // The new file we created to handle the request
+                    type: 'POST',
+                    data: {
+                        search_term: searchTerm
+                    }, // Send the search term to the PHP file
+                    // Before sending 
+                    beforeSend: function() {
+                        $('#department-list').html('<div class="table-row"><div class="table-cell data" style="width: 100%; text-align: center;">Searching...</div></div>');
+                    },
+                    // On success, update the content
+                    success: function(response) {
+                        // Replace the content of the department list with the new rows from the PHP file
+                        $('#department-list').html(response);
+                    },
+                    // On error
+                    error: function() {
+                        alert('An error occurred during the search.');
+                    }
+                });
+            }
+
+            // Attach the search function to the button click event
+            $('#search-btn').click(function() {
+                performSearch();
+            });
+
+            // Optional: Also perform search when the user presses Enter in the input field
+            $('#search-input').keypress(function(e) {
+                if (e.which == 13) { // 13 is the Enter key code
+                    performSearch();
+                }
+            });
+
+            // Optional: Initial load function to show all results (this is already handled by PHP)
+            // You could use this to reset the search if the input is cleared
+            $('#search-input').on('keyup', function() {
+                if ($(this).val().trim() === '') {
+                    performSearch();
+                }
+            });
+        });
+
+        // --- MODAL FUNCTIONALITY (ANIMATED) ---
+
+        // Function to close the modal
+        function closeModal() {
+            // 1. Start the hide animation (revert to scale(0.9) and opacity 0)
+            $('#departmentModal').removeClass('modal-show');
+
+            // 2. After the animation finishes (300ms), hide the modal fully using display: none
+            setTimeout(function() {
+                $('#departmentModal').hide();
+                // Clear form fields
+                $('#departmentForm')[0].reset();
+                $('#departmentId').val('');
+            }, 300); // 300ms matches the CSS transition duration
+        }
+
+        // Function to open the modal
+        function openModal() {
+            // 1. Make the overlay visible immediately (sets display: flex)
+            $('#departmentModal').css('display', 'flex');
+
+            // 2. After the browser renders 'display: flex', add the class to trigger the smooth transition
+            // A small delay (or wrap in setTimeout(..., 10) or nextTick logic) is often needed to force the transition
+            setTimeout(function() {
+                $('#departmentModal').addClass('modal-show');
+            }, 10);
+        }
+
+
+        // Open Modal for Adding
+        $('.add-department-btn').click(function() {
+            $('#modalTitle').text('Add Department');
+            $('#actionType').val('add');
+            $('#confirmBtn').text('Confirm');
+            openModal(); // Use the new function
+        });
+
+        // Open Modal for Editing 
+        $('#department-list').on('click', '.edit-btn', function() {
+            // 1. Get the parent row of the clicked button
+            var $row = $(this).closest('.table-row');
+
+            // 2. Get the unique ID from the button's data-id attribute
+            var currentId = $(this).data('id');
+
+            // 3. Extract Department Name (It's the first .table-cell.data in the row)
+            // We use .eq(0) to target the first cell and .text().trim() to clean the data
+            var currentName = $row.find('.table-cell.data').eq(0).text().trim();
+
+            // 4. Extract Description (It's the table-cell with class .description.data)
+            var currentDesc = $row.find('.table-cell.description.data').text().trim();
+
+            // --- Populate the modal fields ---
+
+            // Hidden ID field (Crucial for the UPDATE query in crud_department.php)
+            $('#departmentId').val(currentId);
+
+            // Visible fields
+            $('#departmentNameInput').val(currentName);
+            $('#departmentDescriptionInput').val(currentDesc);
+
+            // Set modal title and action type
+            $('#modalTitle').text('Edit Department: ' + currentName);
+            $('#actionType').val('edit');
+            $('#confirmBtn').text('Save Changes');
+
+            // Open the modal with animation
+            openModal();
+        });
+
+        // Close Modal handlers
+        $('#cancelBtn').click(closeModal);
+        $('#departmentModal').click(function(e) {
+            if (e.target.id === 'departmentModal') {
+                closeModal();
             }
         });
-    }
 
-    // Attach the search function to the button click event
-    $('#search-btn').click(function() {
-        performSearch();
-    });
+        // Open Modal for Deleting (attached to buttons loaded via PHP)
+        $('#department-list').on('click', '.delete-btn', function() {
+            var $row = $(this).closest('.table-row');
+            var currentId = $(this).data('id');
+            var currentName = $row.find('.table-cell.data').eq(0).text().trim();
 
-    // Optional: Also perform search when the user presses Enter in the input field
-    $('#search-input').keypress(function(e) {
-        if (e.which == 13) { // 13 is the Enter key code
-            performSearch();
+            // Populate the modal fields
+            $('#deleteDepartmentId').val(currentId);
+            $('#departmentToDeleteName').text(currentName);
+
+            // Open the modal (using the flex display for centering and animation)
+            $('#deleteModal').css('display', 'flex');
+            setTimeout(function() {
+                $('#deleteModal').addClass('modal-show');
+            }, 10);
+        });
+
+        // Function to close the delete modal
+        function closeDeleteModal() {
+            $('#deleteModal').removeClass('modal-show');
+            setTimeout(function() {
+                $('#deleteModal').hide();
+                // Clear the ID on close
+                $('#deleteDepartmentId').val('');
+            }, 300);
         }
-    });
 
+<<<<<<< HEAD
+        // Close Delete Modal handlers
+        $('#cancelDeleteBtn').click(closeDeleteModal);
+
+        // Close modal if user clicks outside the content area (on the overlay)
+        $('#deleteModal').click(function(e) {
+            if (e.target.id === 'deleteModal') {
+                closeDeleteModal();
+            }
+        });
+
+        // --- NOTIFICATION FUNCTIONALITY ---
+
+        function displayNotification() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+            const message = urlParams.get('message');
+
+            if (status && message) {
+                const decodedMessage = decodeURIComponent(message);
+                const $box = $('#notification-box');
+                const $msg = $('#notification-message');
+
+                $box.removeClass('success error'); // Clear previous classes
+                $msg.text(decodedMessage);
+
+                if (status === 'success') {
+                    $box.addClass('success');
+                } else if (status === 'error') {
+                    $box.addClass('error');
+                }
+
+                $box.slideDown(300);
+
+                // Remove the parameters from the URL after display (optional, keeps URL clean)
+                urlParams.delete('status');
+                urlParams.delete('message');
+
+                // Build the new query string (which now contains only remaining params, like 'email')
+                const newQueryString = urlParams.toString();
+
+                // Reconstruct the URL: base path + '?' + remaining parameters (if any)
+                const newUrl = window.location.pathname + (newQueryString ? '?' + newQueryString : '');
+
+                // Replace the state with the new URL, preserving 'email'
+                history.replaceState(null, null, newUrl);
+
+                // Auto-hide after 5 seconds
+                setTimeout(function() {
+                    $box.slideUp(500);
+                }, 5000);
+            }
+=======
     // Optional: Initial load function to show all results (this is already handled by PHP)
     $('#search-input').on('keyup', function() {
         if ($(this).val().trim() === '') {
             performSearch();
+>>>>>>> 4e29ad0ac9347b83bdcd33ebf6e7020ce36c57b3
         }
-    });
-});
 
+<<<<<<< HEAD
+        // Call the function on page load
+        displayNotification();
+    </script>
+=======
 // --- MODAL FUNCTIONALITY (ANIMATED) ---
 
 // Function to close the modal
@@ -354,7 +538,9 @@ function displayNotification() {
 // Call the function on page load
 displayNotification();
 </script>
+>>>>>>> 4e29ad0ac9347b83bdcd33ebf6e7020ce36c57b3
 
 
 </body>
+
 </html>

@@ -7,6 +7,11 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+$emailQuery = "";
+if (isset($_POST['email']) && !empty($_POST['email'])) {
+    $emailQuery = "&email=" . urlencode($_POST['email']);
+}
+
 // Check the action type sent via POST
 if (isset($_POST['action_type'])) {
     $action = $_POST['action_type'];
@@ -31,11 +36,13 @@ if (isset($_POST['action_type'])) {
             $message = "Department updated successfully!";
         }
         
-        if ($stmt->execute()) {
-            // Redirect back to the main page on success
-            header("Location: jobDepartment.php?status=success&message=" . urlencode($message));
+       if ($stmt->execute()) {
+            $message = $action === 'add' ? "Job added successfully!" : "Job updated successfully!";
+            // Append status and email query string
+            header("Location: jobDepartment.php?status=success&message=" . urlencode($message) . $emailQuery);
         } else {
-            header("Location: jobDepartment.php?status=error&message=" . urlencode("Database error: " . $stmt->error));
+            // Append error and email query string
+            header("Location: jobDepartment.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery);
         }
         
         $stmt->close();
@@ -50,18 +57,20 @@ if (isset($_POST['action_type'])) {
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $id); // "i" = one integer
 
-        if ($stmt->execute()) {
-            $message = "Department deleted successfully!";
-            header("Location: jobDepartment.php?status=success&message=" . urlencode($message));
+      if ($stmt->execute()) {
+            $message = "Job deleted successfully!";
+            // 🛑 FIX 4: Append status and email query string
+            header("Location: jobDepartment.php?status=success&message=" . urlencode($message) . $emailQuery);
         } else {
-            header("Location: jobDepartment.php?status=error&message=" . urlencode("Database error: " . $stmt->error));
+            // 🛑 FIX 5: Append error and email query string
+            header("Location: jobDepartment.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery);
         }
         
         $stmt->close();
     }
 } else {
     // Handle direct access to the script without POST data
-    header("Location: jobDepartment.php?status=error&message=" . urlencode("Invalid action request."));
+    header("Location: jobDepartment.php?status=error&message=" . urlencode("Invalid action request.") . $emailQuery);
 }
 
 $conn->close();

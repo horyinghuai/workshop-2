@@ -8,6 +8,12 @@ if ($conn->connect_error) {
     die("Database connection failed in jobDepartment.php: " . $conn->connect_error);
 }
 
+// Redirect to login if user not logged in
+if (!isset($_GET['email'])) {
+    header('Location: login.php');
+    exit();
+}
+
 // 1. SQL Query to fetch job data
 $sql = "SELECT jp.*, d.department_name FROM job_position jp INNER JOIN department d ON jp.department_id = d.department_id ORDER BY d.department_name ASC;";
 $result = $conn->query($sql);
@@ -48,7 +54,7 @@ if ($result->num_rows > 0) {
 $conn->close();
 
 // --- CAPTURE CURRENT EMAIL FOR NAVIGATION ---
-$currentEmail = isset($_GET['email']) ? $_GET['email'] : ''; 
+$currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -66,9 +72,9 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 <body>
     <header class="header">
         <div class="header-left">
-             <a href="dashboard.php?email=<?php echo urlencode($currentEmail); ?>" class="back-link">
-            <i class="fas fa-chevron-left"></i> Back
-        </a>
+            <a href="dashboard.php?email=<?php echo urlencode($currentEmail); ?>" class="back-link">
+                <i class="fas fa-chevron-left"></i> Back
+            </a>
         </div>
         <h1 class="logo">Resume Reader</h1>
         <div class="header-right">
@@ -114,6 +120,11 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             <h2 id="modalTitle"></h2>
             <form id="jobForm" action="cud_job.php" method="POST">
                 <input type="hidden" id="jobId" name="job_id" value="">
+                <?php $currentEmail = isset($_GET['email']) ? $_GET['email'] : ''; ?>
+
+                <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
+
+                <input type="hidden" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
                 <input type="hidden" id="actionType" name="action_type" value="">
 
                 <div class="form-group">
@@ -178,6 +189,11 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             <form id="deleteForm" action="cud_job.php" method="POST">
                 <input type="hidden" name="action_type" value="delete">
                 <input type="hidden" id="deleteJobId" name="job_id" value="">
+                <?php $currentEmail = isset($_GET['email']) ? $_GET['email'] : ''; ?>
+
+                <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
+
+                <input  name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn-confirm" style="background-color: #3a7c7c;">Yes, Delete</button>
@@ -426,7 +442,17 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 $box.slideDown(300);
 
                 // Remove the parameters from the URL after display (optional, keeps URL clean)
-                history.replaceState(null, null, window.location.pathname);
+                urlParams.delete('status');
+                urlParams.delete('message');
+
+                // Build the new query string (which now contains only remaining params, like 'email')
+                const newQueryString = urlParams.toString();
+
+                // Reconstruct the URL: base path + '?' + remaining parameters (if any)
+                const newUrl = window.location.pathname + (newQueryString ? '?' + newQueryString : '');
+
+                // Replace the state with the new URL, preserving 'email'
+                history.replaceState(null, null, newUrl);
 
                 // Auto-hide after 5 seconds
                 setTimeout(function() {
