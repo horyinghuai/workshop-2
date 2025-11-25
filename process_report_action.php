@@ -17,13 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $u_education = $_POST['education'];
     $u_skills = $_POST['skills'];
     $u_experience = $_POST['experience'];
-    $u_achievements = $_POST['achievements'];
     $u_language = $_POST['language'];
 
-    $update_sql = "UPDATE candidate SET name=?, gender=?, email=?, contact_number=?, address=?, objective=?, education=?, skills=?, experience=?, achievements=?, language=? WHERE candidate_id=?";
+    $update_sql = "UPDATE candidate SET name=?, gender=?, email=?, contact_number=?, address=?, objective=?, education=?, skills=?, experience=?, language=? WHERE candidate_id=?";
     
     if ($stmt = $conn->prepare($update_sql)) {
-        $stmt->bind_param("sssssssssssi", $u_name, $u_gender, $u_email, $u_contact, $u_address, $u_objective, $u_education, $u_skills, $u_experience, $u_achievements, $u_language, $candidate_id);
+        $stmt->bind_param("ssssssssssi", $u_name, $u_gender, $u_email, $u_contact, $u_address, $u_objective, $u_education, $u_skills, $u_experience, $u_language, $candidate_id);
         
         if ($stmt->execute()) {
             // 2. Run Python Script with Process ID

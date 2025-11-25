@@ -21,7 +21,8 @@ body {
 }
 
 .container {
-    max-width: 1000px;
+    /* UPDATED: maximize width to 98% of the screen */
+    max-width: 98%;
     margin: 0 auto;
     background-color: var(--white);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -48,11 +49,10 @@ body {
 .header-left, .header-right {
     display: flex;
     align-items: center;
-    /* Removed redundant display: flex if using grid on the parent */
 }
 
 .header-right {
-    justify-content: flex-end; /* Align right links to the right edge of their grid column */
+    justify-content: flex-end;
 }
 
 .header-left .back-link {
@@ -64,17 +64,13 @@ body {
     left: 2rem;
     display: flex;
     align-items: center;
-
     transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
 }
 
 .back-link:hover {
-    /* Lift the text up by 2 pixels */
     transform: translateY(-2px) scale(1.05); 
-    
     text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
-
 
 .header h1 {
     font-size: 1.75rem;
@@ -83,7 +79,6 @@ body {
     text-align: center;
 }
 
-/* (The rest of the header styling for links, icons, etc. remains the same) */
 .header-left i {
     margin-right: 10px;
     font-size: 1.5rem;
@@ -100,17 +95,13 @@ body {
     padding: 0 15px;
     font-size: 1.5rem;
     border-right: 1px solid rgba(255, 255, 255, 0.5);
-
-   transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
-
-   position: relative; 
-    display: inline-block; /* Essential for transform to work correctly on inline elements */
+    transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
+    position: relative; 
+    display: inline-block; 
 }
 
 .header-right a:hover {
- /* Lift the text up by 2 pixels */
     transform: translateY(-2px) scale(1.05); 
-    
     text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
@@ -118,7 +109,6 @@ body {
     border-right: none;
 }
 
-/* Highlight 'Department' link */
 .header-right a:nth-child(1) {
     font-weight: bold;
     text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
@@ -178,57 +168,39 @@ body {
     background-color: #307a79;
 }
 
-/* 2. MEDIA QUERY: Activate Scrolling Only on Smaller Screens */
-@media (max-width: 1000px) {
-    
-    /* Force the table to its maximum required width (1500px) to activate overflow */
-    .job-table {
-        width: 1500px; 
-    }
-
-    /* Enable horizontal scrollbar on the wrapper */
-    .table-scroll-wrapper {
-        overflow-x: auto; 
-        overflow-y: hidden;
-        
-        /* Ensure the wrapper displays correctly with the scrollbar */
-        padding-bottom: 10px; 
-        margin: 0 -20px; 
-        padding: 0 20px 10px;
-    }
-}
-
-
 /* --- Department Table (CSS Grid) --- */
 .job-table {
     border: 1px solid var(--primary-color);
+    width: 100%; /* Ensure it fills the container */
 }
 
 .table-row {
-    display:grid;
-    /* Define grid columns for Department, Description, and Action */
+    display: grid;
+    /* UPDATED for Full Screen Mode: 
+       - Description and Education use 'fr' (fraction) units to fill available space.
+       - Others are fixed width or minmax to maintain structure. 
+    */
     grid-template-columns: 
-        150px  /* Department */
-        150px  /* Job Position */
-        260px  /* Description */
-        220px  /* Education */
-        150px  /* Skills */
-        120px  /* Experience */
-        120px  /* Language */
-        150px  /* Others */
-        180px; /* Action */
+        130px               /* Department */
+        130px               /* Job Position */
+        1.5fr               /* Description (Flexible) */
+        1.2fr               /* Education (Flexible) */
+        130px               /* Skills */
+        120px               /* Experience */
+        120px               /* Language */
+        130px               /* Others */
+        200px;              /* Action */
     border-bottom: 1px solid var(--secondary-color);
     background-color: #9fc2c6;
-
-    
 }
 
 .table-row:last-child {
     border-bottom: none;
 }
 
+/* Standard Cell Styling */
 .table-cell {
-    padding: 15px;
+    padding: 15px 5px;
     border-right: 1px solid var(--secondary-color);
     display: flex;
     align-items: center;
@@ -238,7 +210,29 @@ body {
     border-right: none;
 }
 
-/* Table Header Styles */
+/* --- SCROLLING BEHAVIOR FOR SMALLER SCREENS --- */
+/* When screen is smaller than 1400px, revert to fixed widths and enable scrollbar */
+@media (max-width: 1400px) {
+    .job-table {
+        width: 1500px; /* Force width to trigger scroll */
+    }
+    
+    .table-row {
+        /* Switch back to fixed pixels so content doesn't squash */
+        grid-template-columns: 
+            150px 150px 260px 220px 150px 120px 120px 150px 200px;
+    }
+
+    .table-scroll-wrapper {
+        overflow-x: auto; 
+        overflow-y: hidden;
+        padding-bottom: 10px; 
+        margin: 0 -20px; 
+        padding: 0 20px 10px;
+    }
+}
+
+/* HEADER CELLS (TH) - Centered */
 .header-row {
     background-color: var(--primary-color);
     color: var(--white);
@@ -249,19 +243,23 @@ body {
 
 .header-row .table-cell {
     border-right: 1px solid rgba(255, 255, 255, 0.3);
+    justify-content: center; 
+    align-items: center;     
+    text-align: center;
 }
 
-/* UPDATED: Action Column Header */
-.header-row .table-cell.action {
-    padding: 0;
-    justify-content: center;
+/* DATA CELLS (TD) - Left Aligned, Vertically Centered */
+.table-cell.data {
+    justify-content: flex-start; 
+    align-items: center;         
+    text-align: left; 
 }
 
-/* UPDATED: Action Column Data (Buttons) */
+/* ACTION DATA CELL - Left Aligned Buttons */
 .table-cell.action.data {
-    justify-content: center; /* Horizontally Center */
-    gap: 10px; /* Space between buttons */
-    /* Vertically center is overridden below */
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
 }
 
 .edit-btn, .delete-btn {
@@ -288,36 +286,22 @@ body {
     opacity: 0.8;
 }
 
-/* Ensure data text is top-aligned for better readability in multi-line cells */
-.table-cell.data {
-    align-items: flex-start;
-}
-/* IMPORTANT: Override vertical alignment for Action Buttons back to center */
-.table-cell.action.data {
-    align-items: center;
-}
-
-
 /* -------------------- Modal/Popup Styling -------------------- */
 
 .modal-overlay {
-    /* Existing centering styles */
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
-    /* Ensure display: none is the default hide state */
     display: none; 
     justify-content: center;
     align-items: center;
     z-index: 1000;
 }
 
-/* Modal Content Styles (Add transition and initial hidden state) */
 .modal-content {
-    /* Existing styles */
     background: #fff;
     padding: 30px;
     border: 30px solid #9fc2c6;
@@ -326,21 +310,13 @@ body {
     width: 90%;
     max-width: 500px; 
     box-sizing: border-box;
-    
-    /* Set max height to 90% of the viewport height (vh) */
     max-height: 90vh; 
-    /* Enable vertical scrolling when content exceeds max-height */
     overflow-y: auto; 
-
-    /*Invisible and smaller */
     opacity: 0;
     transform: scale(0.9);
-    
-    /* Apply transition to opacity and transform */
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 
-/* Class added by JavaScript to show and animate the modal */
 .modal-show .modal-content {
     opacity: 1;
     transform: scale(1);
@@ -353,7 +329,6 @@ body {
     color: #333;
 }
 
-/* Form Styling */
 .form-group {
     margin-bottom: 15px;
 }
@@ -375,7 +350,6 @@ body {
     background-color: #d9ebec;
 }
 
-/* Action Buttons */
 .form-actions {
     display: flex;
     justify-content: space-between;
@@ -383,7 +357,7 @@ body {
 }
 
 .btn-confirm {
-    background-color: #28a745; /* Green */
+    background-color: #28a745; 
     color: white;
     padding: 10px 20px;
     border: none;
@@ -393,7 +367,7 @@ body {
 }
 
 .btn-cancel {
-    background-color: #dc3545; /* Red */
+    background-color: #dc3545; 
     color: white;
     padding: 10px 20px;
     border: none;

@@ -171,7 +171,6 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
                         <div><label class="preview-form-label">Education</label><textarea name="education" rows="5" class="preview-form-input"><?php echo e($candidate['education']); ?></textarea></div>
                         <div><label class="preview-form-label">Skills</label><textarea name="skills" rows="4" class="preview-form-input"><?php echo e($candidate['skills']); ?></textarea></div>
                         <div><label class="preview-form-label">Experience</label><textarea name="experience" rows="6" class="preview-form-input"><?php echo e($candidate['experience']); ?></textarea></div>
-                        <div><label class="preview-form-label">Achievements</label><textarea name="achievements" rows="4" class="preview-form-input"><?php echo e($candidate['achievements']); ?></textarea></div>
                         <div><label class="preview-form-label">Language</label><input type="text" name="language" class="preview-form-input" value="<?php echo e($candidate['language']); ?>"></div>
                     </div>
 

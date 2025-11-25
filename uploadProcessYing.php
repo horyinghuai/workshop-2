@@ -3,20 +3,16 @@ session_start();
 include 'connection.php';
 
 // --- Configuration ---
-// Ensure these paths are correct for your system
 $python_path = 'python'; 
 $script_path = 'extract_resume.py'; 
 // ---------------------
 
-// Only process POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // 1. Get Parameters
     $current_email = isset($_POST['email']) ? $_POST['email'] : '';
     $process_id = isset($_POST['process_id']) ? $_POST['process_id'] : '';
     $job_id = isset($_POST['job_position']) ? intval($_POST['job_position']) : 0;
 
-    // JSON response header
     header('Content-Type: application/json');
 
     if (empty($current_email)) {
@@ -47,50 +43,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $candidate_id = $conn->insert_id;
                 $stmt_insert->close();
 
-                // --- CRITICAL: CLOSE SESSION WRITING ---
-                // This unlocks the session file so check_progress.php can run simultaneously
+                // --- CLOSE SESSION ---
                 session_write_close();
 
-                // --- RUN PYTHON (Blocking but allowed because session is closed) ---
-                // Passes file path and process ID to Python
+                // --- RUN PYTHON ---
                 $command = $python_path . ' ' . escapeshellarg($script_path) . ' ' . escapeshellarg($fileDestination) . ' ' . escapeshellarg($process_id) . ' 2>&1';
                 $json_output = shell_exec($command);
                 
-                // Clean up progress file
                 if(file_exists("progress_$process_id.txt")) {
                     @unlink("progress_$process_id.txt");
                 }
 
                 $extracted_data = json_decode($json_output, true);
 
-                // Re-open connection for update (good practice)
                 include 'connection.php'; 
 
                 if ($extracted_data && !isset($extracted_data['error'])) {
                     
-                    // Create Formatted File
                     $formatted_content = "--- EXTRACTED RESUME DATA ---\n\nName: " . ($extracted_data['name'] ?? 'N/A') . "\nEmail: " . ($extracted_data['email'] ?? 'N/A') . "\nContact: " . ($extracted_data['contact_number'] ?? 'N/A') . "\n\n--- SKILLS ---\n" . ($extracted_data['skills'] ?? 'N/A') . "\n\n--- EXPERIENCE ---\n" . ($extracted_data['experience'] ?? 'N/A');
                     
                     $formatted_filename = 'formatted_' . $candidate_id . '_' . time() . '.txt';
                     $formatted_filepath = $upload_dir . $formatted_filename;
                     file_put_contents($formatted_filepath, $formatted_content);
 
-                    // Update DB
-                    $sql_update = "UPDATE candidate SET name=?, gender=?, email=?, contact_number=?, address=?, objective=?, education=?, skills=?, experience=?, achievements=?, language=?, others=?, resume_formatted=? WHERE candidate_id=?";
+                    // --- UPDATE DB (ACHIEVEMENTS REMOVED) ---
+                    $sql_update = "UPDATE candidate SET name=?, gender=?, email=?, contact_number=?, address=?, objective=?, education=?, skills=?, experience=?, language=?, others=?, resume_formatted=? WHERE candidate_id=?";
                     
                     $stmt_update = $conn->prepare($sql_update);
-                    $ft = $extracted_data['full_text'] ?? '';
                     
-                    $stmt_update->bind_param("sssssssssssssi", 
-                        $extracted_data['name'], $extracted_data['gender'], $extracted_data['email'], 
-                        $extracted_data['contact_number'], $extracted_data['address'], $extracted_data['objective'], 
-                        $extracted_data['education'], $extracted_data['skills'], $extracted_data['experience'], 
-                        $extracted_data['achievements'], $extracted_data['language'], $ft, 
-                        $formatted_filepath, $candidate_id
+                    // Map variables
+                    $val_name = $extracted_data['name'] ?? null;
+                    $val_gender = $extracted_data['gender'] ?? null; // Python doesn't strictly extract gender in regex, likely null
+                    $val_email = $extracted_data['email'] ?? null;
+                    $val_contact = $extracted_data['contact_number'] ?? null;
+                    $val_address = $extracted_data['address'] ?? null;
+                    $val_objective = $extracted_data['objective'] ?? null;
+                    $val_education = $extracted_data['education'] ?? null;
+                    $val_skills = $extracted_data['skills'] ?? null;
+                    $val_experience = $extracted_data['experience'] ?? null;
+                    $val_language = $extracted_data['language'] ?? null;
+                    $val_others = $extracted_data['others'] ?? null; // Use specific 'others' section
+
+                    // Bind Params: 12 strings + 1 integer = 13 total
+                    $stmt_update->bind_param("ssssssssssssi", 
+                        $val_name, 
+                        $val_gender, 
+                        $val_email, 
+                        $val_contact, 
+                        $val_address, 
+                        $val_objective, 
+                        $val_education, 
+                        $val_skills, 
+                        $val_experience, 
+                        $val_language, 
+                        $val_others,       
+                        $formatted_filepath, 
+                        $candidate_id
                     );
-                    $stmt_update->execute();
                     
-                    echo json_encode(['status' => 'success', 'candidate_id' => $candidate_id, 'email' => $current_email]);
+                    if ($stmt_update->execute()) {
+                        echo json_encode(['status' => 'success', 'candidate_id' => $candidate_id, 'email' => $current_email]);
+                    } else {
+                        echo json_encode(['status' => 'error', 'message' => 'Database Update Failed: ' . $stmt_update->error]);
+                    }
                 } else {
                     echo json_encode(['status' => 'error', 'message' => 'Extraction failed: ' . ($extracted_data['error'] ?? 'Unknown error')]);
                 }

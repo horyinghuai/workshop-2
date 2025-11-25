@@ -20,12 +20,12 @@ try:
 except OSError:
     nlp = None
 
+# REMOVED: 'achievements' from this map
 SECTION_MAP = {
     'objective': ('objective', 'summary', 'professional summary', 'profile'),
     'education': ('education', 'qualifications', 'academic background'),
     'skills': ('skills', 'technical skills', 'proficiencies'),
     'experience': ('experience', 'work experience', 'employment history', 'professional experience'),
-    'achievements': ('achievements', 'awards', 'honors', 'accomplishments'),
     'language': ('languages', 'language proficiency'),
     'address': ('address', 'location', 'contact information') 
 }
@@ -126,14 +126,14 @@ def extract_details(text, pid=None):
     final_data['education'] = raw_sections.get('education')
     final_data['skills'] = raw_sections.get('skills')
     final_data['experience'] = raw_sections.get('experience')
-    final_data['achievements'] = raw_sections.get('achievements')
+    # REMOVED: achievements assignment
     final_data['language'] = raw_sections.get('language')
     final_data['address'] = raw_sections.get('address')
     final_data['others'] = others_text.strip()
     final_data["full_text"] = text 
     
     # Fill missing
-    all_keys = ["name", "email", "contact_number", "address", "objective", "education", "skills", "experience", "achievements", "language", "others", "full_text"]
+    all_keys = ["name", "email", "contact_number", "address", "objective", "education", "skills", "experience", "language", "others", "full_text"]
     for key in all_keys:
         if key not in final_data: final_data[key] = None
 
@@ -141,9 +141,6 @@ def extract_details(text, pid=None):
     return final_data
 
 if __name__ == "__main__":
-    # ARG 1: File Path
-    # ARG 2: Process ID (Optional)
-    
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No file path."}))
         sys.exit(1)
