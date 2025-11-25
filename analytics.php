@@ -1,195 +1,300 @@
 <?php
-// dashboard.php
-require 'config.php';
+require_once 'connection.php';
 
-// --- Total Resumes Uploaded ---
-$totalResumes = 0;
-$res = $mysqli->query("SELECT COUNT(*) as cnt FROM resumes");
-if ($res) {
-    $row = $res->fetch_assoc();
-    $totalResumes = (int)$row['cnt'];
-    $res->free();
+// Check if email parameter is provided
+if (!isset($_GET['email'])) {
+    header('Location: login.php');
+    exit();
 }
 
-// --- New Applicants Today ---
-$newToday = 0;
-$stmt = $mysqli->prepare("SELECT COUNT(*) as cnt FROM resumes WHERE DATE(uploaded_at) = CURDATE()");
-$stmt->execute();
-$stmt->bind_result($cnt);
-if ($stmt->fetch()) $newToday = (int)$cnt;
-$stmt->close();
+$current_email = $conn->real_escape_string($_GET['email']);
 
-// --- Resumes by Job Position ---
-$jobLabels = [];
-$jobCounts = [];
-$q = $mysqli->query("SELECT job_position, COUNT(*) as cnt FROM resumes GROUP BY job_position ORDER BY cnt DESC");
-if ($q) {
-    while ($r = $q->fetch_assoc()) {
-        $jobLabels[] = $r['job_position'];
-        $jobCounts[] = (int)$r['cnt'];
-    }
-    $q->free();
+/* ================= SUMMARY ================= */
+$totalResumes = (int)$conn->query("SELECT COUNT(*) AS c FROM CANDIDATE")->fetch_assoc()['c'];
+$newToday = (int)$conn->query("SELECT COUNT(*) AS c FROM CANDIDATE WHERE applied_date = CURDATE()")->fetch_assoc()['c'];
+
+/* ================= JOB POSITION STATS ================= */
+$jobLabels = []; $jobCounts = [];
+$jq = $conn->query("
+  SELECT j.job_name, COUNT(c.candidate_id) AS cnt
+  FROM JOB_POSITION j
+  LEFT JOIN CANDIDATE c ON c.job_id = j.job_id
+  GROUP BY j.job_id
+  ORDER BY cnt DESC
+");
+while ($r = $jq->fetch_assoc()) {
+    $jobLabels[] = $r['job_name'];
+    $jobCounts[] = (int)$r['cnt'];
 }
 
-// --- Resumes by Department ---
-$deptLabels = [];
-$deptCounts = [];
-$q = $mysqli->query("SELECT department, COUNT(*) as cnt FROM resumes GROUP BY department ORDER BY cnt DESC");
-if ($q) {
-    while ($r = $q->fetch_assoc()) {
-        $deptLabels[] = $r['department'];
-        $deptCounts[] = (int)$r['cnt'];
-    }
-    $q->free();
+/* ================= DEPARTMENT STATS ================= */
+$deptLabels = []; $deptCounts = [];
+$dq = $conn->query("
+  SELECT d.department_name, COUNT(c.candidate_id) AS cnt
+  FROM DEPARTMENT d
+  LEFT JOIN JOB_POSITION j ON j.department_id = d.department_id
+  LEFT JOIN CANDIDATE c ON c.job_id = j.job_id
+  GROUP BY d.department_id
+  ORDER BY cnt DESC
+");
+while ($r = $dq->fetch_assoc()) {
+    $deptLabels[] = $r['department_name'];
+    $deptCounts[] = (int)$r['cnt'];
 }
 
-// --- AI Confidence Level Distribution ---
-// Assuming ai_confidence_score is numeric between 0 and 1 (or 0-100). We'll treat >1 as 0-100 scale.
-$high = $medium = $low = 0;
-$q = $mysqli->query("SELECT ai_confidence_score FROM resumes WHERE ai_confidence_score IS NOT NULL");
-if ($q) {
-    while ($r = $q->fetch_assoc()) {
-        $score = (float)$r['ai_confidence_score'];
-        // normalize if stored 0-100
-        if ($score > 1) $score = $score / 100.0;
-        if ($score >= 0.75) $high++;
-        elseif ($score >= 0.4) $medium++;
-        else $low++;
-    }
-    $q->free();
+/* ================= AI CONFIDENCE ================= */
+$high = $mid = $low = 0;
+$confRes = $conn->query("SELECT ai_confidence_level FROM REPORT WHERE ai_confidence_level IS NOT NULL");
+
+while ($r = $confRes->fetch_assoc()) {
+    $val = floatval($r['ai_confidence_level']);
+    if ($val >= 75) $high++;
+    elseif ($val >= 40) $mid++;
+    else $low++;
 }
 
-// --- Top Candidates (Software Engineer) ---
-$topSoftware = [];
-$stmt = $mysqli->prepare("SELECT candidate_name, role, score FROM resumes WHERE role = ? ORDER BY score DESC LIMIT 3");
-$role1 = 'Software Engineer';
-$stmt->bind_param('s', $role1);
-$stmt->execute();
-$stmt->bind_result($cname, $crole, $cscore);
-while ($stmt->fetch()) {
-    $topSoftware[] = ['name'=>$cname, 'role'=>$crole, 'score'=>$cscore];
+/* ================= TOP CANDIDATES ================= */
+function topCandidatesFor($role, $conn) {
+    $out = [];
+    $st = $conn->prepare("
+      SELECT c.name, j.job_name, r.score_overall, r.ai_confidence_level
+      FROM CANDIDATE c
+      JOIN JOB_POSITION j ON c.job_id = j.job_id
+      JOIN REPORT r ON r.candidate_id = c.candidate_id
+      WHERE j.job_name = ?
+      ORDER BY r.ai_confidence_level DESC, r.score_overall DESC
+      LIMIT 3
+    ");
+    $st->bind_param('s', $role);
+    $st->execute();
+    $res = $st->get_result();
+    while ($row = $res->fetch_assoc()) $out[] = $row;
+    $st->close();
+    return $out;
 }
-$stmt->close();
 
-// --- Top Candidates (Data Scientist) ---
-$topData = [];
-$stmt = $mysqli->prepare("SELECT candidate_name, role, score FROM resumes WHERE role = ? ORDER BY score DESC LIMIT 3");
-$role2 = 'Data Scientist';
-$stmt->bind_param('s', $role2);
-$stmt->execute();
-$stmt->bind_result($cname, $crole, $cscore);
-while ($stmt->fetch()) {
-    $topData[] = ['name'=>$cname, 'role'=>$crole, 'score'=>$cscore];
-}
-$stmt->close();
+$topDataAnalyst = topCandidatesFor('Data Analyst', $conn);
+$topHRAssistant = topCandidatesFor('HR Assistant', $conn);
 
-// Prepare JSON for JS
+/* ================= JSON FOR JS ================= */
 $jobLabelsJSON = json_encode($jobLabels);
 $jobCountsJSON = json_encode($jobCounts);
 $deptLabelsJSON = json_encode($deptLabels);
 $deptCountsJSON = json_encode($deptCounts);
-$confidenceJSON = json_encode([$high, $medium, $low]);
+$confJSON = json_encode([$high, $mid, $low]);
 
-// Close DB
-$mysqli->close();
+// Close connection
+$conn->close();
 ?>
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Resume Reader - Analytics</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="assets/style.css">
+<meta charset="utf-8">
+<title>Resume Reader — Analytics</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="analytics.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-  <header class="site-header">
-    <div class="left-link"><a href="#" class="back">‹ Back</a></div>
-    <div class="brand">
-      <!-- using your uploaded image as requested -->
-      <img src="/mnt/data/24c09001-d5e9-41bf-9e08-e1314006da0b.png" alt="Resume Reader Logo" class="logo-img">
-      <h1>Resume Reader</h1>
+
+<header class="topbar">
+  <div class="left">
+    <a href="dashboard.php?email=<?php echo urlencode($current_email); ?>" class="back">< Back</a>
+  </div>
+  <div class="brand">
+    <div class="title">Resume Reader</div>
+  </div>
+  <div class="right">
+    <a href="logout.php" class="logout">Log Out</a>
+  </div>
+</header>
+
+<main class="main">
+
+  <section class="stats-row">
+    <div class="stat-card">
+      <small>Total Resumes Uploaded</small>
+      <div class="stat-value"><?= number_format($totalResumes) ?></div>
+      <div class="icon">📁</div>
     </div>
-    <div class="right-link"><a href="#" class="logout">Log Out</a></div>
-  </header>
 
-  <main class="container">
-    <section class="stats-row">
-      <div class="stat-card">
-        <small>Total Resumes Uploaded</small>
-        <div class="stat-value"><?php echo number_format($totalResumes); ?></div>
-      </div>
-      <div class="stat-card">
-        <small>New Applicants Today</small>
-        <div class="stat-value"><?php echo number_format($newToday); ?></div>
-      </div>
-    </section>
+    <div class="stat-card">
+      <small>New Applicants Today</small>
+      <div class="stat-value"><?= number_format($newToday) ?></div>
+      <div class="icon">👥</div>
+    </div>
+  </section>
 
-    <section class="charts-grid">
-      <div class="chart-card">
-        <h3>Resumes by Job Position</h3>
-        <canvas id="jobsChart" height="220"></canvas>
-      </div>
+  <section class="charts-row">
+    <div class="card chart-card">
+      <h4>Resumes by Job Position</h4>
+      <canvas id="jobsChart"></canvas>
+    </div>
 
-      <div class="chart-card">
-        <h3>Resumes by Department</h3>
-        <canvas id="deptChart" height="220"></canvas>
-      </div>
+    <div class="card chart-card">
+      <h4>Resumes by Department</h4>
+      <canvas id="deptsChart"></canvas>
+    </div>
 
-      <div class="chart-card donut-card">
-        <h3>AI Confidence Level Distribution</h3>
-        <canvas id="confidenceChart" height="220"></canvas>
-        <div class="legend-small">
-          <div><span class="dot high"></span>High Confidence</div>
-          <div><span class="dot medium"></span>Medium Confidence</div>
-          <div><span class="dot low"></span>Low Confidence</div>
-        </div>
-      </div>
-    </section>
+<div class="card chart-card">
+    <h4>AI Confidence Level Distribution</h4>
+    <canvas id="confChart"></canvas>
+    
+</div>
+  </section>
 
-    <section class="candidates-row">
-      <div class="candidates-card">
-        <h3>Top Candidates: Software Engineer</h3>
-        <ul class="candidate-list">
-          <?php foreach ($topSoftware as $cand): ?>
-            <li>
-              <div>
-                <strong><?php echo htmlspecialchars($cand['name']); ?></strong>
-                <div class="muted"><?php echo htmlspecialchars($cand['role']); ?></div>
-              </div>
-              <div class="score-pill">Score: <?php echo htmlspecialchars($cand['score']); ?></div>
-            </li>
-          <?php endforeach; ?>
-        </ul>
-      </div>
+  <section class="bottom-row">
+    <div class="card list-card">
+      <h4>Top Candidates: Data Analyst</h4>
+      <ul class="cand-list">
+        <?php if (empty($topDataAnalyst)): ?>
+          <li class="empty">No candidates</li>
+        <?php endif; ?>
 
-      <div class="candidates-card">
-        <h3>Top Candidates: Data Scientist</h3>
-        <ul class="candidate-list">
-          <?php foreach ($topData as $cand): ?>
-            <li>
-              <div>
-                <strong><?php echo htmlspecialchars($cand['name']); ?></strong>
-                <div class="muted"><?php echo htmlspecialchars($cand['role']); ?></div>
-              </div>
-              <div class="score-pill">Score: <?php echo htmlspecialchars($cand['score']); ?></div>
-            </li>
-          <?php endforeach; ?>
-        </ul>
-      </div>
-    </section>
+        <?php foreach ($topDataAnalyst as $c): ?>
+          <li>
+            <div>
+              <div class="name"><?= htmlspecialchars($c['name']) ?></div>
+              <div class="muted"><?= htmlspecialchars($c['job_name']) ?></div>
+            </div>
+            <div class="score">
+              <div>Score: <?= htmlspecialchars($c['score_overall']) ?></div>
+              <div class="confidence">AI Confidence: <?= htmlspecialchars(number_format($c['ai_confidence_level'], 1)) ?>%</div>
+            </div>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
 
-  </main>
+    <div class="card list-card">
+      <h4>Top Candidates: HR Assistant</h4>
+      <ul class="cand-list">
+        <?php if (empty($topHRAssistant)): ?>
+          <li class="empty">No candidates</li>
+        <?php endif; ?>
 
-  <script>
-    // Data passed from PHP
-    const jobLabels = <?php echo $jobLabelsJSON; ?>;
-    const jobCounts = <?php echo $jobCountsJSON; ?>;
-    const deptLabels = <?php echo $deptLabelsJSON; ?>;
-    const deptCounts = <?php echo $deptCountsJSON; ?>;
-    const confidenceData = <?php echo $confidenceJSON; ?>;
-  </script>
-  <script src="assets/dashboard.js"></script>
+        <?php foreach ($topHRAssistant as $c): ?>
+          <li>
+            <div>
+              <div class="name"><?= htmlspecialchars($c['name']) ?></div>
+              <div class="muted"><?= htmlspecialchars($c['job_name']) ?></div>
+            </div>
+            <div class="score">
+              <div>Score: <?= htmlspecialchars($c['score_overall']) ?></div>
+              <div class="confidence">AI Confidence: <?= htmlspecialchars(number_format($c['ai_confidence_level'], 1)) ?>%</div>
+            </div>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ============ SAFE CHART SETUP ============ */
+let jobsChartInstance = null;
+let deptsChartInstance = null;
+let confChartInstance = null;
+
+/* ============ JOB POSITIONS BAR ============ */
+if (jobsChartInstance) jobsChartInstance.destroy();
+jobsChartInstance = new Chart(document.getElementById("jobsChart"), {
+    type: "bar",
+    data: {
+        labels: <?= $jobLabelsJSON ?>,
+        datasets: [{
+            data: <?= $jobCountsJSON ?>,
+            backgroundColor: "#0A8A6B"
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+/* ============ DEPARTMENT BAR ============ */
+if (deptsChartInstance) deptsChartInstance.destroy();
+deptsChartInstance = new Chart(document.getElementById("deptsChart"), {
+    type: "bar",
+    data: {
+        labels: <?= $deptLabelsJSON ?>,
+        datasets: [{
+            data: <?= $deptCountsJSON ?>,
+            backgroundColor: "#98A3C7"
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+/* ============ CONFIDENCE PIE ============ */
+if (confChartInstance) confChartInstance.destroy();
+confChartInstance = new Chart(document.getElementById("confChart"), {
+    type: "pie",
+    data: {
+        labels: ["High Confidence", "Medium Confidence", "Low Confidence"],
+        datasets: [{
+            data: <?= $confJSON ?>,
+            backgroundColor: ["#3a7c7c", "#C4C6CC", "#CE3A3A"],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 14
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        },
+        layout: {
+            padding: {
+                top: 10,
+                bottom: 10
+            }
+        }
+    }
+});
+// Add navigation confirmation for logout
+document.querySelector('.logout').addEventListener('click', function(e) {
+    if (!confirm('Are you sure you want to log out?')) {
+        e.preventDefault();
+    }
+});
+</script>
 </body>
 </html>

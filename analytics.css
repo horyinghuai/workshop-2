@@ -1,0 +1,222 @@
+/* Basic Reset */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* Colors */
+:root {
+    --primary: #3a7c7c;
+    --secondary: #98A3C7;
+    --text: #333;
+    --bg: #f4f4f4;
+    --card-bg: #fff;
+}
+
+/* Body & Layout */
+body {
+    background-color: var(--bg);
+}
+
+/* Header - Updated to match image exactly */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--primary);
+    color: #fff;
+    padding: 1rem 2rem;
+    border-bottom: 3px solid #2a6c6c;
+}
+
+.topbar .left,
+.topbar .right {
+    display: flex;
+    align-items: center;
+}
+
+.topbar .brand {
+    text-align: center;
+    flex-grow: 1;
+}
+
+.topbar .title {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.topbar a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.topbar a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Main Area */
+.main {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Stat Cards */
+.stats-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    flex: 1;
+    min-width: 180px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    position: relative;
+    border: 2px solid #3a7c7c;
+}
+
+.stat-card small {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.stat-card .stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #3a7c7c;
+}
+
+.stat-card .icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.5rem;
+}
+
+/* Charts */
+.charts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.chart-card {
+    background: var(--card-bg);
+    flex: 1 1 300px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 2px solid #3a7c7c;
+}
+
+/* IMPORTANT: Fix chart height */
+.chart-card canvas {
+    width: 100% !important;
+    height: 300px !important;
+}
+
+/* Legend for confidence chart */
+.legend {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.legend .dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.dot.high { background: #3a7c7c; }
+.dot.mid { background: #C4C6CC; }
+.dot.low { background: #CE3A3A; }
+
+/* Candidate Lists */
+.bottom-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.list-card {
+    flex: 1 1 300px;
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    border: 2px solid #3a7c7c;
+}
+
+.cand-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.cand-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.cand-list .empty {
+    text-align: center;
+    color: #888;
+}
+
+.name {
+    font-weight: bold;
+}
+
+.muted {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.score {
+    font-weight: bold;
+}
+
+.cand-list .score {
+    font-weight: bold;
+    color: #3a7c7c;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.cand-list .confidence {
+    font-size: 0.8rem;
+    color: #3a7c7c;
+    font-weight: normal;
+    margin-top: 2px;
+}
