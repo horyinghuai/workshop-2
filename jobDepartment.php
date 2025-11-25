@@ -134,7 +134,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 
                 <div class="form-group">
                     <label for="departmentDescriptionInput">Description:</label>
-                    <textarea id="departmentDescriptionInput" name="description" placeholder="Department Description" rows="4" required></textarea>
+                    <textarea id="departmentDescriptionInput" name="description" placeholder="Department Description" rows="4" ></textarea>
                 </div>
 
                 <div class="form-actions">
