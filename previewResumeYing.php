@@ -146,6 +146,7 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
     <main class="max-w-screen-2xl mx-auto p-4">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
+            <!-- LEFT SIDE -->
             <div class="bg-white rounded-xl shadow h-[1000px] p-4">
                 <h2 class="font-bold mb-4 text-gray-800">Original Resume</h2>
                 <?php if ($original_file_ext == 'pdf'): ?>
@@ -155,13 +156,17 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
                 <?php endif; ?>
             </div>
 
-            <div class="bg-[#37474F] text-white rounded-xl shadow p-6">
-                <h2 class="text-2xl font-bold mb-6">Extracted Data</h2>
+            <!-- RIGHT SIDE -->
+            <div id="formatted-container" class="bg-[#37474F] text-white rounded-xl shadow p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Extracted Data</h2>
+                    <!-- DOWNLOAD BUTTON REMOVED HERE -->
+                </div>
                 
                 <form id="aiForm">
                     <input type="hidden" name="candidate_id" value="<?php echo $candidate_id; ?>">
                     
-                    <div class="space-y-5">
+                    <div id="pdf-content" class="space-y-5">
                         <div><label class="preview-form-label">Name</label><input type="text" name="name" class="preview-form-input" value="<?php echo e($candidate['name']); ?>"></div>
                         <div><label class="preview-form-label">Gender</label><input type="text" name="gender" class="preview-form-input" value="<?php echo e($candidate['gender']); ?>"></div>
                         <div><label class="preview-form-label">Email</label><input type="email" name="email" class="preview-form-input" value="<?php echo e($candidate['email']); ?>"></div>
@@ -185,6 +190,7 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
     </main>
 
     <script>
+        // --- AI SUBMISSION LOGIC ---
         const form = document.getElementById('aiForm');
         const overlay = document.getElementById('loadingOverlay');
         const card = document.getElementById('loadingCard');
@@ -196,7 +202,6 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
         form.addEventListener('submit', function(e) {
             e.preventDefault(); 
             
-            // 1. Show Overlay (Reset State)
             overlay.style.display = 'flex';
             card.classList.remove('success');
             title.innerText = "AI Analysis in Progress";
@@ -204,14 +209,10 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
             bar.style.width = '0%';
             txt.innerText = '0%';
             
-            // 2. Generate Process ID
             const processId = Date.now() + Math.floor(Math.random() * 1000);
-            
-            // 3. Form Data
             const formData = new FormData(form);
             formData.append('process_id', processId); 
 
-            // 4. Polling
             const pollInterval = setInterval(() => {
                 fetch('check_progress.php?id=' + processId)
                     .then(res => res.text())
@@ -224,7 +225,6 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
                     });
             }, 800);
 
-            // 5. Send Action
             fetch('process_report_action.php', {
                 method: 'POST',
                 body: formData
@@ -234,19 +234,16 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
                 clearInterval(pollInterval);
                 
                 if (data.status === 'success') {
-                    // Set 100%
                     bar.style.width = '100%';
                     txt.innerText = '100%';
                     
-                    // --- SUCCESS NOTIFICATION STATE ---
                     card.classList.add('success');
                     title.innerHTML = '<i class="fas fa-check-circle mb-2"></i> Report Ready!';
                     sub.innerText = "Resume successfully uploaded and report is ready! You can view the reports in the Candidates and Scoring Management section.";
                     
-                    // Delay redirect so user can see the success message
                     setTimeout(() => {
                         window.location.href = "<?php echo $redirect_url; ?>";
-                    }, 2500); // 2.5 seconds delay
+                    }, 2500); 
                     
                 } else {
                     alert('Error: ' + data.message);

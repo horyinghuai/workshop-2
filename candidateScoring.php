@@ -6,183 +6,48 @@
     <title>Resume Reader | Candidate Scoring</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="candidateScoring.css" />
     <style>
     /* --- Modal & UI styles --- */
-
-    /* Modal overlay */
     .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.35);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1200;
-        padding: 2rem;
+        position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none;
+        align-items: center; justify-content: center; z-index: 1200; padding: 2rem;
     }
-
     .modal-overlay.visible { display: flex; }
 
-    /* EDIT CANDIDATE MODAL (Matches jobDepartment design) */
     .edit-modal-wrapper {
-        background: #fff;
-        padding: 30px;
-        border: 30px solid #9fc2c6;
-        border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        width: 90%;
-        max-width: 500px;
-        box-sizing: border-box;
-        opacity: 0;
-        transform: scale(0.9);
+        background: #fff; padding: 30px; border: 30px solid #9fc2c6; border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); width: 90%; max-width: 500px;
+        box-sizing: border-box; opacity: 0; transform: scale(0.9);
         transition: opacity 0.3s ease-out, transform 0.3s ease-out;
     }
-    
-    .modal-overlay.visible .edit-modal-wrapper {
-        opacity: 1;
-        transform: scale(1);
+    .modal-overlay.visible .edit-modal-wrapper { opacity: 1; transform: scale(1); }
+    .edit-modal-wrapper h2 { text-align: center; margin-bottom: 20px; font-size: 1.5em; color: #333; }
+    .edit-modal-wrapper .form-group { margin-bottom: 15px; }
+    .edit-modal-wrapper label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+    .edit-modal-wrapper input[type="text"], .edit-modal-wrapper input[type="email"], .edit-modal-wrapper textarea {
+        width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;
+        box-sizing: border-box; background-color: #d9ebec; font-family: 'Inter', sans-serif;
     }
+    .edit-modal-wrapper .form-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 25px; }
+    .edit-modal-wrapper .btn-confirm { background-color: #28a745; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; flex: 1; font-weight: bold; }
+    .edit-modal-wrapper .btn-delete { background-color: #d9534f; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; flex: 1; font-weight: bold; }
+    .edit-modal-wrapper .btn-cancel { background-color: #6c757d; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; flex: 1; font-weight: bold; }
 
-    .edit-modal-wrapper h2 {
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 1.5em;
-        color: #333;
-    }
+    .clickable-name { color: #3a7c7c; font-weight: 700; text-decoration: underline; cursor: pointer; transition: color 0.2s; }
+    .clickable-name:hover { color: #2e6c73; }
 
-    .edit-modal-wrapper .form-group {
-        margin-bottom: 15px;
-    }
+    /* Resume Viewer */
+    .resume-modal { width: 900px; max-width: calc(100% - 4rem); border-radius: 18px; background: transparent; padding: 1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+    .resume-modal .inner { border-radius: 12px; background: white; padding: 1rem; height: 80vh; display: flex; flex-direction: column; }
+    .resume-modal .modal-header { display: flex; justify-content: flex-end; }
+    .resume-modal .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+    .resume-modal iframe { border: none; width: 100%; flex: 1; border-radius: 8px; }
 
-    .edit-modal-wrapper label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-        color: #333;
-    }
-
-    .edit-modal-wrapper input[type="text"],
-    .edit-modal-wrapper input[type="email"],
-    .edit-modal-wrapper textarea {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-        background-color: #d9ebec;
-        font-family: 'Inter', sans-serif;
-    }
-
-    .edit-modal-wrapper .form-actions {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        margin-top: 25px;
-    }
-
-    .edit-modal-wrapper .btn-confirm {
-        background-color: #28a745; /* Green */
-        color: white;
-        padding: 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        flex: 1;
-        font-weight: bold;
-    }
-
-    .edit-modal-wrapper .btn-delete {
-        background-color: #d9534f; /* Red */
-        color: white;
-        padding: 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        flex: 1;
-        font-weight: bold;
-    }
-
-    .edit-modal-wrapper .btn-cancel {
-        background-color: #6c757d; /* Grey */
-        color: white;
-        padding: 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        flex: 1;
-        font-weight: bold;
-    }
-
-    .edit-modal-wrapper button:hover {
-        opacity: 0.9;
-    }
-
-    /* Name Link in Table */
-    .clickable-name {
-        color: #000000ff;
-        font-weight: 700;
-        cursor: pointer;
-        transition: color 0.2s;
-    }
-    .clickable-name:hover {
-        color: #2e6c73;
-    }
-
-    /* --- Existing Modal Styles --- */
-    .resume-modal {
-        width: 900px;
-        max-width: calc(100% - 4rem);
-        border-radius: 18px;
-        background: transparent;
-        padding: 1rem;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.35);
-    }
-
-    .resume-modal .inner {
-        border-radius: 12px;
-        background: white;
-        padding: 1rem;
-        height: 80vh;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .resume-modal .modal-header {
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    .resume-modal .close-btn {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-    }
-
-    .resume-modal iframe {
-        border: none;
-        width: 100%;
-        flex: 1;
-        border-radius: 8px;
-    }
-
-    /* Status Modal Styles */
-    .status-modal-wrapper {
-        width: 680px;
-        max-width: calc(100% - 4rem);
-        border-radius: 20px;
-        background: #9fc2c6;
-        padding: 1.5rem;
-        height: 400px;
-    }
-
-    .status-modal {
-        background: white;
-        border-radius: 12px;
-        padding: 2rem;
-    }
-
+    /* Status Modal */
+    .status-modal-wrapper { width: 680px; max-width: calc(100% - 4rem); border-radius: 20px; background: #9fc2c6; padding: 1.5rem; height: 400px; }
+    .status-modal { background: white; border-radius: 12px; padding: 2rem; }
     .status-modal h2 { text-align: center; font-size: 2rem; margin-bottom: 1.25rem; color: #1f3a3a; }
     .status-modal .form-group { margin-bottom: 2rem; }
     .status-modal label { font-weight: 700; font-size: 1.1rem; color: #1f3a3a; display: block; margin-bottom: 1rem; margin-top: 2.5rem; }
@@ -191,30 +56,19 @@
     .status-modal .btn-confirm { background: #14c155; color: white; border: none; padding: .8rem 2rem; border-radius: 10px; font-size: 1.05rem; cursor: pointer; width: 40%; margin-top: 3rem; margin-left: 1rem; }
     .status-modal .btn-cancel { background: #df4747; color: white; border: none; padding: .8rem 2rem; border-radius: 10px; font-size: 1.05rem; cursor: pointer; width: 40%; margin-top: 3rem; margin-right: 1rem; }
 
-    #deleteSelectedBtn {
-        display: none; margin-left: 1rem; padding: 0.6rem 1rem; border-radius: 8px; border: none; background: #e04b4b; color: white; font-weight: 600; cursor: pointer;
-    }
+    #deleteSelectedBtn { display: none; margin-left: 1rem; padding: 0.6rem 1rem; border-radius: 8px; border: none; background: #e04b4b; color: white; font-weight: 600; cursor: pointer; }
 
-    /* Outreach Buttons */
     .btn-accept { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
     .btn-reject { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
-    .btn-accept:hover { background: #218838; }
-    .btn-reject:hover { background: #c82333; }
-
+    
     /* Loading Popup */
-    .loading-popup-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1300;
-    }
+    .loading-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1300; }
     .loading-popup-content { background: white; padding: 25px 40px; border-radius: 12px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 300px; }
     .loading-spinner { border: 5px solid #f3f3f3; border-top: 5px solid #3a7c7c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .progress-text { font-weight: bold; color: #3a7c7c; margin-top: 10px; font-size: 1.2rem; }
 
-    @media (max-width: 768px) {
-        .status-modal-wrapper { width: 92%; padding: .5rem; }
-        .resume-modal { width: 92%; }
-        .edit-modal-wrapper { width: 95%; border-width: 15px; }
-    }
+    @media (max-width: 768px) { .status-modal-wrapper { width: 92%; padding: .5rem; } .resume-modal { width: 92%; } .edit-modal-wrapper { width: 95%; border-width: 15px; } }
     </style>
 </head>
 <body>
@@ -222,19 +76,14 @@
     $currentEmail = isset($_GET['email']) ? urlencode($_GET['email']) : '';
 ?>
     <header class="header">
-        <a href="dashboard.php?email=<?php echo $currentEmail; ?>" class="back-link">
-            <i class="fas fa-chevron-left"></i> Back
-        </a>
+        <a href="dashboard.php?email=<?php echo $currentEmail; ?>" class="back-link"><i class="fas fa-chevron-left"></i> Back</a>
         <h1 class="header-title">Resume Reader</h1>
         <a href="logout.php" class="logout-link">Log Out</a>
     </header>
 
     <div class="main-content">
         <div class="filter-sidebar">
-            <div class="filter-header">
-                <h2>Filter</h2>
-                <button class="reset-btn" id="resetFilters">Reset</button>
-            </div>
+            <div class="filter-header"><h2>Filter</h2><button class="reset-btn" id="resetFilters">Reset</button></div>
             <div class="filter-group">
                 <button class="filter-title" data-target="status-options">Status <i class="fas fa-chevron-right"></i></button>
                 <div class="filter-options" id="status-options">
@@ -268,7 +117,6 @@
                     </div>
                     <button id="deleteSelectedBtn"><i class="fas fa-trash"></i> Delete Selected Row</button>
                 </div>
-
                 <div class="search-container" style="margin-left:auto;">
                     <i class="fas fa-search"></i>
                     <input type="text" class="search-input" placeholder="Search" id="searchInput">
@@ -304,6 +152,7 @@
         </div>
     </div>
 
+    <!-- Resume Viewer Modal -->
     <div id="resumeViewerOverlay" class="modal-overlay">
         <div class="resume-modal">
             <div class="inner">
@@ -313,6 +162,7 @@
         </div>
     </div>
 
+    <!-- Change Status Modal -->
     <div id="statusOverlay" class="modal-overlay">
         <div class="status-modal-wrapper">
             <div class="status-modal">
@@ -334,34 +184,28 @@
         </div>
     </div>
 
+    <!-- Edit Candidate Modal -->
     <div id="editCandidateModal" class="modal-overlay">
         <div class="edit-modal-wrapper">
             <h2>Edit Candidate</h2>
             <form id="editCandidateForm">
                 <input type="hidden" id="edit_candidate_id" name="candidate_id">
                 <input type="hidden" name="action_type" value="update">
-                
                 <div class="form-group">
-                    <label for="edit_name">Name</label>
-                    <input type="text" id="edit_name" name="name" required>
+                    <label for="edit_name">Name</label><input type="text" id="edit_name" name="name" required>
                 </div>
                 <div class="form-group">
-                    <label for="edit_gender">Gender</label>
-                    <input type="text" id="edit_gender" name="gender">
+                    <label for="edit_gender">Gender</label><input type="text" id="edit_gender" name="gender">
                 </div>
                 <div class="form-group">
-                    <label for="edit_email">Email</label>
-                    <input type="email" id="edit_email" name="email">
+                    <label for="edit_email">Email</label><input type="email" id="edit_email" name="email">
                 </div>
                 <div class="form-group">
-                    <label for="edit_contact">Contact Number</label>
-                    <input type="text" id="edit_contact" name="contact_number">
+                    <label for="edit_contact">Contact Number</label><input type="text" id="edit_contact" name="contact_number">
                 </div>
                 <div class="form-group">
-                    <label for="edit_address">Address</label>
-                    <textarea id="edit_address" name="address" rows="3"></textarea>
+                    <label for="edit_address">Address</label><textarea id="edit_address" name="address" rows="3"></textarea>
                 </div>
-
                 <div class="form-actions">
                     <button type="button" class="btn-confirm" id="btnUpdateCandidate">Confirm</button>
                     <button type="button" class="btn-delete" id="btnDeleteCandidate">Delete</button>
@@ -371,6 +215,7 @@
         </div>
     </div>
 
+    <!-- Outreach Modal -->
     <div id="outreachModal" class="modal-overlay">
         <div class="modal-content" style="width: 600px; max-width:90%; background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.35);">
             <h2 id="outreachTitle" style="text-align: center; margin-bottom: 1.5rem; color: #1f3a3a;">Generate Email</h2>
@@ -394,6 +239,7 @@
         </div>
     </div>
 
+    <!-- Loading Popup -->
     <div id="sendingPopup" class="loading-popup-overlay">
         <div class="loading-popup-content">
             <div class="loading-spinner"></div>
@@ -404,9 +250,8 @@
 
 <script>
     const currentEmail = '<?php echo $currentEmail; ?>';
-    let allCandidates = []; // Store fetched candidates globally
+    let allCandidates = []; 
 
-    // Filter Logic
     document.querySelectorAll('.filter-title').forEach(button => {
         button.addEventListener('click', function() {
             const targetId = this.dataset.target;
@@ -438,7 +283,6 @@
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    // --- MAIN FETCH FUNCTION ---
     async function fetchCandidates() {
         const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
         const selectedJobPositions = Array.from(document.querySelectorAll('input[name="job_position"]:checked')).map(cb => cb.value);
@@ -455,7 +299,7 @@
 
         try {
             const response = await fetch(`get_candidates.php?${params.toString()}`);
-            allCandidates = await response.json(); // Update global variable
+            allCandidates = await response.json();
 
             const tableBody = document.getElementById('candidateTableBody');
             tableBody.innerHTML = ''; 
@@ -486,7 +330,6 @@
                 }
 
                 const row = document.createElement('tr');
-                // Make name clickable
                 const nameCell = `<span class="clickable-name" onclick="openEditCandidate(${candidate.id})">${escapeHtml(candidate.name)}</span>`;
 
                 row.innerHTML = `
@@ -506,7 +349,7 @@
                     </td>
                     <td>${outreachContent}</td>
                     <td><button class="btn-original" data-src="${escapeHtml(candidate.resume_original)}">Original Resume</button></td>
-                    <td><button class="btn-formatted" data-src="${escapeHtml(candidate.resume_formatted)}">Formatted Resume</button></td>
+                    <td><button class="btn-formatted" data-id="${escapeHtml(candidate.id)}">Formatted Resume</button></td>
                     <td><button class="btn-report" data-candidate-id="${escapeHtml(candidate.id)}">Report</button></td>
                     <td>${escapeHtml(candidate.staff_in_charge || '')}</td>
                 `;
@@ -522,80 +365,60 @@
         }
     }
 
-    // --- OPEN EDIT CANDIDATE MODAL ---
     function openEditCandidate(id) {
         const candidate = allCandidates.find(c => c.id == id);
         if(!candidate) return;
-
         document.getElementById('edit_candidate_id').value = candidate.id;
         document.getElementById('edit_name').value = candidate.name;
         document.getElementById('edit_gender').value = candidate.gender || '';
         document.getElementById('edit_email').value = candidate.email || '';
         document.getElementById('edit_contact').value = candidate.contact_number || '';
         document.getElementById('edit_address').value = candidate.address || '';
-
         document.getElementById('editCandidateModal').classList.add('visible');
     }
 
-    // --- HANDLE EDIT CONFIRM ---
     document.getElementById('btnUpdateCandidate').addEventListener('click', async () => {
         const form = document.getElementById('editCandidateForm');
         const formData = new FormData(form);
-        // formData already includes action_type=update from hidden input
-
         try {
             const resp = await fetch('cud_candidate.php', { method: 'POST', body: formData });
             const data = await resp.json();
             if(data.success) {
                 alert(data.message);
                 document.getElementById('editCandidateModal').classList.remove('visible');
-                fetchCandidates(); // Refresh table
-            } else {
-                alert('Error: ' + data.message);
-            }
+                fetchCandidates();
+            } else alert('Error: ' + data.message);
         } catch(e) { console.error(e); alert("Request failed."); }
     });
 
-    // --- HANDLE DELETE SINGLE CANDIDATE (FROM MODAL) ---
     document.getElementById('btnDeleteCandidate').addEventListener('click', async () => {
-        if(!confirm("Are you sure you want to delete this candidate? This cannot be undone.")) return;
-
+        if(!confirm("Are you sure you want to delete this candidate?")) return;
         const id = document.getElementById('edit_candidate_id').value;
         const formData = new FormData();
         formData.append('action_type', 'delete');
         formData.append('candidate_id', id);
-
         try {
             const resp = await fetch('cud_candidate.php', { method: 'POST', body: formData });
             const data = await resp.json();
             if(data.success) {
                 alert(data.message);
                 document.getElementById('editCandidateModal').classList.remove('visible');
-                fetchCandidates(); // Refresh table
-            } else {
-                alert('Error: ' + data.message);
-            }
+                fetchCandidates(); 
+            } else alert('Error: ' + data.message);
         } catch(e) { console.error(e); alert("Request failed."); }
     });
 
-    // --- CLOSE EDIT MODAL ---
-    document.getElementById('btnCloseEditModal').addEventListener('click', () => {
-        document.getElementById('editCandidateModal').classList.remove('visible');
-    });
+    document.getElementById('btnCloseEditModal').addEventListener('click', () => document.getElementById('editCandidateModal').classList.remove('visible'));
 
     function attachRowEventListeners() {
-        document.querySelectorAll('input[name="candidate_check"]').forEach(cb => {
-            cb.addEventListener('change', updateDeleteButtonVisibility);
-        });
-        document.querySelectorAll('.status-btn').forEach(btn => {
-            btn.addEventListener('click', onStatusButtonClick);
-        });
-        document.querySelectorAll('.btn-original, .btn-formatted').forEach(btn => {
-            btn.addEventListener('click', onOpenResume);
-        });
-        document.querySelectorAll('.btn-report').forEach(btn => {
-            btn.addEventListener('click', onReportClick);
-        });
+        document.querySelectorAll('input[name="candidate_check"]').forEach(cb => cb.addEventListener('change', updateDeleteButtonVisibility));
+        document.querySelectorAll('.status-btn').forEach(btn => btn.addEventListener('click', onStatusButtonClick));
+        document.querySelectorAll('.btn-original').forEach(btn => btn.addEventListener('click', onOpenResume));
+        
+        // Updated handler for Formatted Resume button to allow VIEWING first
+        document.querySelectorAll('.btn-formatted').forEach(btn => btn.addEventListener('click', onViewFormatted));
+        
+        document.querySelectorAll('.btn-report').forEach(btn => btn.addEventListener('click', onReportClick));
         const selectAll = document.getElementById('selectAll');
         if (selectAll) {
             selectAll.addEventListener('change', function() {
@@ -605,14 +428,85 @@
         }
     }
 
-    // --- Other Functionalities (Resume, Outreach, Bulk Delete) kept same as before... ---
+    // --- VIEW FORMATTED RESUME (Generated from DB Data) ---
+    async function onViewFormatted(e) {
+        const id = e.currentTarget.dataset.id;
+        const candidate = allCandidates.find(c => c.id == id);
+        
+        if (!candidate) { alert('Candidate data not found.'); return; }
+
+        const popup = document.getElementById('sendingPopup');
+        const progressText = document.getElementById('sendingProgress');
+        popup.style.display = 'flex';
+        popup.querySelector('h3').innerText = "Generating PDF...";
+        progressText.innerText = "Formatting...";
+
+        try {
+            const container = document.createElement('div');
+            container.style.width = '700px';
+            container.style.padding = '40px';
+            container.style.background = '#ffffff';
+            container.style.fontFamily = 'Arial, sans-serif';
+            container.style.color = '#333';
+            container.style.lineHeight = '1.6';
+
+            // Construct HTML from DB Data
+            container.innerHTML = `
+                <div style="text-align:center; border-bottom: 2px solid #3a7c7c; padding-bottom: 20px; margin-bottom: 20px;">
+                    <h1 style="color:#3a7c7c; margin:0;">${escapeHtml(candidate.name)}</h1>
+                    <p style="margin:5px 0;">${escapeHtml(candidate.email)} | ${escapeHtml(candidate.contact_number)}</p>
+                    <p style="margin:5px 0;">${escapeHtml(candidate.address)}</p>
+                </div>
+
+                <h3 style="color:#3a7c7c; border-bottom: 1px solid #ddd; margin-top:20px;">Objective</h3>
+                <p>${escapeHtml(candidate.objective || 'N/A').replace(/\n/g, '<br>')}</p>
+
+                <h3 style="color:#3a7c7c; border-bottom: 1px solid #ddd; margin-top:20px;">Education</h3>
+                <p>${escapeHtml(candidate.education || 'N/A').replace(/\n/g, '<br>')}</p>
+
+                <h3 style="color:#3a7c7c; border-bottom: 1px solid #ddd; margin-top:20px;">Skills</h3>
+                <p>${escapeHtml(candidate.skills || 'N/A').replace(/\n/g, '<br>')}</p>
+
+                <h3 style="color:#3a7c7c; border-bottom: 1px solid #ddd; margin-top:20px;">Experience</h3>
+                <p>${escapeHtml(candidate.experience || 'N/A').replace(/\n/g, '<br>')}</p>
+
+                <h3 style="color:#3a7c7c; border-bottom: 1px solid #ddd; margin-top:20px;">Language</h3>
+                <p>${escapeHtml(candidate.language || 'N/A').replace(/\n/g, '<br>')}</p>
+
+                <h3 style="color:#3a7c7c; border-bottom: 1px solid #ddd; margin-top:20px;">Others</h3>
+                <p>${escapeHtml(candidate.others || 'N/A').replace(/\n/g, '<br>')}</p>
+            `;
+
+            document.body.appendChild(container);
+
+            const opt = {
+                margin: 0.5,
+                filename: `${candidate.name}_Formatted_Resume.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Use 'output' with 'bloburl' to open in new tab instead of saving immediately
+            const pdfBlobUrl = await html2pdf().set(opt).from(container).output('bloburl');
+            window.open(pdfBlobUrl, '_blank');
+
+            document.body.removeChild(container);
+            popup.style.display = 'none';
+            popup.querySelector('h3').innerText = "Processing..."; 
+
+        } catch (err) {
+            console.error(err);
+            alert("Error generating PDF");
+            popup.style.display = 'none';
+        }
+    }
 
     // Bulk Delete
     document.getElementById('deleteSelectedBtn').addEventListener('click', async () => {
         const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);
         if (!selected.length) return;
         if (!confirm(`Delete ${selected.length} selected row(s)?`)) return;
-
         try {
             const formData = new FormData();
             selected.forEach(id => formData.append('ids[]', id));
@@ -628,7 +522,7 @@
         document.getElementById('deleteSelectedBtn').style.display = anyChecked ? 'inline-block' : 'none';
     }
 
-    // Resume Viewer
+    // Resume Viewer (Only for Original)
     const resumeOverlay = document.getElementById('resumeViewerOverlay');
     const resumeIframe = document.getElementById('resumeViewerIframe');
     function onOpenResume(e) {
@@ -640,7 +534,6 @@
     document.getElementById('closeResumeViewer').addEventListener('click', () => resumeOverlay.classList.remove('visible'));
     resumeOverlay.addEventListener('click', (e) => { if(e.target === resumeOverlay) resumeOverlay.classList.remove('visible'); });
 
-    // Status Change
     const statusOverlay = document.getElementById('statusOverlay');
     const statusSelect = document.getElementById('statusSelect');
     let currentStatusCandidateId = null;
@@ -664,20 +557,16 @@
     });
     document.getElementById('cancelStatusBtn').addEventListener('click', () => statusOverlay.classList.remove('visible'));
 
-    // Report
     function onReportClick(e) {
         const id = e.currentTarget.dataset.candidateId;
         window.location.href = `report.php?email=${currentEmail}&candidate_id=${encodeURIComponent(id)}`;
     }
 
-    // Outreach Logic
     let outreachData = { id: null, email: null, action: null, meetLink: null };
     function openOutreach(id, email, action) {
         outreachData = { id, email, action };
-        // Needed if we want to pre-fill email from global data
         const cand = allCandidates.find(c => c.id == id);
         if(cand) outreachData.email = cand.email;
-
         document.getElementById('outreachTitle').innerText = action === 'accept' ? "Schedule Interview" : "Rejection Outreach";
         document.getElementById('dateGroup').style.display = action === 'accept' ? 'block' : 'none';
         document.getElementById('previewArea').style.display = 'none';
@@ -685,10 +574,8 @@
         document.getElementById('btnGenerate').style.display = 'inline-block';
         document.getElementById('outreachModal').classList.add('visible');
     }
-    // expose to global scope
     window.openOutreach = openOutreach; 
 
-    // Generate/Send Outreach Handlers (Same as provided logic)
     document.getElementById('btnGenerate').addEventListener('click', () => {
         const date = document.getElementById('interviewDate').value;
         if (outreachData.action === 'accept' && !date) { alert("Please select a date."); return; }
@@ -738,7 +625,6 @@
         });
     });
 
-    // Init
     document.addEventListener('DOMContentLoaded', async () => {
         await fetchDynamicFilters();
         fetchCandidates();

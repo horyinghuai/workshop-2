@@ -82,6 +82,14 @@ SELECT
     c.email,
     c.contact_number,
     c.address,
+    /* Resume Text Fields */
+    c.objective,
+    c.education,
+    c.skills,
+    c.experience,
+    c.language,
+    c.others,
+    
     jp.job_name AS applied_job_position,
     d.department_name AS department,
     c.applied_date,
