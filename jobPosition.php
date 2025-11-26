@@ -141,7 +141,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 
                 <div class="form-group">
                     <label for="jobDescriptionInput">Description:</label>
-                    <textarea id="jobDescriptionInput" name="description" placeholder="Job Description" rows="4" required></textarea>
+                    <textarea id="jobDescriptionInput" name="description" placeholder="Job Description" rows="4"></textarea>
                 </div>
 
                 <div class="form-group">
@@ -192,8 +192,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 <?php $currentEmail = isset($_GET['email']) ? $_GET['email'] : ''; ?>
 
                 <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
-
-                <input  name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn-confirm" style="background-color: #3a7c7c;">Yes, Delete</button>

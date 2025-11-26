@@ -110,7 +110,7 @@ $conn->close();
     <meta charset="utf-8">
     <title>Resume Reader — Analytics</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="analyticsv2.css">
+    <link rel="stylesheet" href="analytics.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -124,8 +124,6 @@ $conn->close();
       </div>
       <h1 class="logo">Resume Reader</h1>
       <div class="header-right">
-          <a href="#">Job Position</a>
-          <a href="jobDepartment.php?email=<?php echo urlencode($currentEmail); ?>">Department</a>
           <a href="logout.php" class="logout">Log Out</a>
       </div>
     </header>

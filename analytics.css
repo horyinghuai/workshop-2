@@ -65,7 +65,7 @@ body {
 .header-left .back-link {
     color: white;
     text-decoration: none;
-    font-size: 1.1rem; /* Smaller font for better integration */
+    font-size: 1.5rem; /* Smaller font for better integration */
     font-weight: 500;
     /* FIX 3: Removed absolute positioning */
     position: static;
@@ -89,26 +89,15 @@ body {
     color: var(--white);
     text-decoration: none;
     padding: 0 15px;
-    font-size: 1.1rem; /* Consistent smaller size */
+    font-size: 1.5rem; /* Consistent smaller size */
     /* Removed border-right from base selector */
     transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
     position: relative; 
     display: inline-block; 
 }
 
-/* Apply border only to the links that are NOT the last one (Log Out) */
-.header-right a:not(:last-child) {
-    border-right: 1px solid rgba(255, 255, 255, 0.5);
-}
-
 .header-right a:hover {
     transform: translateY(-2px) scale(1.05); 
-    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
-}
-
-/* Highlight the active link (Job Position) */
-.header-right a:nth-child(1) {
-    font-weight: bold;
     text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
