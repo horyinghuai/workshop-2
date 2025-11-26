@@ -1,115 +1,135 @@
 <?php
 require_once 'connection.php';
 
-// Check if email parameter is provided
+// Redirect if no email in URL
 if (!isset($_GET['email'])) {
     header('Location: login.php');
     exit();
 }
 
-$current_email = $conn->real_escape_string($_GET['email']);
+$currentEmail = $conn->real_escape_string($_GET['email']);
 
 /* ================= SUMMARY ================= */
 $totalResumes = (int)$conn->query("SELECT COUNT(*) AS c FROM CANDIDATE")->fetch_assoc()['c'];
 $newToday = (int)$conn->query("SELECT COUNT(*) AS c FROM CANDIDATE WHERE applied_date = CURDATE()")->fetch_assoc()['c'];
 
 /* ================= JOB POSITION STATS ================= */
-$jobLabels = []; $jobCounts = [];
-$jq = $conn->query("
-  SELECT j.job_name, COUNT(c.candidate_id) AS cnt
-  FROM JOB_POSITION j
-  LEFT JOIN CANDIDATE c ON c.job_id = j.job_id
-  GROUP BY j.job_id
-  ORDER BY cnt DESC
+$jobLabels = [];
+$jobCounts = [];
+
+$jobQuery = $conn->query("
+    SELECT j.job_name, COUNT(c.candidate_id) AS cnt
+    FROM JOB_POSITION j
+    LEFT JOIN CANDIDATE c ON c.job_id = j.job_id
+    GROUP BY j.job_id
+    ORDER BY cnt DESC
 ");
-while ($r = $jq->fetch_assoc()) {
-    $jobLabels[] = $r['job_name'];
-    $jobCounts[] = (int)$r['cnt'];
+
+while ($row = $jobQuery->fetch_assoc()) {
+    $jobLabels[] = $row['job_name'];
+    $jobCounts[] = (int)$row['cnt'];
 }
 
 /* ================= DEPARTMENT STATS ================= */
-$deptLabels = []; $deptCounts = [];
-$dq = $conn->query("
-  SELECT d.department_name, COUNT(c.candidate_id) AS cnt
-  FROM DEPARTMENT d
-  LEFT JOIN JOB_POSITION j ON j.department_id = d.department_id
-  LEFT JOIN CANDIDATE c ON c.job_id = j.job_id
-  GROUP BY d.department_id
-  ORDER BY cnt DESC
+$deptLabels = [];
+$deptCounts = [];
+
+$deptQuery = $conn->query("
+    SELECT d.department_name, COUNT(c.candidate_id) AS cnt
+    FROM DEPARTMENT d
+    LEFT JOIN JOB_POSITION j ON j.department_id = d.department_id
+    LEFT JOIN CANDIDATE c ON c.job_id = j.job_id
+    GROUP BY d.department_id
+    ORDER BY cnt DESC
 ");
-while ($r = $dq->fetch_assoc()) {
-    $deptLabels[] = $r['department_name'];
-    $deptCounts[] = (int)$r['cnt'];
+
+while ($row = $deptQuery->fetch_assoc()) {
+    $deptLabels[] = $row['department_name'];
+    $deptCounts[] = (int)$row['cnt'];
 }
 
-/* ================= AI CONFIDENCE ================= */
+/* ================= AI CONFIDENCE STATS ================= */
 $high = $mid = $low = 0;
-$confRes = $conn->query("SELECT ai_confidence_level FROM REPORT WHERE ai_confidence_level IS NOT NULL");
 
-while ($r = $confRes->fetch_assoc()) {
-    $val = floatval($r['ai_confidence_level']);
-    if ($val >= 75) $high++;
-    elseif ($val >= 40) $mid++;
+$confQuery = $conn->query("SELECT ai_confidence_level FROM REPORT WHERE ai_confidence_level IS NOT NULL");
+
+while ($row = $confQuery->fetch_assoc()) {
+    $value = (float)$row['ai_confidence_level'];
+
+    if ($value >= 75) $high++;
+    else if ($value >= 40) $mid++;
     else $low++;
 }
 
-/* ================= TOP CANDIDATES ================= */
+/* ================= TOP CANDIDATES FUNCTION ================= */
 function topCandidatesFor($role, $conn) {
-    $out = [];
-    $st = $conn->prepare("
-      SELECT c.name, j.job_name, r.score_overall, r.ai_confidence_level
-      FROM CANDIDATE c
-      JOIN JOB_POSITION j ON c.job_id = j.job_id
-      JOIN REPORT r ON r.candidate_id = c.candidate_id
-      WHERE j.job_name = ?
-      ORDER BY r.ai_confidence_level DESC, r.score_overall DESC
-      LIMIT 3
+    $list = [];
+
+    $stmt = $conn->prepare("
+        SELECT c.name, j.job_name, r.score_overall, r.ai_confidence_level
+        FROM CANDIDATE c
+        JOIN JOB_POSITION j ON c.job_id = j.job_id
+        JOIN REPORT r ON r.candidate_id = c.candidate_id
+        WHERE j.job_name = ?
+        ORDER BY r.ai_confidence_level DESC, r.score_overall DESC
+        LIMIT 3
     ");
-    $st->bind_param('s', $role);
-    $st->execute();
-    $res = $st->get_result();
-    while ($row = $res->fetch_assoc()) $out[] = $row;
-    $st->close();
-    return $out;
+
+    $stmt->bind_param("s", $role);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $list[] = $row;
+    }
+
+    $stmt->close();
+    return $list;
 }
 
-$topDataAnalyst = topCandidatesFor('Data Analyst', $conn);
-$topHRAssistant = topCandidatesFor('HR Assistant', $conn);
+$topDataAnalyst = topCandidatesFor("Data Analyst", $conn);
+$topHRAssistant = topCandidatesFor("HR Assistant", $conn);
 
-/* ================= JSON FOR JS ================= */
-$jobLabelsJSON = json_encode($jobLabels);
-$jobCountsJSON = json_encode($jobCounts);
+/* ================= JSON FOR CHARTS ================= */
+$jobLabelsJSON  = json_encode($jobLabels);
+$jobCountsJSON  = json_encode($jobCounts);
+
 $deptLabelsJSON = json_encode($deptLabels);
 $deptCountsJSON = json_encode($deptCounts);
-$confJSON = json_encode([$high, $mid, $low]);
 
-// Close connection
+$confJSON       = json_encode([$high, $mid, $low]);
+
+// Close DB
 $conn->close();
 ?>
+
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<title>Resume Reader — Analytics</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="analytics.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="utf-8">
+    <title>Resume Reader — Analytics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="analyticsv2.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
+    <header class="header">
+      <div class="header-left">
+          <a href="dashboard.php?email=<?php echo urlencode($currentEmail); ?>" class="back-link">
+              <i class="fas fa-chevron-left"></i> Back
+          </a>
+      </div>
+      <h1 class="logo">Resume Reader</h1>
+      <div class="header-right">
+          <a href="#">Job Position</a>
+          <a href="jobDepartment.php?email=<?php echo urlencode($currentEmail); ?>">Department</a>
+          <a href="logout.php" class="logout">Log Out</a>
+      </div>
+    </header>
 
-<header class="topbar">
-  <div class="left">
-    <a href="dashboard.php?email=<?php echo urlencode($current_email); ?>" class="back">< Back</a>
-  </div>
-  <div class="brand">
-    <div class="title">Resume Reader</div>
-  </div>
-  <div class="right">
-    <a href="logout.php" class="logout">Log Out</a>
-  </div>
-</header>
 
 <main class="main">
 
