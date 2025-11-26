@@ -18,6 +18,19 @@ $currentEmail = $_GET['email'];
         .main-container { padding: 40px; max-width: 1200px; margin: 0 auto; }
         #calendar { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .fc-event { cursor: pointer; }
+
+        .fc-toolbar button {
+            background-color: #3a7c7c !important;
+            color: white !important;
+        }
+
+        .fc-toolbar-title {
+            color: #3a7c7c !important;
+        }
+
+        .fc-timegrid-now-indicator {
+            background-color: #9fc2c6 !important;
+        }
     </style>
 </head>
 <body>
