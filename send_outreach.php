@@ -9,8 +9,16 @@ $action = $_POST['action'] ?? '';
 $email_to = $_POST['email'] ?? '';
 $subject = $_POST['subject'] ?? '';
 $body = $_POST['body'] ?? '';
-$meet_link = $_POST['meet_link'] ?? '';
+$meet_link = $_POST['meet_link'] ?? ''; // Might be empty now
 $interview_date = $_POST['interview_date'] ?? '';
+
+// --- NEW: EXTRACT LINK FROM BODY IF MISSING ---
+if (empty($meet_link) && !empty($body)) {
+    // Looks for https://meet.google.com/xxx-xxxx-xxx
+    if (preg_match('/https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}/', $body, $matches)) {
+        $meet_link = $matches[0];
+    }
+}
 
 if (empty($email_to) && !empty($candidate_id)) {
     $stmt = $conn->prepare("SELECT email FROM candidate WHERE candidate_id = ?");
@@ -44,8 +52,7 @@ if (mail($email_to, $subject, $body, $headers)) {
         $stmt->execute();
         $stmt->close();
         
-        // DO NOT update main status for accept action (keep as Active per requirement)
-        // Just update outreach_status
+        // Update candidate status
         $stmt = $conn->prepare("UPDATE candidate SET outreach = ? WHERE candidate_id = ?");
         $stmt->bind_param("si", $outreach_status, $candidate_id);
         $stmt->execute();

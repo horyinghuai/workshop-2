@@ -241,7 +241,7 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
                     // --- SUCCESS NOTIFICATION STATE ---
                     card.classList.add('success');
                     title.innerHTML = '<i class="fas fa-check-circle mb-2"></i> Report Ready!';
-                    sub.innerText = "Resume successfully uploaded and report is ready!";
+                    sub.innerText = "Resume successfully uploaded and report is ready! You can view the reports in the Candidates and Scoring Management section.";
                     
                     // Delay redirect so user can see the success message
                     setTimeout(() => {

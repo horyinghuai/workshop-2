@@ -52,13 +52,16 @@ if (!empty($_GET['department']) && is_array($_GET['department'])) {
 if (!empty($_GET['search'])) {
     $search = '%' . trim($_GET['search']) . '%';
     // Search across name, contact, job, department, status, and score fields (converted to char)
-    $where_clauses[] = "(c.name LIKE ? OR c.contact_number LIKE ? OR jp.job_name LIKE ? OR d.department_name LIKE ? OR c.status LIKE ?)";
+    $where_clauses[] = "(c.name LIKE ? OR c.contact_number LIKE ? OR jp.job_name LIKE ? OR d.department_name LIKE ? OR c.status LIKE ? OR c.applied_date LIKE ? OR c.outreach LIKE ? OR u.name LIKE ?)";
     $params[] = $search;
     $params[] = $search;
     $params[] = $search;
     $params[] = $search;
     $params[] = $search;
-    $param_types .= 'sssss';
+    $params[] = $search;
+    $params[] = $search;
+    $params[] = $search;
+    $param_types .= 'ssssssss';
 }
 
 /* ---------------------------------------------------------------------------
