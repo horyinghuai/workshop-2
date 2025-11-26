@@ -134,6 +134,10 @@ function showScore($val) {
                 <label>Language</label>
                 <textarea readonly><?php echo e($data['language']); ?></textarea>
             </div>
+            <div class="field-row">
+                <label>Others</label>
+                <textarea readonly><?php echo e($data['others']); ?></textarea>
+            </div>
         </div>
 
         <div class="report-col w-full md:w-1/2 p-6 overflow-y-auto">
@@ -214,6 +218,15 @@ function showScore($val) {
             <div class="field-row">
                 <label>Lang. Comment</label>
                 <textarea readonly><?php echo e($data['ai_comments_language']); ?></textarea>
+            </div>
+
+            <div class="field-row mt-4">
+                <label>Others Score</label>
+                <input type="text" readonly value="<?php echo showScore($data['score_others']); ?>">
+            </div>
+            <div class="field-row">
+                <label>Others AI Comments</label>
+                <textarea readonly><?php echo e($data['ai_comments_others']); ?></textarea>
             </div>
 
             <div class="mt-6 p-3 bg-gray-700 rounded-lg border border-gray-600 text-center">

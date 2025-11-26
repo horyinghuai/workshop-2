@@ -70,8 +70,8 @@ $conn->close();
 
         <a href="candidateScoring.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
             <div class="card-icon"><i class="fas fa-medal"></i></div>
-            <h4 class="card-title">Candidate Scoring</h4>
-            <p class="card-description">Evaluate and score applicants based on criteria.</p>
+            <h4 class="card-title">Candidates and Scoring Management</h4>
+            <p class="card-description">Manage and evaluate applicants based on criteria.</p>
         </a>
 
         <a href="jobPosition.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
@@ -84,6 +84,12 @@ $conn->close();
             <div class="card-icon"><i class="fas fa-chart-line"></i></div>
             <h4 class="card-title">Analytics</h4>
             <p class="card-description">Gain insights into your recruitment pipeline.</p>
+        </a>
+
+        <a href="calendar.php?email=<?php echo urlencode($current_email); ?>" class="action-card">
+            <div class="card-icon"><i class="fas fa-calendar-alt"></i></div>
+            <h4 class="card-title">Interview Calendar</h4>
+            <p class="card-description">View scheduled interviews.</p>
         </a>
     </div>
 </main>

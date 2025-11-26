@@ -47,14 +47,18 @@ if (!empty($_GET['department']) && is_array($_GET['department'])) {
 }
 
 /* ---------------------------------------------------------------------------
-   SEARCH FILTER (name / contact)
+   SEARCH FILTER (name / contact / all columns)
 --------------------------------------------------------------------------- */
 if (!empty($_GET['search'])) {
     $search = '%' . trim($_GET['search']) . '%';
-    $where_clauses[] = "(c.name LIKE ? OR c.contact_number LIKE ?)";
+    // Search across name, contact, job, department, status, and score fields (converted to char)
+    $where_clauses[] = "(c.name LIKE ? OR c.contact_number LIKE ? OR jp.job_name LIKE ? OR d.department_name LIKE ? OR c.status LIKE ?)";
     $params[] = $search;
     $params[] = $search;
-    $param_types .= 'ss';
+    $params[] = $search;
+    $params[] = $search;
+    $params[] = $search;
+    $param_types .= 'sssss';
 }
 
 /* ---------------------------------------------------------------------------
@@ -82,9 +86,9 @@ if (!empty($_GET['sort_by'])) {
 }
 
 /* ---------------------------------------------------------------------------
-   SQL QUERY (Updated)
+   SQL QUERY
    - Aliases: c = candidate, jp = job_position, d = department, r = report, u = users/staff
-   - Includes: staff_in_charge, resume_original, resume_formatted
+   - Includes: outreach column
 --------------------------------------------------------------------------- */
 
 $sql = "
@@ -96,6 +100,7 @@ SELECT
     d.department_name AS department,
     c.applied_date,
     c.status,
+    c.outreach AS outreach_status,
     
     /* report scores */
     r.score_overall AS overall_score,

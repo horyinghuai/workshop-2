@@ -58,6 +58,18 @@ session_start();
             </span>
         </div>
 
+        <div class="form-group">
+            <label for="company">Company Name</label>
+            <input type="text" id="company" name="company" 
+                value="<?php echo htmlspecialchars($_SESSION['old_company'] ?? ''); ?>">
+            <span class="error-message">
+                <?php 
+                echo htmlspecialchars($_SESSION['company_err'] ?? ''); 
+                unset($_SESSION['company_err']);
+                ?>
+            </span>
+        </div>
+
         <!-- UPDATED PASSWORD SECTION -->
         <div class="form-group">
             <label for="password">Password</label>

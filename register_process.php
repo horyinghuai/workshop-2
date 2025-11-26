@@ -22,10 +22,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     $email = trim($_POST["email"]);
     $password = trim($_POST["password"]);
     $confirm_password = trim($_POST["confirm_password"]);
+    $company = trim($_POST["company"]);
 
     // Store old input to repopulate form on error
     $_SESSION['old_name'] = $name;
     $_SESSION['old_email'] = $email;
+    $_SESSION['old_company'] = $company;
 
     // --- VALIDATION ---
     if (empty($name)) { $_SESSION['name_err'] = "Please enter your name."; $has_errors = true; }
@@ -58,6 +60,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
 
     if ($password != $confirm_password) { $_SESSION['confirm_err'] = "Passwords do not match."; $has_errors = true; }
 
+    if (empty($company)) {
+        $_SESSION['company_err'] = "Please enter your company name.";
+        $has_errors = true;
+    }
+
     // Redirect if errors
     if ($has_errors) {
         header("Location: register.php");
@@ -81,10 +88,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
 
     // --- INSERT NEW USER ---
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-    $sql = "INSERT INTO user (name, email, password) VALUES (?, ?, ?)";
+    $sql = "INSERT INTO user (name, email, password, company) VALUES (?, ?, ?, ?)";
 
     if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("sss", $name, $email, $hashed_password);
+        $stmt->bind_param("ssss", $name, $email, $hashed_password, $company);
 
         if ($stmt->execute()) {
             
@@ -96,6 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
             // Clear old form data
             unset($_SESSION['old_name']);
             unset($_SESSION['old_email']);
+            unset($_SESSION['old_company']);
 
             // Force session to write to disk immediately
             session_write_close();
