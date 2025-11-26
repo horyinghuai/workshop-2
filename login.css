@@ -58,7 +58,7 @@
         .cancel-btn { flex: 1; padding: 10px; background: #e74c3c; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 20px; }
         .cancel-btn:hover { background: #c0392b; }
 
-        .error-msg { color: #ff0800; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-align: left; }
+        .error-msg { color: #ff0800; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-align: center; }
         .sent-to-text { font-size: 14px; color: #ff0000; margin-bottom: 25px; text-align: center; }
 
         .resend-block { margin-top: 5px; text-align: right; font-size: 13px; }
