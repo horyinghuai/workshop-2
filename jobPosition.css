@@ -200,7 +200,7 @@ body {
 
 /* Standard Cell Styling */
 .table-cell {
-    padding: 15px 5px;
+    padding: 15px 10px;
     border-right: 1px solid var(--secondary-color);
     display: flex;
     align-items: center;

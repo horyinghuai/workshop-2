@@ -161,7 +161,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 
                 <div class="form-group">
                     <label for="languageInput">Language:</label>
-                    <input type="text" id="languageInput" name="language" placeholder="Language" >
+                    <input type="text" id="languageInput" name="language" placeholder="Language" required>
                 </div>
 
                 <div class="form-group">
