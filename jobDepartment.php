@@ -134,7 +134,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 
                 <div class="form-group">
                     <label for="departmentDescriptionInput">Description:</label>
-                    <textarea id="departmentDescriptionInput" name="description" placeholder="Department Description" rows="4" required></textarea>
+                    <textarea id="departmentDescriptionInput" name="description" placeholder="Department Description" rows="4" ></textarea>
                 </div>
 
                 <div class="form-actions">
@@ -324,71 +324,13 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             }, 300);
         }
 
-<<<<<<< HEAD
-        // Close Delete Modal handlers
-        $('#cancelDeleteBtn').click(closeDeleteModal);
-
-        // Close modal if user clicks outside the content area (on the overlay)
-        $('#deleteModal').click(function(e) {
-            if (e.target.id === 'deleteModal') {
-                closeDeleteModal();
-            }
-        });
-
-        // --- NOTIFICATION FUNCTIONALITY ---
-
-        function displayNotification() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const status = urlParams.get('status');
-            const message = urlParams.get('message');
-
-            if (status && message) {
-                const decodedMessage = decodeURIComponent(message);
-                const $box = $('#notification-box');
-                const $msg = $('#notification-message');
-
-                $box.removeClass('success error'); // Clear previous classes
-                $msg.text(decodedMessage);
-
-                if (status === 'success') {
-                    $box.addClass('success');
-                } else if (status === 'error') {
-                    $box.addClass('error');
-                }
-
-                $box.slideDown(300);
-
-                // Remove the parameters from the URL after display (optional, keeps URL clean)
-                urlParams.delete('status');
-                urlParams.delete('message');
-
-                // Build the new query string (which now contains only remaining params, like 'email')
-                const newQueryString = urlParams.toString();
-
-                // Reconstruct the URL: base path + '?' + remaining parameters (if any)
-                const newUrl = window.location.pathname + (newQueryString ? '?' + newQueryString : '');
-
-                // Replace the state with the new URL, preserving 'email'
-                history.replaceState(null, null, newUrl);
-
-                // Auto-hide after 5 seconds
-                setTimeout(function() {
-                    $box.slideUp(500);
-                }, 5000);
-            }
-=======
     // Optional: Initial load function to show all results (this is already handled by PHP)
     $('#search-input').on('keyup', function() {
         if ($(this).val().trim() === '') {
             performSearch();
->>>>>>> 4e29ad0ac9347b83bdcd33ebf6e7020ce36c57b3
         }
+        });
 
-<<<<<<< HEAD
-        // Call the function on page load
-        displayNotification();
-    </script>
-=======
 // --- MODAL FUNCTIONALITY (ANIMATED) ---
 
 // Function to close the modal
@@ -538,7 +480,6 @@ function displayNotification() {
 // Call the function on page load
 displayNotification();
 </script>
->>>>>>> 4e29ad0ac9347b83bdcd33ebf6e7020ce36c57b3
 
 
 </body>
