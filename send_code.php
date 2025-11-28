@@ -28,8 +28,10 @@ $code = rand(100000, 999999);
 // 3. Send Email
 $subject = "Password Reset Verification Code";
 $message = "Your verification code is: " . $code;
-// IMPORTANT: Sender email must match the one in sendmail.ini
-$headers = "From: yinghuai180704@gmail.com"; 
+
+// UPDATED: Use environment variable for sender
+$sender_email = getenv('MAIL_SENDER') ?: "yinghuai180704@gmail.com";
+$headers = "From: " . $sender_email; 
 
 if (mail($email, $subject, $message, $headers)) {
     echo json_encode(['status' => 'success', 'code' => $code]);
