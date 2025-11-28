@@ -4,6 +4,13 @@ import json
 import requests
 import urllib3
 import warnings
+import os
+
+# --- NEW: IMPORT DOTENV ---
+from dotenv import load_dotenv
+
+# --- LOAD ENV VARIABLES ---
+load_dotenv()
 
 # --- SUPPRESS SSL WARNINGS ---
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -11,14 +18,14 @@ warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWar
 
 # --- DB CONFIG ---
 DB_CONFIG = {
-    'user': 'root',
-    'password': '',
-    'host': 'localhost',
-    'database': 'resume_reader'
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', ''),
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'database': os.getenv('DB_NAME', 'resume_reader')
 }
 
 # --- GEMINI CONFIG ---
-GEMINI_API_KEY = "" 
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
 def generate_email(candidate_id, action, interview_date=None):

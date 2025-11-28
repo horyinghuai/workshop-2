@@ -8,6 +8,9 @@ import time
 import re
 import warnings
 
+# --- NEW: IMPORT DOTENV ---
+from dotenv import load_dotenv
+
 # --- FIX FOR IMPORT ERROR ---
 import urllib3
 # Disable "InsecureRequestWarning" since we use verify=False for Localhost/XAMPP
@@ -16,20 +19,22 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+# --- LOAD ENV VARIABLES ---
+load_dotenv()
+
 # --- DEBUG: CONFIRM NEW CODE IS RUNNING ---
-print("LOADED: process_report.py (Fixed Imports + Job Context)")
+print("LOADED: process_report.py (Env Configured)")
 
 # --- CONFIGURATION ---
 DB_CONFIG = {
-    'user': 'root',
-    'password': '',
-    'host': 'localhost',
-    'database': 'resume_reader'
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', ''),
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'database': os.getenv('DB_NAME', 'resume_reader')
 }
 
 # --- GEMINI API CONFIGURATION ---
-# Using Gemini 1.5 Pro as requested
-GEMINI_API_KEY = "" 
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
 # Priority Models (Start with 2.0-flash, then fall back to 1.5 if needed)
