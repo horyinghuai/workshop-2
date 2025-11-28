@@ -148,7 +148,7 @@ function showScore($val) {
             <div class="flex justify-between items-center mb-6" data-html2canvas-ignore="true">
                 <h2 class="text-3xl font-bold">Report</h2>
                 <button class="download-btn px-4 py-1.5 rounded shadow hover:bg-opacity-90 text-sm font-bold" onclick="downloadPDF()">
-                    Download PDF
+                    Download
                 </button>
             </div>
             
