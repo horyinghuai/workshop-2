@@ -10,49 +10,26 @@ import warnings
 
 # --- FIX FOR IMPORT ERROR ---
 import urllib3
+# Disable "InsecureRequestWarning" since we use verify=False for Localhost/XAMPP
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# --- LOAD .ENV FILE (Robust Version) ---
-import os
-
-env_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(env_path):
-    with open(env_path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            # Skip comments and empty lines
-            if not line or line.startswith('#') or '=' not in line:
-                continue
-            
-            key, value = line.split('=', 1)
-            
-            key = key.strip()           # Remove spaces around key
-            value = value.strip()       # Remove spaces around value
-            value = value.strip('"\'')  # Remove quotes around value
-            
-            os.environ[key] = value
-
 # --- DEBUG: CONFIRM NEW CODE IS RUNNING ---
 print("LOADED: process_report.py (Fixed Imports + Job Context)")
 
 # --- CONFIGURATION ---
-# Update to use os.environ
 DB_CONFIG = {
-    'user': os.environ.get('DB_USER', 'root'),
-    'password': os.environ.get('DB_PASSWORD', ''),
-    'host': os.environ.get('DB_HOST', 'localhost'),
-    'database': os.environ.get('DB_NAME', 'resume_reader')
+    'user': 'root',
+    'password': '',
+    'host': 'localhost',
+    'database': 'resume_reader'
 }
 
 # --- GEMINI API CONFIGURATION ---
-# Update to use os.environ
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', "") 
-if not GEMINI_API_KEY:
-    print(json.dumps({"status": "error", "message": "CRITICAL: GEMINI_API_KEY not found in environment variables."}))
-    sys.exit(1)
+# Using Gemini 1.5 Pro as requested
+GEMINI_API_KEY = "" 
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
 # Priority Models (Start with 2.0-flash, then fall back to 1.5 if needed)

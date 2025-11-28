@@ -4,44 +4,21 @@ import json
 import requests
 import urllib3
 import warnings
-import os # Import os
-
-# --- LOAD .ENV FILE (Robust Version) ---
-import os
-
-env_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(env_path):
-    with open(env_path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            # Skip comments and empty lines
-            if not line or line.startswith('#') or '=' not in line:
-                continue
-            
-            key, value = line.split('=', 1)
-            
-            key = key.strip()           # Remove spaces around key
-            value = value.strip()       # Remove spaces around value
-            value = value.strip('"\'')  # Remove quotes around value
-            
-            os.environ[key] = value
 
 # --- SUPPRESS SSL WARNINGS ---
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
 # --- DB CONFIG ---
-# Update to use os.environ
 DB_CONFIG = {
-    'user': os.environ.get('DB_USER', 'root'),
-    'password': os.environ.get('DB_PASSWORD', ''),
-    'host': os.environ.get('DB_HOST', 'localhost'),
-    'database': os.environ.get('DB_NAME', 'resume_reader')
+    'user': 'root',
+    'password': '',
+    'host': 'localhost',
+    'database': 'resume_reader'
 }
 
 # --- GEMINI CONFIG ---
-# Update to use os.environ
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', "") 
+GEMINI_API_KEY = "" 
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
 def generate_email(candidate_id, action, interview_date=None):
