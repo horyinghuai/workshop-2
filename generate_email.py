@@ -1,9 +1,6 @@
 import sys
 import mysql.connector
 import json
-import requests
-import urllib3
-import warnings
 import os
 
 # --- NEW: IMPORT DOTENV ---
@@ -12,10 +9,6 @@ from dotenv import load_dotenv
 # --- LOAD ENV VARIABLES ---
 load_dotenv()
 
-# --- SUPPRESS SSL WARNINGS ---
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
-
 # --- DB CONFIG ---
 DB_CONFIG = {
     'user': os.getenv('DB_USER', 'root'),
@@ -23,10 +16,6 @@ DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'database': os.getenv('DB_NAME', 'resume_reader')
 }
-
-# --- GEMINI CONFIG ---
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
 def generate_email(candidate_id, action, interview_date=None):
     conn = mysql.connector.connect(**DB_CONFIG)
@@ -55,43 +44,37 @@ def generate_email(candidate_id, action, interview_date=None):
         
         meet_link = None 
 
-        # 2. Prepare Prompt based on Action
+        # 2. Generate Email Content using Templates
         if action == 'accept':
-            # Link generation removed. Placeholder instruction added.
-            prompt = (
-                f"Write a professional email invitation for an interview at {company_name}.\n"
-                f"Candidate: {name}\nRole: {job}\n"
-                f"Time: {interview_date}\n"
-                f"Tone: Welcoming and professional.\n"
-                f"Content: Congratulate them on their application. "
-                f"State clearly that we at {company_name} are impressed with their resume and would like to invite them for an interview. "
-                f"Propose the interview time. Please include the placeholder '[Meeting Link]' where the Google Meet link should go. "
-                f"Do not include the subject line."
-            )
             subject = f"Interview Invitation: {job} at {company_name}"
             
-        else: # reject
-            prompt = (
-                f"Write a polite, empathetic rejection email from {company_name}.\n"
-                f"Candidate: {name}\nRole: {job}\n"
-                f"Tone: Professional, kind, encouraging, not harsh.\n"
-                f"Content: Thank them for applying to {company_name}. Mention we were impressed with their resume, but we have decided to move forward with other candidates who more closely match our current needs. Wish them luck in their future endeavors. Do not include the subject line."
+            # Format the date if provided
+            date_str = interview_date if interview_date else "[Date and Time]"
+
+            email_body = (
+                f"Dear {name},\n\n"
+                f"Thank you for applying to the {job} position at {company_name}. We were impressed with your application and would like to invite you for an interview to discuss your qualifications further.\n\n"
+                f"We have scheduled the interview for: {date_str}\n\n"
+                f"Please join the meeting using the link below:\n"
+                f"[Meeting Link]\n\n"
+                f"If this time does not work for you, please let us know so we can reschedule.\n\n"
+                f"Best regards,\n"
+                f"{company_name} Recruitment Team"
             )
+            
+        else: # reject
             subject = f"Update regarding your application for {job} at {company_name}"
+            
+            email_body = (
+                f"Dear {name},\n\n"
+                f"Thank you for giving us the opportunity to consider your application for the {job} role at {company_name}. We appreciate the time and effort you put into the process.\n\n"
+                f"We have reviewed your background and qualifications, and while we were impressed, we have decided to move forward with other candidates who more closely match our current needs.\n\n"
+                f"We wish you the best in your future endeavors.\n\n"
+                f"Sincerely,\n"
+                f"{company_name} Recruitment Team"
+            )
 
-        # 3. Call Gemini
-        payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        headers = {'Content-Type': 'application/json'}
-        
-        response = requests.post(GEMINI_URL, headers=headers, json=payload, verify=False)
-        email_body = "Error generating email."
-        
-        if response.status_code == 200:
-            result = response.json()
-            if 'candidates' in result:
-                email_body = result['candidates'][0]['content']['parts'][0]['text']
-
-        # 4. Return Result (meet_link will be null/None)
+        # 3. Return Result (meet_link will be null/None, to be filled by PHP if needed or user)
         print(json.dumps({
             "status": "success",
             "subject": subject,

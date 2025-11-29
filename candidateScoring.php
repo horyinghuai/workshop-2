@@ -152,7 +152,6 @@
         </div>
     </div>
 
-    <!-- Resume Viewer Modal -->
     <div id="resumeViewerOverlay" class="modal-overlay">
         <div class="resume-modal">
             <div class="inner">
@@ -162,7 +161,6 @@
         </div>
     </div>
 
-    <!-- Change Status Modal -->
     <div id="statusOverlay" class="modal-overlay">
         <div class="status-modal-wrapper">
             <div class="status-modal">
@@ -184,7 +182,6 @@
         </div>
     </div>
 
-    <!-- Edit Candidate Modal -->
     <div id="editCandidateModal" class="modal-overlay">
         <div class="edit-modal-wrapper">
             <h2>Edit Candidate</h2>
@@ -215,7 +212,6 @@
         </div>
     </div>
 
-    <!-- Outreach Modal -->
     <div id="outreachModal" class="modal-overlay">
         <div class="modal-content" style="width: 600px; max-width:90%; background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.35);">
             <h2 id="outreachTitle" style="text-align: center; margin-bottom: 1.5rem; color: #1f3a3a;">Generate Email</h2>
@@ -224,12 +220,12 @@
                 <input type="datetime-local" id="interviewDate" style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;">
             </div>
             <div id="previewArea" class="form-group" style="margin-bottom: 1.5rem; display: none;">
-                <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Email Preview (AI Generated)</label>
+                <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Email Preview</label>
                 <input type="text" id="emailSubject" placeholder="Subject" style="width:100%; margin-bottom:10px; padding:10px; border: 1px solid #ccc; border-radius: 6px; font-weight:bold;">
                 <textarea id="emailBody" rows="10" style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px; resize: vertical;"></textarea>
             </div>
             <div id="aiLoading" style="display:none; text-align:center; color:#3a7c7c; margin:10px;">
-                <i class="fas fa-spinner fa-spin"></i> Generating personalized email with Gemini...
+                <i class="fas fa-spinner fa-spin"></i> Generating email...
             </div>
             <div class="actions" style="margin-top:20px; display:flex; justify-content:space-between; gap: 10px;">
                 <button id="btnGenerate" style="background:#3a7c7c; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; flex: 1;">Generate Draft</button>
@@ -239,7 +235,6 @@
         </div>
     </div>
 
-    <!-- Loading Popup -->
     <div id="sendingPopup" class="loading-popup-overlay">
         <div class="loading-popup-content">
             <div class="loading-spinner"></div>

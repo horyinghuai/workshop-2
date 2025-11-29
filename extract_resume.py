@@ -20,7 +20,7 @@ try:
 except OSError:
     nlp = None
 
-# REMOVED: 'achievements' from this map
+# Section Keywords
 SECTION_MAP = {
     'objective': ('objective', 'summary', 'professional summary', 'profile'),
     'education': ('education', 'qualifications', 'academic background'),
@@ -65,18 +65,20 @@ def extract_details(text, pid=None):
     
     raw_sections = {}
     final_data = {}
-    others_text = text
+    
+    # We will build 'others' by excluding known sections
+    # List of ranges to exclude: (start_index, end_index)
+    exclusion_ranges = []
 
-    # 1. Extract Entities
+    # 1. Extract Entities (Email/Phone)
     email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
     phone_match = re.search(r'(\(?\+?\d{1,3}\)?[\s\.-]?)?\(?\d{3}\)?[\s\.-]?\d{3}[\s\.-]?\d{4}', text)
     
     if email_match:
         final_data['email'] = email_match.group(0)
-        others_text = others_text.replace(email_match.group(0), "")
+        # We handle entity removal via string replace at the end as they are small and unique
     if phone_match:
         final_data['contact_number'] = phone_match.group(0)
-        others_text = others_text.replace(phone_match.group(0), "")
 
     update_progress(pid, 30) # Extracting Name
 
@@ -92,7 +94,6 @@ def extract_details(text, pid=None):
         name = " ".join(re.split(r'[\._-]', local_part))
 
     final_data['name'] = process_name(name)
-    if name: others_text = others_text.replace(name, "")
 
     # 2. Extract Sections
     update_progress(pid, 50) # Identifying Sections
@@ -104,35 +105,68 @@ def extract_details(text, pid=None):
         for keyword in keywords:
             start_index = lower_text.find(keyword)
             if start_index != -1:
+                # Store: (start_index, section_name, length_of_keyword)
                 found_sections.append((start_index, section_name, len(keyword)))
                 break 
     
+    # Sort by appearance in text
     found_sections.sort(key=lambda x: x[0])
 
     update_progress(pid, 70) # Parsing Sections
 
     for i, (start, name, length) in enumerate(found_sections):
+        # The content starts after the keyword
         content_start = start + length
-        content_end = len(text)
+        
+        # The section ends at the start of the next section, or end of text
         if i + 1 < len(found_sections):
             content_end = found_sections[i+1][0]
+        else:
+            content_end = len(text)
             
+        # Extract the content for the DB
         raw_content = text[content_start:content_end].strip(": \n")
         raw_sections[name] = raw_content
-        others_text = others_text.replace(raw_content, "")
+        
+        # Mark the WHOLE section (Header + Content) for exclusion from 'Others'
+        # Range: [start_index_of_keyword, end_index_of_content]
+        exclusion_ranges.append((start, content_end))
 
-    # 3. Assign
+    # 3. Assign Standard Sections
     final_data['objective'] = raw_sections.get('objective')
     final_data['education'] = raw_sections.get('education')
     final_data['skills'] = raw_sections.get('skills')
     final_data['experience'] = raw_sections.get('experience')
-    # REMOVED: achievements assignment
     final_data['language'] = raw_sections.get('language')
     final_data['address'] = raw_sections.get('address')
-    final_data['others'] = others_text.strip()
     final_data["full_text"] = text 
     
-    # Fill missing
+    # 4. Construct 'Others' by stitching together non-excluded parts
+    others_parts = []
+    current_idx = 0
+    
+    for (exc_start, exc_end) in exclusion_ranges:
+        # Append text appearing BEFORE this section
+        if current_idx < exc_start:
+            others_parts.append(text[current_idx:exc_start])
+        # Move cursor PAST this section
+        current_idx = max(current_idx, exc_end)
+        
+    # Append any remaining text after the last section
+    if current_idx < len(text):
+        others_parts.append(text[current_idx:])
+        
+    others_text = "".join(others_parts)
+
+    # Clean up specific entities from 'Others'
+    if final_data.get('email'): others_text = others_text.replace(final_data['email'], "")
+    if final_data.get('contact_number'): others_text = others_text.replace(final_data['contact_number'], "")
+    if final_data.get('name'): others_text = others_text.replace(final_data['name'], "")
+
+    # Final cleanup of whitespace/special chars
+    final_data['others'] = others_text.strip(" \n\r\t-:,|")
+    
+    # Fill missing keys with None
     all_keys = ["name", "email", "contact_number", "address", "objective", "education", "skills", "experience", "language", "others", "full_text"]
     for key in all_keys:
         if key not in final_data: final_data[key] = None
