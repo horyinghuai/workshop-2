@@ -7,6 +7,10 @@ import requests
 import time
 import re
 import warnings
+import math
+
+# --- NEW: IMPORT DOTENV ---
+from dotenv import load_dotenv
 
 # --- FIX FOR IMPORT ERROR ---
 import urllib3
@@ -16,23 +20,26 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+# --- LOAD ENV VARIABLES ---
+load_dotenv()
+
 # --- DEBUG: CONFIRM NEW CODE IS RUNNING ---
-print("LOADED: process_report.py (Fixed Imports + Job Context)")
+print("LOADED: generate_report.py (Updated Scoring Logic)")
 
 # --- CONFIGURATION ---
 DB_CONFIG = {
-    'user': 'root',
-    'password': '',
-    'host': 'localhost',
-    'database': 'resume_reader'
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', ''),
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'database': os.getenv('DB_NAME', 'resume_reader')
 }
 
 # --- GEMINI API CONFIGURATION ---
-# Using Gemini 1.5 Pro as requested
-GEMINI_API_KEY = "AIzaSyAGrA3VmtkHxwhWXoOrSQU66fZnuL1HksQ" 
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+# Base URL for generation
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
 
-# Priority Models (Start with 2.0-flash, then fall back to 1.5 if needed)
+# Priority Models
 VALID_MODELS = [
     "gemini-2.0-flash",
     "gemini-1.5-flash", 
@@ -58,88 +65,9 @@ def update_progress(pid, percent):
 def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
 
-# UPDATED: Scoring now compares Candidate Text vs Job Requirement Text
-def calculate_hybrid_score(candidate_text, job_requirement_text, field_name):
-    # 1. Safety Checks
-    if not candidate_text or len(str(candidate_text)) < 3: return 10.0
-    if not job_requirement_text or len(str(job_requirement_text)) < 3: return 80.0 # If no requirement, assume good fit
-    
-    c_text = str(candidate_text).lower()
-    j_text = str(job_requirement_text).lower()
-    
-    # --- 1. EDUCATION HIERARCHY LOGIC ---
-    if field_name == 'education':
-        edu_levels = {'phd': 5, 'doctorate': 5, 'master': 4, 'bachelor': 3, 'degree': 3, 'diploma': 2, 'certificate': 1}
-        
-        cand_level = 0
-        req_level = 0
-        
-        for edu, val in edu_levels.items():
-            if edu in c_text and val > cand_level: cand_level = val
-            if edu in j_text and val > req_level: req_level = val
-            
-        # Bonus if candidate level >= requirement level
-        if cand_level > req_level:
-            return 100.0 # Overqualified is a perfect score for "minimum requirement"
-        elif cand_level == req_level:
-            return 95.0
-        elif cand_level < req_level and cand_level > 0:
-            return 60.0 # Underqualified but has some education
-    
-    # --- 2. SKILL / GENERAL KEYWORD MATCHING ---
-    # Split job requirements by comma or spaces to get key terms
-    job_keywords = [k.strip() for k in re.split(r'[,|\n]', j_text) if len(k.strip()) > 2]
-    
-    match_count = 0
-    total_keywords = len(job_keywords)
-    
-    if total_keywords > 0:
-        for keyword in job_keywords:
-            if keyword in c_text:
-                match_count += 1
-        keyword_score = (match_count / total_keywords) * 100
-    else:
-        keyword_score = 100.0 # No specific keywords required
-
-    # --- 3. SEMANTIC RELEVANCE (For "Other relevant skills") ---
-    try:
-        documents = [j_text, c_text]
-        tfidf = TfidfVectorizer(stop_words='english')
-        tfidf_matrix = tfidf.fit_transform(documents)
-        
-        # Compare Candidate (index 1) against Job (index 0)
-        cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
-        ml_score = cosine_sim[0][0] * 100
-    except:
-        ml_score = keyword_score # Fallback if TF-IDF fails
-
-    # 4. Weighted Final Score
-    final_score = (keyword_score * 0.5) + (ml_score * 0.5)
-    
-    # Boost score slightly if semantic match is high even if keywords miss (Candidate has relevant alternatives)
-    if keyword_score < 50 and ml_score > 60:
-        final_score += 15 
-    
-    return round(min(99.0, max(10.0, final_score)), 2)
-
-# UPDATED: Prompt now includes the Job Requirement context
-def generate_llm_comment(field_name, candidate_text, job_requirement_text, score):
-    if not candidate_text or len(str(candidate_text)) < 5: 
-        return "No details provided for this section."
-
-    # Construct a context-aware prompt
-    prompt = (
-        f"Role: HR Recruiter. \n"
-        f"Task: Compare Candidate vs Job Requirement for '{field_name}'.\n\n"
-        f"Job Requirement: \"{job_requirement_text}\"\n"
-        f"Candidate Data: \"{candidate_text}\"\n\n"
-        f"Match Score: {score}/100.\n"
-        f"Instructions:\n"
-        f"1. If candidate meets/exceeds requirements (e.g. Master vs Diploma), praise them.\n"
-        f"2. If candidate lacks specific skills but has RELEVANT alternatives, state: 'Lacks [X] but possesses relevant skills in [Y].'\n"
-        f"3. Keep it under 40 words."
-    )
-
+# --- HELPER: CALL GEMINI API ---
+def call_gemini(prompt, retries=3):
+    headers = {'Content-Type': 'application/json'}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "safetySettings": [
@@ -149,143 +77,282 @@ def generate_llm_comment(field_name, candidate_text, job_requirement_text, score
             {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
         ]
     }
-    
-    headers = {'Content-Type': 'application/json'}
 
-    # Try the specific 2.0 Flash URL first
-    try:
-        response = requests.post(GEMINI_URL, headers=headers, json=payload, timeout=20, verify=False)
-        if response.status_code == 200:
-            result = response.json()
-            if 'candidates' in result and len(result['candidates']) > 0:
-                return result['candidates'][0]['content']['parts'][0]['text'].strip()
-    except Exception:
-        pass # Fail silently to fallback loop
+    for model in VALID_MODELS:
+        url = f"{GEMINI_BASE_URL}{model}:generateContent?key={GEMINI_API_KEY}"
+        for attempt in range(retries):
+            try:
+                response = requests.post(url, headers=headers, json=payload, timeout=20, verify=False)
+                if response.status_code == 200:
+                    result = response.json()
+                    if 'candidates' in result and len(result['candidates']) > 0:
+                        return result['candidates'][0]['content']['parts'][0]['text'].strip()
+                elif response.status_code == 429:
+                    time.sleep(2) # Rate limit backoff
+                else:
+                    break # Try next model on other errors
+            except Exception as e:
+                log_gemini_error(f"API Error ({model}): {str(e)}")
+                time.sleep(1)
+    return None
 
-    # Fallback loop
-    for model_name in VALID_MODELS:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
-        try:
-            response = requests.post(url, headers=headers, json=payload, timeout=20, verify=False)
-            if response.status_code == 200:
-                result = response.json()
-                if 'candidates' in result and len(result['candidates']) > 0:
-                    return result['candidates'][0]['content']['parts'][0]['text'].strip()
-            elif response.status_code == 429:
-                time.sleep(2)
-                continue
-            elif response.status_code == 404:
-                continue
-        except Exception as e:
-            log_gemini_error(f"Exception: {str(e)}")
-            continue
+# --- SCORING: EDUCATION ---
+def calculate_education_score(candidate_text, job_requirement_text):
+    # 1. Check for empty content
+    if not candidate_text or len(str(candidate_text).strip()) < 3:
+        return 50.0
 
-    # Fallback
-    return f"Candidate provided details. Match score: {score}/100. (AI Analysis Unavailable)"
+    c_text = str(candidate_text).lower()
+    j_text = str(job_requirement_text).lower()
 
-# --- UPDATED CONFIDENCE LOGIC ---
-def calculate_confidence(row):
-    confidence = 0.0 # Start at 0
-    
-    # Increased Thresholds significantly to make 99% hard to get
-    weights = {
-        'experience': {'threshold': 50, 'points': 35}, 
-        'education': {'threshold': 15, 'points': 20},
-        'skills': {'threshold': 10, 'points': 20},
-        'language': {'threshold': 5, 'points': 10},
-        'others': {'threshold': 10, 'points': 10}
+    # If no requirement specified, assume perfect fit
+    if not j_text or len(j_text) < 3:
+        return 90.0
+
+    # 2. Hierarchy Logic
+    edu_levels = {
+        'phd': 5, 'doctorate': 5, 
+        'master': 4, 
+        'bachelor': 3, 'degree': 3, 
+        'diploma': 2, 
+        'certificate': 1, 'spm': 1
     }
     
-    # Bonus: Is the resume balanced?
-    sections_present = 0
+    cand_level = 0
+    req_level = 0
+    
+    for edu, val in edu_levels.items():
+        if edu in c_text and val > cand_level: cand_level = val
+        if edu in j_text and val > req_level: req_level = val
+    
+    # 3. Determine Base Score based on Hierarchy
+    base_score = 50.0
 
-    for field, criteria in weights.items():
-        content = str(row.get(field, ""))
-        # Filter out "None" or "N/A"
-        if content.lower() in ['none', 'n/a', ''] or len(content) < 3:
-            word_count = 0
+    if cand_level > req_level:
+        # Overqualified
+        if req_level == 3 and cand_level == 4: # Req Bachelor, Has Master
+            base_score = 85.0
+        elif req_level == 3 and cand_level == 5: # Req Bachelor, Has PhD
+            base_score = 95.0
         else:
-            word_count = len(content.split())
+            base_score = 90.0 # General Overqualified
+    elif cand_level == req_level:
+        # Exact Level Match
+        base_score = 80.0
+    elif cand_level < req_level and cand_level > 0:
+        # Underqualified
+        base_score = 60.0 # Will be adjusted by field relevance
+    else:
+        # No level found / Mismatch
+        base_score = 50.0
+
+    # 4. API Analysis: Field Compatibility (e.g., Marketing vs CS)
+    # prompt returns a modifier score 0.0 to 1.0
+    prompt = (
+        f"Job Requirement: {j_text}\n"
+        f"Candidate Education: {c_text}\n"
+        f"Task: Is the candidate's field of study relevant to the job requirement?\n"
+        f"Examples: AI is relevant to CS (1.0). Marketing is NOT relevant to CS (0.0). "
+        f"Output ONLY a number between 0.0 and 1.0 representing relevance."
+    )
+    
+    ai_relevance_str = call_gemini(prompt)
+    try:
+        match = re.search(r"(\d+(\.\d+)?)", ai_relevance_str)
+        field_relevance = float(match.group(1)) if match else 0.5
+    except:
+        field_relevance = 0.5 # Default neutral
+
+    # 5. Final Calculation
+    # If field is not relevant, punish, but floor at 50
+    if field_relevance < 0.4:
+        final_score = max(50.0, base_score - 20)
+    else:
+        # If relevant, add small boost if exact match
+        final_score = base_score + (field_relevance * 5)
+    
+    return round(min(100.0, final_score), 2)
+
+# --- SCORING: HYBRID (Skills, Experience, Language) ---
+def calculate_hybrid_score(candidate_text, job_requirement_text, section_name):
+    # 1. Check for Empty Content
+    # "if theres no content inside, make it 50 marks."
+    if not candidate_text or len(str(candidate_text).strip()) < 3:
+        return 50.0
+
+    c_text = str(candidate_text).lower()
+    j_text = str(job_requirement_text).lower()
+
+    # If no requirement, assume 80 (Good fit)
+    if not j_text or len(j_text) < 3:
+        return 80.0
+
+    # --- A. Keyword Match (10%) ---
+    # Split job requirements into keywords
+    job_keywords = [k.strip() for k in re.split(r'[,|\n]', j_text) if len(k.strip()) > 2]
+    total_keywords = len(job_keywords)
+    match_count = 0
+    
+    if total_keywords > 0:
+        for keyword in job_keywords:
+            if keyword in c_text:
+                match_count += 1
+        keyword_ratio = (match_count / total_keywords)
+    else:
+        keyword_ratio = 1.0
+
+    score_keywords = keyword_ratio * 100 # Out of 100 base
+    
+    # --- B. Semantic Match (20%) ---
+    # Using TF-IDF
+    try:
+        documents = [j_text, c_text]
+        tfidf = TfidfVectorizer(stop_words='english')
+        tfidf_matrix = tfidf.fit_transform(documents)
+        cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
+        score_semantic = cosine_sim[0][0] * 100
+    except:
+        score_semantic = 50.0 # Fallback
+
+    # --- C. API Analysis (70%) ---
+    # Handles "relevant alternatives" (Java vs Python)
+    prompt = (
+        f"Role: HR Recruiter.\n"
+        f"Job Requirement ({section_name}): \"{j_text}\"\n"
+        f"Candidate ({section_name}): \"{c_text}\"\n"
+        f"Task: Rate the relevance of the candidate's {section_name} on a scale of 0 to 100.\n"
+        f"Rules:\n"
+        f"1. If they lack exact skills but have relevant alternatives (e.g. Java instead of Python), give a HIGH score.\n"
+        f"2. Ignore unrelated skills (do not punish).\n"
+        f"3. Output ONLY the number."
+    )
+    
+    ai_str = call_gemini(prompt)
+    try:
+        match = re.search(r"(\d+)", ai_str)
+        score_ai = float(match.group(1)) if match else 50.0
+    except:
+        score_ai = 50.0
+
+    # --- D. Weighted Calculation ---
+    # Formula: (Keyword * 10%) + (Semantic * 20%) + (AI * 70%)
+    # This generates a "Raw Quality Score" (0-100)
+    raw_quality_score = (score_keywords * 0.10) + (score_semantic * 0.20) + (score_ai * 0.70)
+
+    # --- E. Final Mapping (50 - 100 Range) ---
+    # "total score... will be 50 + ..."
+    # We map the 0-100 raw quality to the 50-100 range.
+    final_score = 50 + (raw_quality_score / 2)
+
+    # --- F. Detail Bonus ---
+    # "If the candidate wrote more than 50 words... +5 points"
+    word_count = len(c_text.split())
+    if word_count > 50:
+        final_score += 5
+
+    return round(min(100.0, final_score), 2)
+
+# --- SCORING: OTHERS ---
+def calculate_others_score(candidate_text, job_requirement_text):
+    # "if theres no content inside, make it 0 marks."
+    if not candidate_text or len(str(candidate_text).strip()) < 3:
+        return 0.0
+    
+    # If content exists, calculate normally using Hybrid logic
+    return calculate_hybrid_score(candidate_text, job_requirement_text, "others")
+
+# --- GENERATE COMMENT ---
+def generate_comment(field_name, candidate_text, job_requirement_text, score):
+    if not candidate_text or len(str(candidate_text)) < 5: 
+        return "No details provided for this section."
+
+    prompt = (
+        f"Role: HR Recruiter. \n"
+        f"Task: Write a 1-sentence comment comparing Candidate vs Job for '{field_name}'.\n"
+        f"Job: {job_requirement_text}\n"
+        f"Candidate: {candidate_text}\n"
+        f"Score: {score}/100.\n"
+        f"Context: If score > 80, praise. If score 50-70, mention they meet basics or have relevant alternatives. If < 50, mention gaps."
+    )
+    
+    comment = call_gemini(prompt)
+    return comment if comment else "Analysis unavailable."
+
+# --- CONFIDENCE CALCULATION ---
+def calculate_confidence(row):
+    confidence = 0.0
+    weights = {'experience': 35, 'education': 20, 'skills': 20, 'language': 10, 'others': 10}
+    
+    sections_present = 0
+    for field, points in weights.items():
+        content = str(row.get(field, ""))
+        if content.lower() not in ['none', 'n/a', ''] and len(content) > 5:
+            confidence += points
             sections_present += 1
-        
-        if word_count >= criteria['threshold']:
-            confidence += criteria['points']
-        elif word_count > 0:
-            # Linear scaling: e.g. if you have 25/50 words, you get half points
-            ratio = word_count / criteria['threshold']
-            confidence += (criteria['points'] * ratio)
-
-    # Penalty if sections are missing
-    if sections_present < 3:
-        confidence -= 15
-
+            
+    if sections_present < 3: confidence -= 15
     return round(min(99.0, max(10.0, confidence)), 2)
 
+# --- MAIN PROCESS ---
 def process_candidate(candidate_id, pid=None):
-    update_progress(pid, 5) 
+    update_progress(pid, 5)
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
     try:
-        update_progress(pid, 10)
-        
-        # 1. Fetch Candidate Data
+        # 1. Fetch Candidate
         cursor.execute("SELECT * FROM candidate WHERE candidate_id = %s", (candidate_id,))
         candidate = cursor.fetchone()
-        if not candidate: 
-            print(json.dumps({"status": "error", "message": "Candidate not found"}))
-            return
+        if not candidate: return
 
-        update_progress(pid, 20)
-
-        # 2. Fetch Job Requirements based on candidate's job_id
+        # 2. Fetch Job
         job_id = candidate['job_id']
         cursor.execute("SELECT * FROM job_position WHERE job_id = %s", (job_id,))
         job_reqs = cursor.fetchone()
-        
-        # Handle case if job is deleted/missing
-        if not job_reqs:
-            # Fallback to empty strings to prevent crash, score will rely on text presence
-            job_reqs = {k: "" for k in ['education', 'skills', 'experience', 'language', 'others', 'job_name']}
+        if not job_reqs: job_reqs = {} # Safety
 
-        update_progress(pid, 30)
-        
-        # Fields to analyze (Column Name in DB)
-        fields = ['education', 'skills', 'experience', 'language', 'others']
+        update_progress(pid, 20)
+
+        # 3. Calculate Scores
         scores = {}
         comments = {}
-        
-        step = 60 / len(fields)
-        current_p = 30
 
-        for field in fields:
-            # Data from Candidate
-            cand_content = candidate.get(field, "")
-            # Data from Job Position (Requirement)
-            job_content = job_reqs.get(field, "")
-            
-            # Pass field_name to apply Education Hierarchy Logic
-            scores[field] = calculate_hybrid_score(cand_content, job_content, field)
-            
-            # Generate Comment comparing Candidate vs Job
-            comments[field] = generate_llm_comment(field, cand_content, job_content, scores[field])
-            
-            time.sleep(1) 
-            current_p += step
-            update_progress(pid, int(current_p))
+        # A. Education (Special Logic)
+        scores['education'] = calculate_education_score(candidate.get('education'), job_reqs.get('education'))
+        comments['education'] = generate_comment('Education', candidate.get('education'), job_reqs.get('education'), scores['education'])
+        update_progress(pid, 40)
 
-        # Overall Score is average of component scores
-        scores['overall'] = sum(scores.values()) / len(scores)
+        # B. Hybrid Sections
+        for field in ['skills', 'experience', 'language']:
+            scores[field] = calculate_hybrid_score(candidate.get(field), job_reqs.get(field), field)
+            comments[field] = generate_comment(field, candidate.get(field), job_reqs.get(field), scores[field])
+            time.sleep(1) # Prevent rate limit
+        update_progress(pid, 70)
+
+        # C. Others (0 if empty)
+        scores['others'] = calculate_others_score(candidate.get('others'), job_reqs.get('others'))
+        comments['others'] = generate_comment('Others', candidate.get('others'), job_reqs.get('others'), scores['others'])
+        update_progress(pid, 85)
+
+        # 4. Overall Score Logic
+        # "Average of 5 distinct scores if OTHERS is NOT NULL (score > 0)"
+        # "Average of 4 distinct scores if OTHERS is NULL (score == 0)"
+        if scores['others'] > 0:
+            total_sum = scores['education'] + scores['skills'] + scores['experience'] + scores['language'] + scores['others']
+            overall_score = total_sum / 5
+        else:
+            total_sum = scores['education'] + scores['skills'] + scores['experience'] + scores['language']
+            overall_score = total_sum / 4
+
+        overall_score = round(overall_score, 2)
         
-        # Overall Comment uses Job Title context
+        # Overall Comment
         job_title = job_reqs.get('job_name', 'the role')
-        comments['overall'] = generate_llm_comment(f"Overall Profile for {job_title}", str(candidate), str(job_reqs), scores['overall'])
-        
+        comments['overall'] = generate_comment(f"Overall Fit for {job_title}", "See sections", "See sections", overall_score)
+
         confidence = calculate_confidence(candidate)
 
-        update_progress(pid, 95)
-
-        # Save to DB
+        # 5. Database Update
         cursor.execute("SELECT report_id FROM report WHERE candidate_id = %s", (candidate_id,))
         exists = cursor.fetchone()
 
@@ -295,7 +362,7 @@ def process_candidate(candidate_id, pid=None):
             sql = """INSERT INTO report (score_overall, ai_comments_overall, score_education, ai_comments_education, score_skills, ai_comments_skills, score_experience, ai_comments_experience, score_language, ai_comments_language, score_others, ai_comments_others, ai_confidence_level, candidate_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
         vals = (
-            scores['overall'], comments['overall'], 
+            overall_score, comments['overall'], 
             scores['education'], comments['education'], 
             scores['skills'], comments['skills'], 
             scores['experience'], comments['experience'], 
@@ -308,14 +375,14 @@ def process_candidate(candidate_id, pid=None):
         conn.commit()
         
         update_progress(pid, 100)
-        print(json.dumps({"status": "success", "score": scores['overall']}))
+        print(json.dumps({"status": "success", "score": overall_score}))
 
     except Exception as e:
-        log_gemini_error(f"CRITICAL SCRIPT ERROR: {str(e)}")
+        log_gemini_error(f"CRITICAL ERROR: {str(e)}")
         print(json.dumps({"status": "error", "message": str(e)}))
     finally:
-        cursor.close()
-        conn.close()
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 if __name__ == "__main__":
     pid = sys.argv[2] if len(sys.argv) > 2 else None

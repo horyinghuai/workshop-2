@@ -37,7 +37,9 @@ if (empty($email_to)) {
 }
 
 // 1. Send Email
-$headers = "From: yinghuai180704@gmail.com\r\n"; 
+// UPDATED: Use environment variable for sender
+$sender_email = getenv('MAIL_SENDER') ?: "yinghuai180704@gmail.com";
+$headers = "From: " . $sender_email . "\r\n"; 
 $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
 
 if (mail($email_to, $subject, $body, $headers)) {
