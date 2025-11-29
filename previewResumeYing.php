@@ -182,7 +182,13 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
 
                     <div class="mt-8 pt-6 border-t border-gray-500 flex gap-4">
                         <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded">Confirm & Run AI</button>
-                        <button type="button" onclick="location.href='<?php echo $redirect_url; ?>'" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded">Cancel</button>
+                        
+                        <!-- UPDATED CANCEL BUTTON -->
+                        <button type="button" 
+                                onclick="if(confirm('Are you sure you want to cancel? This candidate will be removed.')) location.href='previewResumeYing.php?action=delete&candidate_id=<?php echo $candidate_id; ?>&email=<?php echo urlencode($email); ?>'" 
+                                class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded">
+                            Cancel
+                        </button>
                     </div>
                 </form>
             </div>

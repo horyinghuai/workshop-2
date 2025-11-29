@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (move_uploaded_file($fileTmpName, $fileDestination)) {
             
-            // --- DB INSERT INITIAL ---
+            // --- DB INSERT INITIAL (Placeholder) ---
             $sql_insert = "INSERT INTO candidate (job_id, resume_original, email_user, status, applied_date) VALUES (?, ?, ?, 'Active', CURDATE())";
             $stmt_insert = $conn->prepare($sql_insert);
             $stmt_insert->bind_param("iss", $job_id, $fileDestination, $current_email);
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // --- CLOSE SESSION ---
                 session_write_close();
 
-                // --- RUN PYTHON ---
+                // --- RUN PYTHON EXTRACTION ---
                 $command = $python_path . ' ' . escapeshellarg($script_path) . ' ' . escapeshellarg($fileDestination) . ' ' . escapeshellarg($process_id) . ' 2>&1';
                 $json_output = shell_exec($command);
                 
@@ -60,20 +60,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($extracted_data && !isset($extracted_data['error'])) {
                     
+                    // --- DUPLICATE CHECK LOGIC ---
+                    $ext_name = $extracted_data['name'] ?? '';
+                    $ext_email = $extracted_data['email'] ?? '';
+                    $ext_phone = $extracted_data['contact_number'] ?? '';
+
+                    // Check if this candidate already applied for THIS job position
+                    // We check against OTHER candidates (not the one we just inserted with $candidate_id)
+                    $dup_sql = "SELECT candidate_id FROM candidate 
+                                WHERE job_id = ? 
+                                AND candidate_id != ? 
+                                AND (
+                                    (email IS NOT NULL AND email != '' AND email = ?) OR 
+                                    (contact_number IS NOT NULL AND contact_number != '' AND contact_number = ?) OR
+                                    (name IS NOT NULL AND name != '' AND name = ?)
+                                ) LIMIT 1";
+                                
+                    $stmt_dup = $conn->prepare($dup_sql);
+                    $stmt_dup->bind_param("iisss", $job_id, $candidate_id, $ext_email, $ext_phone, $ext_name);
+                    $stmt_dup->execute();
+                    $stmt_dup->store_result();
+                    
+                    if ($stmt_dup->num_rows > 0) {
+                        // --- DUPLICATE FOUND ---
+                        $stmt_dup->close();
+                        
+                        // 1. Delete the file
+                        if (file_exists($fileDestination)) unlink($fileDestination);
+                        
+                        // 2. Delete the placeholder DB record
+                        $conn->query("DELETE FROM candidate WHERE candidate_id = $candidate_id");
+                        
+                        echo json_encode([
+                            'status' => 'error', 
+                            'message' => 'This candidate has already applied for this job position. Duplicate application rejected.'
+                        ]);
+                        exit();
+                    }
+                    $stmt_dup->close();
+                    
+                    // --- NO DUPLICATE: PROCEED TO SAVE ---
+
                     $formatted_content = "--- EXTRACTED RESUME DATA ---\n\nName: " . ($extracted_data['name'] ?? 'N/A') . "\nEmail: " . ($extracted_data['email'] ?? 'N/A') . "\nContact: " . ($extracted_data['contact_number'] ?? 'N/A') . "\n\n--- SKILLS ---\n" . ($extracted_data['skills'] ?? 'N/A') . "\n\n--- EXPERIENCE ---\n" . ($extracted_data['experience'] ?? 'N/A');
                     
                     $formatted_filename = 'formatted_' . $candidate_id . '_' . time() . '.txt';
                     $formatted_filepath = $upload_dir . $formatted_filename;
                     file_put_contents($formatted_filepath, $formatted_content);
 
-                    // --- UPDATE DB (ACHIEVEMENTS REMOVED) ---
+                    // --- UPDATE DB WITH EXTRACTED DATA ---
                     $sql_update = "UPDATE candidate SET name=?, gender=?, email=?, contact_number=?, address=?, objective=?, education=?, skills=?, experience=?, language=?, others=?, resume_formatted=? WHERE candidate_id=?";
                     
                     $stmt_update = $conn->prepare($sql_update);
                     
                     // Map variables
                     $val_name = $extracted_data['name'] ?? null;
-                    $val_gender = $extracted_data['gender'] ?? null; // Python doesn't strictly extract gender in regex, likely null
+                    $val_gender = $extracted_data['gender'] ?? null; 
                     $val_email = $extracted_data['email'] ?? null;
                     $val_contact = $extracted_data['contact_number'] ?? null;
                     $val_address = $extracted_data['address'] ?? null;
@@ -82,7 +123,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $val_skills = $extracted_data['skills'] ?? null;
                     $val_experience = $extracted_data['experience'] ?? null;
                     $val_language = $extracted_data['language'] ?? null;
-                    $val_others = $extracted_data['others'] ?? null; // Use specific 'others' section
+                    
+                    // Explicitly handle Others as NULL if empty
+                    $val_others = $extracted_data['others'];
+                    if (empty($val_others) || trim($val_others) === '') {
+                        $val_others = null;
+                    }
 
                     // Bind Params: 12 strings + 1 integer = 13 total
                     $stmt_update->bind_param("ssssssssssssi", 
@@ -107,6 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         echo json_encode(['status' => 'error', 'message' => 'Database Update Failed: ' . $stmt_update->error]);
                     }
                 } else {
+                    // Extraction failed - cleanup
+                    $conn->query("DELETE FROM candidate WHERE candidate_id = $candidate_id");
+                    if (file_exists($fileDestination)) unlink($fileDestination);
                     echo json_encode(['status' => 'error', 'message' => 'Extraction failed: ' . ($extracted_data['error'] ?? 'Unknown error')]);
                 }
             } else {
