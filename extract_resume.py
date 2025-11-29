@@ -16,7 +16,7 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
 VALID_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
 
-# --- UTILS: PROGRESS & FILE READING ---
+# --- UTILS ---
 def update_progress(pid, percent):
     if pid:
         try:
@@ -45,31 +45,33 @@ def extract_text_from_docx(file_path):
         return ""
     return text
 
-# --- LOCAL NLP / REGEX FUNCTIONS ---
+# --- LOCAL REGEX (FAST & ACCURATE) ---
 def extract_local_data(text):
-    """
-    Uses local regex to quickly extract and normalize specific fields 
-    before sending to API. This saves tokens and ensures accuracy for patterns.
-    """
     data = {}
 
-    # 1. Local Email Extraction (High Accuracy Regex)
+    # 1. Email (Standard Pattern)
     email_match = re.search(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text)
     data['email'] = email_match.group(0) if email_match else None
 
-    # 2. Local Phone Extraction & Normalization (Digits Only)
-    # Find potential phone numbers (simple pattern for 9-15 digits)
-    phone_match = re.search(r'(\+?\(?\d{1,4}\)?[\s\.-]?)?(\d{3}[\s\.-]?\d{3}[\s\.-]?\d{4})', text)
+    # 2. Contact Number (Flexible International/Local Format)
+    # Looks for sequences of digits/spaces/dashes that resemble a phone number (7-15 digits long)
+    # This handles: 012-3456789, +60 12 345 6789, (123) 456-7890
+    phone_match = re.search(r'(\+?\(?\d{1,4}\)?[\s\.-]?)?(\d{2,5}[\s\.-]?\d{2,5}[\s\.-]?\d{2,5})', text)
+    
     if phone_match:
         raw_number = phone_match.group(0)
-        # NORMALIZE LOCALLY: Remove all non-digit characters
-        data['contact_number'] = re.sub(r'\D', '', raw_number)
+        # Check if it has at least 8 digits to be valid
+        digits_only = re.sub(r'\D', '', raw_number)
+        if len(digits_only) >= 8:
+            data['contact_number'] = digits_only
+        else:
+            data['contact_number'] = None
     else:
         data['contact_number'] = None
 
     return data
 
-# --- API FUNCTION ---
+# --- GEMINI API CALL ---
 def call_gemini(prompt):
     headers = {'Content-Type': 'application/json'}
     payload = {
@@ -83,7 +85,6 @@ def call_gemini(prompt):
         ]
     }
     
-    # Disable SSL warning for local dev environments
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -103,7 +104,7 @@ def call_gemini(prompt):
 def process_resume(file_path, pid=None):
     update_progress(pid, 10)
 
-    # 1. READ FILE (Local Code)
+    # 1. Read File
     file_ext = file_path.split('.')[-1].lower()
     if file_ext == 'pdf':
         full_text = extract_text_from_pdf(file_path)
@@ -117,14 +118,12 @@ def process_resume(file_path, pid=None):
 
     update_progress(pid, 30)
 
-    # 2. EXTRACT STRUCTURED DATA LOCALLY (Local Code)
-    # We grab email and phone locally because regex is faster and extremely reliable for patterns.
+    # 2. Local Extraction (Priority)
     local_data = extract_local_data(full_text)
 
     update_progress(pid, 50)
 
-    # 3. EXTRACT UNSTRUCTURED DATA VIA API
-    # We ask the API to handle the "messy" parts: Summarizing experience, formatting education, etc.
+    # 3. API Extraction (Messy Data)
     clean_text = re.sub(r'\s+', ' ', full_text).strip()[:30000] 
 
     prompt = f"""
@@ -138,9 +137,9 @@ def process_resume(file_path, pid=None):
     3. "address": Extract city, state, country OR full address.
     4. "education": List as "Course, University, Grade, Year". Newline for multiple.
     5. "skills": List key skills (technical & soft), comma-separated.
-    6. "experience": Summarize into short paragraphs/bullet points. Group by role.
-    7. "language": List languages and proficiency.
-    8. "others": Summarize awards/certs. Return null if empty/irrelevant.
+    6. "experience": Summarize into short paragraphs. Group by role.
+    7. "language": List languages and proficiency. If not explicitly listed, try to infer from context (e.g. "Native English speaker").
+    8. "others": Summarize awards/certs. Return null if empty.
     9. "objective": Short summary.
 
     Return strictly valid JSON.
@@ -156,24 +155,18 @@ def process_resume(file_path, pid=None):
         "language": None, "others": None, "objective": None, "full_text": full_text
     }
 
-    # 4. MERGE DATA (Hybrid Approach)
+    # 4. Merge API Data
     if api_response:
         try:
-            # Parse API JSON
             json_str = api_response.replace("```json", "").replace("```", "").strip()
             api_data = json.loads(json_str)
-            
-            # Merge API data into final_data
             for key in final_data:
                 if key in api_data:
                     final_data[key] = api_data[key]
-
         except json.JSONDecodeError:
             final_data['others'] = "Error parsing AI response"
 
-    # 5. OVERRIDE WITH LOCAL DATA (Best of both worlds)
-    # If local regex found an email/phone, prioritize it (usually more accurate formatting)
-    # If local regex failed but API found it, keep API version.
+    # 5. Override with Local Data (More Accurate)
     if local_data['email']:
         final_data['email'] = local_data['email']
     
@@ -191,7 +184,6 @@ if __name__ == "__main__":
     path = sys.argv[1]
     proc_id = sys.argv[2] if len(sys.argv) > 2 else None
 
-    # Check for API Key
     if not GEMINI_API_KEY:
         print(json.dumps({"error": "GEMINI_API_KEY missing in .env"}))
         sys.exit(1)
