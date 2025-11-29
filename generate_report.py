@@ -29,7 +29,7 @@ DB_CONFIG = {
 
 # --- GEMINI API CONFIGURATION ---
 # Using Gemini 1.5 Pro as requested
-GEMINI_API_KEY = "" 
+GEMINI_API_KEY = "AIzaSyAGrA3VmtkHxwhWXoOrSQU66fZnuL1HksQ" 
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
 # Priority Models (Start with 2.0-flash, then fall back to 1.5 if needed)

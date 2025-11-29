@@ -1,29 +1,34 @@
 <?php
-// get_interviews.php
-include 'connection.php';
+session_start();
+require 'connection.php'; // your database connection
+
 header('Content-Type: application/json');
 
-$sql = "
-    SELECT i.interview_id, c.name, j.job_name, i.interview_date, i.meeting_link 
-    FROM interview i
-    JOIN candidate c ON i.candidate_id = c.candidate_id
-    JOIN job_position j ON c.job_id = j.job_id
-";
-
+$sql = "SELECT id, candidate_id, interview_date, meet_link, interview_questions 
+        FROM interview_schedules";
 $result = $conn->query($sql);
+
 $events = [];
 
-if ($result) {
-    while($row = $result->fetch_assoc()) {
-        $events[] = [
-            'title' => $row['name'] . ' (' . $row['job_name'] . ')',
-            'start' => $row['interview_date'], // FullCalendar expects 'start'
-            'url'   => $row['meeting_link'],   // Click to join meeting
-            'color' => '#3a7c7c'
-        ];
-    }
+while ($row = $result->fetch_assoc()) {
+
+    // Build event title
+    $title = "Interview (Candidate ID: " . $row['candidate_id'] . ")";
+
+    // Build description to show in popup
+    $description = "<b>Candidate ID:</b> " . $row['candidate_id'] . "<br>"
+                 . "<b>Meet Link:</b> " . ($row['meet_link'] ?: 'Not provided') . "<br><br>"
+                 . "<b>Questions:</b><br>" . nl2br($row['interview_questions']);
+
+    $events[] = [
+        "id" => $row['id'],
+        "title" => $title,
+        "start" => $row['interview_date'],
+        "extendedProps" => [
+            "description" => $description
+        ]
+    ];
 }
 
 echo json_encode($events);
-$conn->close();
 ?>
