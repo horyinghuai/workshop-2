@@ -79,6 +79,7 @@ $conn->close();
             <i class="fas fa-chevron-left"></i> Back
         </a>
         <h1 class="header-title">Resume Reader</h1>
+        <a href="logout.php" class="logout-link">Log Out</a>
     </header>
 
     <main class="main-container">
