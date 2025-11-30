@@ -3,8 +3,13 @@ header('Content-Type: application/json');
 include 'connection.php'; // make sure this sets $conn
 
 // Correct table name and columns
-$sql = "SELECT interview_id AS id, candidate_id, interview_date, meeting_link, interview_questions 
-        FROM interview";
+$sql = "
+    SELECT i.interview_id, i.interview_date, i.meeting_link,
+           c.name, q.questions
+    FROM interview i
+    JOIN candidate c ON i.candidate_id = c.candidate_id
+    LEFT JOIN interview_questions q ON q.interview_id = i.interview_id
+";
 
 $result = $conn->query($sql);
 if (!$result) {
@@ -14,13 +19,13 @@ if (!$result) {
 $events = [];
 
 while ($row = $result->fetch_assoc()) {
-    $events[] = [
-        "id" => $row["id"],
-        "title" => "Interview with Candidate " . $row["candidate_id"],
-        "start" => $row["interview_date"],
-        "meet_link" => $row["meeting_link"],
-        "questions" => $row["interview_questions"]
-    ];
+   $events[] = [
+    "title" => $row["name"],        // ← only the name
+    "start" => $row["interview_date"],
+    "meet_link" => $row["meeting_link"],
+    "questions" => $row["questions"]
+   ];
+
 }
 
 echo json_encode($events);
