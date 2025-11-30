@@ -336,7 +336,7 @@ def process_candidate(candidate_id, pid=None):
 
         # 4. Overall Score Logic
         # "Average of 5 distinct scores if OTHERS is NOT NULL (score > 0)"
-        # "Average of 4 distinct scores if OTHERS is NULL (score == 0) 
+        # "Average of 4 distinct scores if OTHERS is NULL (score == 0)"
         if scores['others'] > 0:
             total_sum = scores['education'] + scores['skills'] + scores['experience'] + scores['language'] + scores['others']
             overall_score = total_sum / 5
