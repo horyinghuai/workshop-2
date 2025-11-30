@@ -1,31 +1,27 @@
 <?php
+// get_interviews.php
+include 'connection.php';
 header('Content-Type: application/json');
-include 'connection.php'; // make sure this sets $conn
 
-// Correct table name and columns
 $sql = "
-    SELECT i.interview_id, i.interview_date, i.meeting_link,
-           c.name, q.questions
+    SELECT i.interview_id, c.name, j.job_name, i.interview_date, i.meeting_link 
     FROM interview i
     JOIN candidate c ON i.candidate_id = c.candidate_id
-    LEFT JOIN interview_questions q ON q.interview_id = i.interview_id
+    JOIN job_position j ON c.job_id = j.job_id
 ";
 
 $result = $conn->query($sql);
-if (!$result) {
-    die("SQL Error: " . $conn->error);
-}
-
 $events = [];
 
-while ($row = $result->fetch_assoc()) {
-   $events[] = [
-    "title" => $row["name"],        // ← only the name
-    "start" => $row["interview_date"],
-    "meet_link" => $row["meeting_link"],
-    "questions" => $row["questions"]
-   ];
-
+if ($result) {
+    while($row = $result->fetch_assoc()) {
+        $events[] = [
+            'title' => $row['name'] . ' (' . $row['job_name'] . ')',
+            'start' => $row['interview_date'], // FullCalendar expects 'start'
+            'url'   => $row['meeting_link'],   // Click to join meeting
+            'color' => '#3a7c7c'
+        ];
+    }
 }
 
 echo json_encode($events);
