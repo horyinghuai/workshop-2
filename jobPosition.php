@@ -166,7 +166,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 
                 <div class="form-group">
                     <label for="othersInput">Others:</label>
-                    <input type="text" id="othersInput" name="others" placeholder="Others" >
+                    <input type="text" id="othersInput" name="others" placeholder="Others">
                 </div>
 
                 <div class="form-actions">
@@ -203,7 +203,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
     <script>
         $(document).ready(function() {
             // Function to handle the search logic
-            function performSearch() {
+            /*function performSearch() {
                 var searchTerm = $('#search-input').val(); // Get the value from the search input
 
                 $.ajax({
@@ -249,9 +249,51 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                     performSearch();
                 }
             });
-
+*/
             populateDepartmentDropdown();
+
+            // 🛑 Attach the search button click event 🛑
+            $('#search-btn').click(function() {
+                performRAGSearch(); // Call the new RAG function
+            });
+
+            // 🛑 Attach the Enter keypress event 🛑
+            $('#search-input').keypress(function(e) {
+                if (e.which == 13) { // 13 is the Enter key code
+                    performRAGSearch(); // Call the new RAG function
+                }
+            });
+
+            // 🛑 Optional: keyup (for showing all results when cleared) 🛑
+            $('#search-input').on('keyup', function() {
+                if ($(this).val().trim() === '') {
+                    performRAGSearch(); // Call the new RAG function
+                }
+            });
         });
+
+        // --- RAG SEARCH FUNCTION ---
+        function performRAGSearch() {
+            var nlQuery = $('#search-input').val().trim(); // Get query from the EXISTING search bar
+            if (nlQuery === "") return;
+
+            // Show loading state, assuming 10 columns total for centering messages
+            $('#job-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 10; text-align: center;">Searching Semantically (RAG)...</div></div>');
+
+            $.ajax({
+                url: 'execute_rag_query.php', // 🛑 Pointing to the PHP script that runs Python RAG
+                type: 'POST',
+                data: {
+                    nl_query: nlQuery
+                }, // Send the query text
+                success: function(response) {
+                    $('#job-list').html(response);
+                },
+                error: function() {
+                    $('#job-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 10; text-align: center; color: red;">Network error during RAG process.</div></div>');
+                }
+            });
+        }
 
         // Add jQuery functionality for the modal inside $(document).ready()
         // --- MODAL FUNCTIONALITY (ANIMATED) ---
