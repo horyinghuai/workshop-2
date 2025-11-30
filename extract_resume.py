@@ -6,7 +6,10 @@ import docx
 import os
 import requests
 import time
+import pickle
 from dotenv import load_dotenv
+from sklearn.feature_extraction.text import CountVectorizer # Required for loading vectorizer
+from sklearn.naive_bayes import MultinomialNB # Required for loading model
 
 # --- LOAD ENV VARIABLES ---
 load_dotenv()
@@ -15,6 +18,20 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
 VALID_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+
+# --- LOAD GENDER MODEL ---
+GENDER_VECTORIZER = None
+GENDER_MODEL = None
+
+try:
+    if os.path.exists('gender_vectorizer.pkl') and os.path.exists('gender_model.pkl'):
+        with open('gender_vectorizer.pkl', 'rb') as f:
+            GENDER_VECTORIZER = pickle.load(f)
+        with open('gender_model.pkl', 'rb') as f:
+            GENDER_MODEL = pickle.load(f)
+except Exception as e:
+    # Model not found or error loading, we will proceed but prediction will fail (blank)
+    pass
 
 # --- UTILS ---
 def update_progress(pid, percent):
@@ -45,6 +62,23 @@ def extract_text_from_docx(file_path):
         return ""
     return text
 
+def predict_gender(name):
+    """Predicts gender using the loaded local model. Returns '' if fails."""
+    if not name or not GENDER_VECTORIZER or not GENDER_MODEL:
+        return ""
+    
+    try:
+        # Use first name for better accuracy
+        first_name = name.split()[0].strip().lower()
+        if not first_name:
+            return ""
+            
+        name_vec = GENDER_VECTORIZER.transform([first_name])
+        prediction = GENDER_MODEL.predict(name_vec)
+        return prediction[0]
+    except Exception:
+        return ""
+
 # --- LOCAL REGEX (FAST & ACCURATE) ---
 def extract_local_data(text):
     data = {}
@@ -54,13 +88,10 @@ def extract_local_data(text):
     data['email'] = email_match.group(0) if email_match else None
 
     # 2. Contact Number (Flexible International/Local Format)
-    # Looks for sequences of digits/spaces/dashes that resemble a phone number (7-15 digits long)
-    # This handles: 012-3456789, +60 12 345 6789, (123) 456-7890
     phone_match = re.search(r'(\+?\(?\d{1,4}\)?[\s\.-]?)?(\d{2,5}[\s\.-]?\d{2,5}[\s\.-]?\d{2,5})', text)
     
     if phone_match:
         raw_number = phone_match.group(0)
-        # Check if it has at least 8 digits to be valid
         digits_only = re.sub(r'\D', '', raw_number)
         if len(digits_only) >= 8:
             data['contact_number'] = digits_only
@@ -126,6 +157,7 @@ def process_resume(file_path, pid=None):
     # 3. API Extraction (Messy Data)
     clean_text = re.sub(r'\s+', ' ', full_text).strip()[:30000] 
 
+    # Modified prompt: Removed Gender inference, we will use local model
     prompt = f"""
     You are a Resume Parser. Extract and normalize data from the resume text.
     
@@ -133,14 +165,13 @@ def process_resume(file_path, pid=None):
 
     Instructions:
     1. "name": Extract full name.
-    2. "gender": Infer Male/Female/Unknown.
-    3. "address": Extract city, state, country OR full address.
-    4. "education": List as "Course, University, Grade, Year". Newline for multiple.
-    5. "skills": List key skills (technical & soft), comma-separated.
-    6. "experience": Summarize into short paragraphs. Group by role.
-    7. "language": List languages and proficiency. If not explicitly listed, try to infer from context (e.g. "Native English speaker").
-    8. "others": Summarize awards/certs. Return null if empty.
-    9. "objective": Short summary.
+    2. "address": Extract city, state, country OR full address.
+    3. "education": List as "Course, University, Grade, Year". Newline for multiple.
+    4. "skills": List key skills (technical & soft), comma-separated.
+    5. "experience": Summarize into short paragraphs. Group by role.
+    6. "language": List languages and proficiency. If not explicitly listed, try to infer from context (e.g. "Native English speaker").
+    7. "others": Summarize awards/certs. Return null if empty.
+    8. "objective": Short summary.
 
     Return strictly valid JSON.
     """
@@ -150,7 +181,7 @@ def process_resume(file_path, pid=None):
     update_progress(pid, 80)
 
     final_data = {
-        "name": None, "gender": None, "email": None, "contact_number": None, 
+        "name": None, "gender": "", "email": None, "contact_number": None, 
         "address": None, "education": None, "skills": None, "experience": None, 
         "language": None, "others": None, "objective": None, "full_text": full_text
     }
@@ -161,7 +192,7 @@ def process_resume(file_path, pid=None):
             json_str = api_response.replace("```json", "").replace("```", "").strip()
             api_data = json.loads(json_str)
             for key in final_data:
-                if key in api_data:
+                if key in api_data and key != 'gender': # Skip gender from API
                     final_data[key] = api_data[key]
         except json.JSONDecodeError:
             final_data['others'] = "Error parsing AI response"
@@ -172,6 +203,16 @@ def process_resume(file_path, pid=None):
     
     if local_data['contact_number']:
         final_data['contact_number'] = local_data['contact_number']
+
+    # 6. Predict Gender Locally
+    if final_data['name']:
+        pred = predict_gender(final_data['name'])
+        if pred:
+            final_data['gender'] = pred
+        else:
+            final_data['gender'] = "" # Blank if fails
+    else:
+        final_data['gender'] = ""
 
     update_progress(pid, 100)
     return final_data
