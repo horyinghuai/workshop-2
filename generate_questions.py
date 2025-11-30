@@ -79,13 +79,18 @@ def generate_questions(candidate_id):
         )
 
         prompt = (
-            f"Role: Senior Technical Interviewer.\n"
-            f"Task: Generate a list of 8 interview questions (5 Technical, 3 Behavioral) for a candidate applying for {job.get('job_name')}.\n"
-            f"Job Requirements: {job_summary}\n"
-            f"Candidate Resume Summary: {cand_summary}\n"
-            f"Instructions:\n"
-            f"- Identify gaps between the candidate's resume and the job requirements.\n"
-            f"- Output strictly a numbered list of questions."
+            f"Role: Friendly Hiring Manager.\n"
+            f"Task: Write 8 short, simple interview questions (5 Technical, 3 Behavioral) for a {job.get('job_name')} role.\n"
+            f"Job Context: {job_summary}\n"
+            f"Candidate Info: {cand_summary}\n\n"
+            f"STRICT OUTPUT RULES:\n"
+            f"1. Start directly with Question 1. Do NOT include any intro text like 'Here are the questions'.\n"
+            f"2. Label each question clearly as **[Technical]** or **[Behavioral]**.\n"
+            f"3. Add a blank line (gap) between every question.\n"
+            f"4. Use simple, human-like English. Short sentences only.\n\n"
+            f"Content Guidelines:\n"
+            f"- If they miss a skill, ask about it kindly.\n"
+            f"- If they list a project, ask what they did there simply."
         )
 
         # 3. Call API
