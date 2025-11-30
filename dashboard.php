@@ -93,5 +93,7 @@ $conn->close();
         </a>
     </div>
 </main>
+    <?php include 'chatbot_widget.php'; ?>
 </body>
 </html>
+
