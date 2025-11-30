@@ -30,9 +30,13 @@
     .chat-message { display: flex; margin-bottom: 15px; }
     .chat-message.ai { justify-content: flex-start; }
     .chat-message.user { justify-content: flex-end; }
+    
     .chat-message p { padding: 10px 14px; max-width: 80%; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
+    
+    /* Colors */
     .chat-message.ai p { background: #e0e0e0; color: #333; border-radius: 10px 10px 10px 0; }
     .chat-message.user p { background: #3a7c7c; color: #fff; border-radius: 10px 10px 0 10px; }
+    .chat-message.system p { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 10px; width: 100%; text-align: center; }
 
     /* Input Area */
     .chat-input { display: flex; padding: 10px; border-top: 1px solid #ddd; background: #fff; }
@@ -51,7 +55,7 @@
     </div>
     <ul class="chatbox" id="chatbox">
         <li class="chat-message ai">
-            <p>Hi! 👋<br>Our working hours are 9 AM - 6 PM. How can we help?</p>
+            <p>Hi! 👋<br>How can we help you today?</p>
         </li>
     </ul>
     <div class="chat-input">
@@ -73,17 +77,48 @@
         return chatLi;
     }
 
+    const scrollToBottom = () => {
+        chatbox.scrollTo(0, chatbox.scrollHeight);
+    }
+
+    // --- 1. Load History & Start Polling ---
+    function loadChatHistory() {
+        fetch('check_reply.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                chatbox.innerHTML = ''; // Clear default greeting
+                
+                // Add Default Greeting if empty
+                if(data.messages.length === 0) {
+                     chatbox.appendChild(createChatLi("Hi! 👋<br>How can we help you today?", "ai"));
+                }
+
+                // Render History
+                data.messages.forEach(msg => {
+                    let type = "user";
+                    if (msg.sender === 'admin') type = "ai";
+                    if (msg.sender === 'system') type = "system"; // Auto-replies
+                    
+                    // Simple cleaning of breaks
+                    const text = msg.message.replace(/\n/g, '<br>');
+                    chatbox.appendChild(createChatLi(text, type));
+                });
+                scrollToBottom();
+            }
+        })
+        .catch(err => console.error("History load error:", err));
+    }
+
+    // --- 2. Send Message ---
     const handleChat = () => {
         const userMessage = chatInput.value.trim();
         if (!userMessage) return;
 
+        // Optimistic UI Update
         chatbox.appendChild(createChatLi(userMessage, "user"));
-        chatbox.scrollTo(0, chatbox.scrollHeight);
+        scrollToBottom();
         chatInput.value = "";
-
-        const loadingLi = createChatLi("Sending...", "ai");
-        chatbox.appendChild(loadingLi);
-        chatbox.scrollTo(0, chatbox.scrollHeight);
 
         const formData = new FormData();
         formData.append('message', userMessage);
@@ -91,44 +126,31 @@
         fetch('send_support_message.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
-            chatbox.removeChild(loadingLi);
-            
-            if(data.status === 'success') {
-                chatbox.appendChild(createChatLi(data.message, "ai"));
-                startPolling(); // Start listening for Admin reply
-            } 
-            else if(data.status === 'auto_reply') {
-                chatbox.appendChild(createChatLi(data.message, "ai"));
+            if(data.status === 'auto_reply') {
+                 // Auto reply (System) logic
+                 chatbox.appendChild(createChatLi(data.message, "system"));
+            } else if (data.status !== 'success') {
+                 chatbox.appendChild(createChatLi("❌ Error: " + data.message, "ai"));
             }
-            else {
-                chatbox.appendChild(createChatLi("❌ Error: " + data.message, "ai"));
-            }
-            chatbox.scrollTo(0, chatbox.scrollHeight);
+            // If success, we just wait for the poll to confirm persistence or do nothing
+            scrollToBottom();
         })
         .catch(() => {
-            chatbox.removeChild(loadingLi);
             chatbox.appendChild(createChatLi("❌ Network error.", "ai"));
         });
     }
 
-    // POLL FOR REPLIES FROM TELEGRAM
+    // --- 3. Start Polling ---
     function startPolling() {
-        if (pollingInterval) return; // Already polling
-        
-        pollingInterval = setInterval(() => {
-            fetch('check_reply.php')
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success' && data.replies) {
-                    data.replies.forEach(reply => {
-                        chatbox.appendChild(createChatLi("Admin: " + reply, "ai"));
-                        chatbox.scrollTo(0, chatbox.scrollHeight);
-                    });
-                }
-            })
-            .catch(err => console.error("Polling error:", err));
-        }, 3000); // Check every 3 seconds
+        // Poll every 4 seconds to sync history and get new replies
+        pollingInterval = setInterval(loadChatHistory, 4000);
     }
+
+    // Init
+    document.addEventListener("DOMContentLoaded", () => {
+        loadChatHistory();
+        startPolling();
+    });
 
     sendChatBtn.addEventListener("click", handleChat);
     chatInput.addEventListener("keydown", (e) => {

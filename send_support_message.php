@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'connection.php'; // Loads .env and DB connection
+include 'connection.php'; 
 header('Content-Type: application/json');
 
 // 1. Configuration
@@ -20,56 +20,37 @@ if (empty($message)) {
     exit;
 }
 
-// 3. Fetch User Details
-$session_email = $_SESSION['user_email'] ?? '';
+// 3. Identify User (Handle Multiple Guests)
 $final_name = 'Guest';
-$final_email = 'Guest';
+$final_email = '';
 
-if (!empty($session_email)) {
-    // Verify against USER table to get real name
-    $stmt = $conn->prepare("SELECT name, email FROM user WHERE email = ?");
-    if ($stmt) {
-        $stmt->bind_param("s", $session_email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
-            $final_name = $row['name'];
-            $final_email = $row['email'];
-        }
-        $stmt->close();
-    }
+if (!empty($_SESSION['user_email'])) {
+    // Logged in user
+    $final_email = $_SESSION['user_email'];
+    $final_name = $_SESSION['user_name'] ?? 'User';
+} else {
+    // Guest User: Use Session ID to create a unique fake email for threading
+    // This ensures Guest A and Guest B don't see each other's messages
+    $final_email = 'guest_' . session_id() . '@temp.com';
+    $final_name = 'Guest (' . substr(session_id(), 0, 5) . ')';
 }
 
-// 4. Log to Database
-$stmt = $conn->prepare("INSERT INTO support_messages (email, name, message) VALUES (?, ?, ?)");
-if ($stmt) {
-    $stmt->bind_param("sss", $final_email, $final_name, $message);
-    $stmt->execute();
-    $stmt->close();
-}
+// 4. Send Notification to Telegram & Capture Message ID
+$telegram_msg_id = null;
 
-// 5. Send Notification to Telegram (Always sent, regardless of time)
 if (!empty($telegram_bot_token) && !empty($telegram_chat_id)) {
     $time_str = date('Y-m-d H:i:s');
     
-    // Prepare Email Link
-    $email_display = "No email provided";
-    if ($final_email !== 'Guest') {
-        $mailto = "mailto:$final_email?subject=" . urlencode("Support Reply");
-        $email_display = "<a href='$mailto'>$final_email</a>";
-    }
+    // Create a clickable email link for the Admin
+    $display_email = ($final_name === 'Guest') ? "Guest Session" : $final_email;
 
-    // Build HTML Message
-    $text = "<b>📝 New Support Request</b>\n\n" .
+    $text = "<b>📩 New Support Request</b>\n" .
             "<b>👤 Name:</b> " . htmlspecialchars($final_name) . "\n" .
-            "<b>📧 Email:</b> " . $email_display . "\n" .
+            "<b>📧 Email:</b> " . $display_email . "\n" .
             "<b>🕒 Time:</b> $time_str\n\n" .
             "<b>💬 Message:</b>\n" . htmlspecialchars($message) . "\n\n" .
-            "<b>Reply Options:</b>\n" .
-            "1. Reply directly to this message.\n" .
-            "2. Click the email above.";
+            "<i>Reply to this message to send an answer to the user.</i>";
 
-    // Send via cURL
     $url = "https://api.telegram.org/bot$telegram_bot_token/sendMessage";
     $data = [
         'chat_id' => $telegram_chat_id,
@@ -83,22 +64,45 @@ if (!empty($telegram_bot_token) && !empty($telegram_chat_id)) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
-    curl_exec($ch);
+    
+    $result = curl_exec($ch);
     curl_close($ch);
+    
+    // Parse result to get Message ID for threading
+    if ($result) {
+        $json_res = json_decode($result, true);
+        if (isset($json_res['result']['message_id'])) {
+            $telegram_msg_id = $json_res['result']['message_id'];
+        }
+    }
 }
 
-// 6. Check Working Hours (9 AM - 6 PM) & Return Response
+// 5. Save User Message to Database (Persistence)
+$stmt = $conn->prepare("INSERT INTO support_messages (email, name, message, sender, telegram_msg_id) VALUES (?, ?, ?, 'user', ?)");
+if ($stmt) {
+    $stmt->bind_param("sssi", $final_email, $final_name, $message, $telegram_msg_id);
+    $stmt->execute();
+    $stmt->close();
+}
+
+// 6. Check Working Hours (9 AM - 6 PM)
 $current_hour = (int)date('H'); 
-$is_working_hours = ($current_hour >= 15 && $current_hour < 18);
+$is_working_hours = ($current_hour >= 9 && $current_hour < 18);
 
 if (!$is_working_hours) {
-    // Auto-reply for out of office
+    $auto_msg = "Thank you for contacting us. Our operating hours are 9:00 AM - 6:00 PM. We will attend to your message on the next working day.";
+    
+    // Save Auto-Reply to DB so it persists on restart
+    $stmt = $conn->prepare("INSERT INTO support_messages (email, name, message, sender) VALUES (?, 'System', ?, 'system')");
+    $stmt->bind_param("ss", $final_email, $auto_msg);
+    $stmt->execute();
+    $stmt->close();
+
     echo json_encode([
         'status' => 'auto_reply', 
-        'message' => "Thank you for contacting us. Our operating hours are 9:00 AM - 6:00 PM. We will attend to your message on the next working day."
+        'message' => $auto_msg
     ]);
 } else {
-    // Standard success message
     echo json_encode([
         'status' => 'success', 
         'message' => 'Message sent! Wait here for a reply.'
