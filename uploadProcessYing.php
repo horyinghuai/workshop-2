@@ -61,23 +61,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($extracted_data && !isset($extracted_data['error'])) {
                     
                     // --- DUPLICATE CHECK LOGIC ---
-                    $ext_name = $extracted_data['name'] ?? '';
                     $ext_email = $extracted_data['email'] ?? '';
-                    $ext_phone = $extracted_data['contact_number'] ?? '';
 
                     // Check if this candidate already applied for THIS job position
                     // We check against OTHER candidates (not the one we just inserted with $candidate_id)
                     $dup_sql = "SELECT candidate_id FROM candidate 
                                 WHERE job_id = ? 
                                 AND candidate_id != ? 
-                                AND (
-                                    (email IS NOT NULL AND email != '' AND email = ?) OR 
-                                    (contact_number IS NOT NULL AND contact_number != '' AND contact_number = ?) OR
-                                    (name IS NOT NULL AND name != '' AND name = ?)
-                                ) LIMIT 1";
+                                AND (email IS NOT NULL AND email != '' AND email = ?) LIMIT 1";
                                 
                     $stmt_dup = $conn->prepare($dup_sql);
-                    $stmt_dup->bind_param("iisss", $job_id, $candidate_id, $ext_email, $ext_phone, $ext_name);
+                    $stmt_dup->bind_param("iis", $job_id, $candidate_id, $ext_email);
                     $stmt_dup->execute();
                     $stmt_dup->store_result();
                     

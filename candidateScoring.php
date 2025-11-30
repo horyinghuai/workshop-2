@@ -1,3 +1,15 @@
+<?php
+session_start();
+// Include connection
+include 'connection.php';
+
+// Redirect to login if user not logged in
+if (!isset($_GET['email'])) { 
+    header('Location: login.php'); 
+    exit(); 
+}
+$currentEmail = $_GET['email'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,6 +70,20 @@
 
     #deleteSelectedBtn { display: none; margin-left: 1rem; padding: 0.6rem 1rem; border-radius: 8px; border: none; background: #e04b4b; color: white; font-weight: 600; cursor: pointer; }
 
+    /* NEW: Compare Button Style */
+    #compareSelectedBtn { 
+        display: none; 
+        margin-left: 1rem; 
+        padding: 0.6rem 1rem; 
+        border-radius: 8px; 
+        border: none; 
+        background: #2196F3; 
+        color: white; 
+        font-weight: 600; 
+        cursor: pointer; 
+    }
+    #compareSelectedBtn:hover { background: #1976D2; }
+
     .btn-accept { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
     .btn-reject { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
     
@@ -115,6 +141,7 @@
                             <option value="Language">Language</option>
                         </select>
                     </div>
+                    <button id="compareSelectedBtn"><i class="fas fa-balance-scale"></i> Compare Selected</button>
                     <button id="deleteSelectedBtn"><i class="fas fa-trash"></i> Delete Selected Row</button>
                 </div>
                 <div class="search-container" style="margin-left:auto;">
@@ -301,7 +328,7 @@
 
             if (!Array.isArray(allCandidates) || allCandidates.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="17" style="text-align: center; padding: 2rem;">No candidates found matching your criteria.</td></tr>`;
-                updateDeleteButtonVisibility();
+                updateButtonVisibility(); // Update button visibility on empty
                 return;
             }
 
@@ -352,7 +379,7 @@
             });
 
             attachRowEventListeners();
-            updateDeleteButtonVisibility();
+            updateButtonVisibility();
 
         } catch (error) {
             console.error('Error fetching candidates:', error);
@@ -406,19 +433,19 @@
     document.getElementById('btnCloseEditModal').addEventListener('click', () => document.getElementById('editCandidateModal').classList.remove('visible'));
 
     function attachRowEventListeners() {
-        document.querySelectorAll('input[name="candidate_check"]').forEach(cb => cb.addEventListener('change', updateDeleteButtonVisibility));
+        // UPDATED: Use a unified visibility updater for both buttons
+        document.querySelectorAll('input[name="candidate_check"]').forEach(cb => cb.addEventListener('change', updateButtonVisibility));
+        
         document.querySelectorAll('.status-btn').forEach(btn => btn.addEventListener('click', onStatusButtonClick));
         document.querySelectorAll('.btn-original').forEach(btn => btn.addEventListener('click', onOpenResume));
-        
-        // Updated handler for Formatted Resume button to allow VIEWING first
         document.querySelectorAll('.btn-formatted').forEach(btn => btn.addEventListener('click', onViewFormatted));
-        
         document.querySelectorAll('.btn-report').forEach(btn => btn.addEventListener('click', onReportClick));
+        
         const selectAll = document.getElementById('selectAll');
         if (selectAll) {
             selectAll.addEventListener('change', function() {
                 document.querySelectorAll('input[name="candidate_check"]').forEach(cb => cb.checked = this.checked);
-                updateDeleteButtonVisibility();
+                updateButtonVisibility();
             });
         }
     }
@@ -512,9 +539,29 @@
         } catch (err) { console.error(err); alert('Error deleting rows.'); }
     });
 
-    function updateDeleteButtonVisibility() {
-        const anyChecked = document.querySelectorAll('input[name="candidate_check"]:checked').length > 0;
-        document.getElementById('deleteSelectedBtn').style.display = anyChecked ? 'inline-block' : 'none';
+    // NEW: Compare Selected Handler
+    document.getElementById('compareSelectedBtn').addEventListener('click', () => {
+        const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);
+        
+        if (selected.length < 2 || selected.length > 3) {
+            alert("Please select 2 or 3 candidates to compare.");
+            return;
+        }
+        
+        // Redirect to comparison page
+        const idsParam = selected.join(',');
+        window.location.href = `compare.php?ids=${idsParam}&email=${encodeURIComponent(currentEmail)}`;
+    });
+
+    // UPDATED: Generic Visibility Updater
+    function updateButtonVisibility() {
+        const checkedCount = document.querySelectorAll('input[name="candidate_check"]:checked').length;
+        
+        // Delete button visible if 1+ selected
+        document.getElementById('deleteSelectedBtn').style.display = checkedCount > 0 ? 'inline-block' : 'none';
+        
+        // Compare button visible if 2 or 3 selected
+        document.getElementById('compareSelectedBtn').style.display = (checkedCount >= 2 && checkedCount <= 3) ? 'inline-block' : 'none';
     }
 
     // Resume Viewer (Only for Original)

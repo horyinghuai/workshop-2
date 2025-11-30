@@ -14,10 +14,12 @@ $currentEmail = $_GET['email'];
     <style>
         body { font-family: Arial, sans-serif; background: #f4f7f6; margin: 0; }
         .header { background: #3a7c7c; padding: 1.25rem 2rem; display: flex; align-items: center; color: white; }
-        .back-link { color: white; text-decoration: none; font-size: 1.2rem; font-weight: bold; }
+        .back-link { color: white; text-decoration: none; font-size: 1.5rem; font-weight: bold; }
         .main-container { padding: 40px; max-width: 1200px; margin: 0 auto; }
         #calendar { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .fc-event { cursor: pointer; }
+        .header .logout-link {position: absolute;right: 2rem;font-size: 1.5rem; text-decoration: none;color: white;}
+        .logout-link:hover {text-decoration: underline;}
 
         /* MODAL */
         #interviewModal {
@@ -57,6 +59,7 @@ $currentEmail = $_GET['email'];
         <i class="fas fa-chevron-left"></i> Back
     </a>
     <h1 style="flex-grow:1; text-align:center; margin:0;">Interview Calendar</h1>
+    <a href="logout.php" class="logout-link">Log Out</a>
 </header>
 
 <div class="main-container">

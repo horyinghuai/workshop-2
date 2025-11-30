@@ -82,10 +82,52 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F5F7FA; }
-        .preview-form-label { font-size: 0.875rem; font-weight: 500; color: #E0E0E0; margin-bottom: 4px; display: block; }
-        .preview-form-input { background-color: white; color: #111827; border: 1px solid #4B5563; border-radius: 0.5rem; padding: 0.75rem 1rem; width: 100%; font-weight: 500; }
-        textarea.preview-form-input { min-height: 100px; resize: vertical; }
+        /* --- DESIGN MATCHING report.php --- */
+        body { font-family: 'Inter', sans-serif; background-color: #f0f4f4; }
+        
+        /* Header styling */
+        .header-bar { background-color: #457b7d; color: white; }
+        
+        /* Left Column (Resume) - Light Teal */
+        .resume-col { background-color: #dbecea; color: #333; }
+        
+        /* Right Column (Form) - Dark Slate */
+        .report-col { background-color: #2F3E46; color: white; }
+        .report-col h2 { color: white; font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem; }
+        
+        /* Field Row Grid Layout (Label Left, Input Right) */
+        .field-row { 
+            display: grid; 
+            grid-template-columns: 140px 1fr; 
+            gap: 10px; 
+            align-items: start; 
+            margin-bottom: 12px; 
+        }
+        
+        /* Labels inside the dark column */
+        .field-row label { 
+            padding-top: 10px; 
+            font-size: 0.95rem; 
+            font-weight: 600; 
+            color: white; 
+        }
+
+        /* Input Styling */
+        .preview-form-input { 
+            background-color: white; 
+            color: #333; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            padding: 10px 12px; 
+            width: 100%; 
+            font-weight: normal; 
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 10px;
+        }
+        .preview-form-input:focus { border-color: #457b7d; box-shadow: 0 0 0 2px rgba(69, 123, 125, 0.2); }
+        textarea.preview-form-input { min-height: 80px; resize: vertical; }
         
         /* LOADING OVERLAY */
         .loading-overlay {
@@ -110,20 +152,29 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
         }
         .percentage { font-family: monospace; font-size: 1.2rem; margin-top: 10px; color: #60A5FA; }
         
-        /* Success Animation State */
         .loading-card.success {
-            border-color: #10B981; /* Green Border */
-            background: #064E3B; /* Darker Green BG */
+            border-color: #10B981; 
+            background: #064E3B; 
         }
         .loading-card.success .progress-bar {
-            background: #10B981; /* Solid Green Bar */
+            background: #10B981; 
         }
         .loading-card.success .percentage {
             color: #34D399;
         }
+        .header .logout-link {
+            position: absolute;
+            right: 2rem;
+            font-size: 1.5rem; 
+            text-decoration: none;
+            color: white;
+        }
+        .logout-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
-<body class="text-gray-900">
+<body class="h-screen flex flex-col overflow-hidden">
 
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-card" id="loadingCard">
@@ -137,56 +188,95 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
         </div>
     </div>
 
-    <header class="bg-white shadow-sm sticky top-0 z-50">
-        <nav class="max-w-7xl mx-auto px-4 py-4">
-            <a href="<?php echo $redirect_url; ?>" class="text-gray-600 font-bold">Back</a>
+    <header class="header-bar shadow-md flex-none z-50">
+        <nav class="max-w-screen-2xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <a href="<?php echo $redirect_url; ?>" class="text-white hover:text-gray-200 text-lg font-medium flex items-center gap-2 font-size-1.5rm">
+                    <i class="fas fa-chevron-left"></i> Back
+                </a>
+            </div>
+            <h1 class="text-3xl font-bold tracking-wide">Resume Reader</h1>
+            <a href="logout.php" class="logout-link">Log Out</a>
         </nav>
     </header>
 
-    <main class="max-w-screen-2xl mx-auto p-4">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <main class="flex-1 w-full overflow-hidden">
+        <div class="flex flex-col lg:flex-row h-full">
             
-            <!-- LEFT SIDE -->
-            <div class="bg-white rounded-xl shadow h-[1000px] p-4">
-                <h2 class="font-bold mb-4 text-gray-800">Original Resume</h2>
-                <?php if ($original_file_ext == 'pdf'): ?>
-                    <iframe src="<?php echo e($candidate['resume_original']); ?>" class="w-full h-full border rounded"></iframe>
-                <?php else: ?>
-                    <div class="text-center pt-20 text-gray-500">DOCX Preview Unavailable. <a href="<?php echo e($candidate['resume_original']); ?>" class="text-blue-500 underline">Download</a></div>
-                <?php endif; ?>
+            <div class="resume-col w-full lg:w-1/2 p-6 h-full flex flex-col border-r border-gray-300 overflow-hidden">
+                <h2 class="flex-none text-2xl font-bold text-gray-700 mb-4">Original Resume</h2>
+                <div class="flex-1 bg-white border rounded overflow-hidden relative">
+                    <?php if ($original_file_ext == 'pdf'): ?>
+                        <iframe src="<?php echo e($candidate['resume_original']); ?>" class="w-full h-full border-none"></iframe>
+                    <?php else: ?>
+                        <div class="absolute inset-0 flex flex-col justify-center items-center text-gray-500">
+                            <i class="fas fa-file-word fa-4x mb-4 text-blue-600"></i>
+                            <p class="text-lg font-medium">DOCX Preview Unavailable</p>
+                            <a href="<?php echo e($candidate['resume_original']); ?>" class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Download File</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
 
-            <!-- RIGHT SIDE -->
-            <div id="formatted-container" class="bg-[#37474F] text-white rounded-xl shadow p-6">
+            <div id="formatted-container" class="report-col w-full lg:w-1/2 p-6 h-full overflow-y-auto">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">Extracted Data</h2>
-                    <!-- DOWNLOAD BUTTON REMOVED HERE -->
+                    <h2>Extracted Data</h2>
                 </div>
                 
-                <form id="aiForm">
+                <form id="aiForm" class="space-y-1">
                     <input type="hidden" name="candidate_id" value="<?php echo $candidate_id; ?>">
                     
-                    <div id="pdf-content" class="space-y-5">
-                        <div><label class="preview-form-label">Name</label><input type="text" name="name" class="preview-form-input" value="<?php echo e($candidate['name']); ?>"></div>
-                        <div><label class="preview-form-label">Gender</label><input type="text" name="gender" class="preview-form-input" value="<?php echo e($candidate['gender']); ?>"></div>
-                        <div><label class="preview-form-label">Email</label><input type="email" name="email" class="preview-form-input" value="<?php echo e($candidate['email']); ?>"></div>
-                        <div><label class="preview-form-label">Contact</label><input type="text" name="contact_number" class="preview-form-input" value="<?php echo e($candidate['contact_number']); ?>"></div>
-                        <div><label class="preview-form-label">Address</label><textarea name="address" class="preview-form-input"><?php echo e($candidate['address']); ?></textarea></div>
-                        <div><label class="preview-form-label">Objective</label><textarea name="objective" class="preview-form-input"><?php echo e($candidate['objective']); ?></textarea></div>
-                        <div><label class="preview-form-label">Education</label><textarea name="education" rows="5" class="preview-form-input"><?php echo e($candidate['education']); ?></textarea></div>
-                        <div><label class="preview-form-label">Skills</label><textarea name="skills" rows="4" class="preview-form-input"><?php echo e($candidate['skills']); ?></textarea></div>
-                        <div><label class="preview-form-label">Experience</label><textarea name="experience" rows="6" class="preview-form-input"><?php echo e($candidate['experience']); ?></textarea></div>
-                        <div><label class="preview-form-label">Language</label><input type="text" name="language" class="preview-form-input" value="<?php echo e($candidate['language']); ?>"></div>
-                        <div><label class="preview-form-label">Others</label><textarea name="others" rows="4" class="preview-form-input"><?php echo e($candidate['others']); ?></textarea></div>
+                    <div class="field-row">
+                        <label>Name</label>
+                        <input type="text" name="name" class="preview-form-input" value="<?php echo e($candidate['name']); ?>">
+                    </div>
+                    <div class="field-row">
+                        <label>Gender</label>
+                        <input type="text" name="gender" class="preview-form-input" value="<?php echo e($candidate['gender']); ?>">
+                    </div>
+                    <div class="field-row">
+                        <label>Email</label>
+                        <input type="email" name="email" class="preview-form-input" value="<?php echo e($candidate['email']); ?>">
+                    </div>
+                    <div class="field-row">
+                        <label>Contact</label>
+                        <input type="text" name="contact_number" class="preview-form-input" value="<?php echo e($candidate['contact_number']); ?>">
+                    </div>
+                    <div class="field-row">
+                        <label>Address</label>
+                        <textarea name="address" class="preview-form-input"><?php echo e($candidate['address']); ?></textarea>
+                    </div>
+                    <div class="field-row">
+                        <label>Objective</label>
+                        <textarea name="objective" class="preview-form-input"><?php echo e($candidate['objective']); ?></textarea>
+                    </div>
+                    <div class="field-row">
+                        <label>Education</label>
+                        <textarea name="education" class="preview-form-input" style="height:120px"><?php echo e($candidate['education']); ?></textarea>
+                    </div>
+                    <div class="field-row">
+                        <label>Skills</label>
+                        <textarea name="skills" class="preview-form-input" style="height:100px"><?php echo e($candidate['skills']); ?></textarea>
+                    </div>
+                    <div class="field-row">
+                        <label>Experience</label>
+                        <textarea name="experience" class="preview-form-input" style="height:150px"><?php echo e($candidate['experience']); ?></textarea>
+                    </div>
+                    <div class="field-row">
+                        <label>Language</label>
+                        <input type="text" name="language" class="preview-form-input" value="<?php echo e($candidate['language']); ?>">
+                    </div>
+                    <div class="field-row">
+                        <label>Others</label>
+                        <textarea name="others" class="preview-form-input" style="height:100px"><?php echo e($candidate['others']); ?></textarea>
                     </div>
 
-                    <div class="mt-8 pt-6 border-t border-gray-500 flex gap-4">
-                        <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded">Confirm & Run AI</button>
+                    <div class="mt-8 pt-6 flex gap-4">
+                        <button type="submit" class="flex-1 bg-[#28a745] hover:bg-green-600 text-white font-bold py-3 rounded shadow transition">Confirm & Run AI</button>
                         
-                        <!-- UPDATED CANCEL BUTTON -->
                         <button type="button" 
                                 onclick="if(confirm('Are you sure you want to cancel? This candidate will be removed.')) location.href='previewResumeYing.php?action=delete&candidate_id=<?php echo $candidate_id; ?>&email=<?php echo urlencode($email); ?>'" 
-                                class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded">
+                                class="flex-1 bg-[#dc3545] hover:bg-red-600 text-white font-bold py-3 rounded shadow transition">
                             Cancel
                         </button>
                     </div>
