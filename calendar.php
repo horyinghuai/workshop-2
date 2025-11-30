@@ -1,4 +1,4 @@
-<?php
+<?php 
 session_start();
 if (!isset($_GET['email'])) { header('Location: login.php'); exit(); }
 $currentEmail = $_GET['email'];
@@ -28,6 +28,7 @@ $currentEmail = $_GET['email'];
             display: none;
             justify-content: center;
             align-items: center;
+            z-index: 9999;
         }
         .modal-box {
             background: white;
@@ -73,6 +74,10 @@ $currentEmail = $_GET['email'];
 </div>
 
 <script>
+function closeModal() {
+    document.getElementById('interviewModal').style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
 
@@ -86,46 +91,44 @@ document.addEventListener('DOMContentLoaded', function() {
         events: 'get_interviews.php',
 
         eventClick: function(info) {
-            let details = info.event.extendedProps.description;
+            info.jsEvent.preventDefault();
 
-            // Show popup
-            let popup = document.createElement("div");
-            popup.style.position = "fixed";
-            popup.style.top = "50%";
-            popup.style.left = "50%";
-            popup.style.transform = "translate(-50%, -50%)";
-            popup.style.background = "white";
-            popup.style.padding = "20px";
-            popup.style.borderRadius = "10px";
-            popup.style.boxShadow = "0 0 15px rgba(0,0,0,0.3)";
-            popup.style.zIndex = "9999";
-            popup.innerHTML = `
-                <h3>Interview Details</h3>
-                <p>${details}</p>
-                <button id="closePopup" style="
-                    margin-top:15px;
-                    padding:10px 15px;
-                    background:#3a7c7c;
-                    color:white;
-                    border:none;
-                    border-radius:5px;
-                    cursor:pointer;">
-                    Close
-                </button>
-            `;
+            // Extract event data
+            let candidateId = info.event.title.replace("Interview with Candidate ", "");
+            let meetLink = info.event.extendedProps.meet_link;
+            let questions = info.event.extendedProps.questions;
 
-            document.body.appendChild(popup);
+            // Set modal title
+            document.getElementById('modalTitle').textContent = "Candidate ID: " + candidateId;
 
-            document.getElementById('closePopup').onclick = function() {
-                popup.remove();
-            };
+            // Google Meet button
+            let meetBtn = document.getElementById('meetBtn');
+            if(meetLink) {
+                meetBtn.style.display = 'block';
+                meetBtn.href = meetLink;
+            } else {
+                meetBtn.style.display = 'none';
+            }
+
+            // Interview Questions button
+            let questionBtn = document.getElementById('questionBtn');
+            if(questions) {
+                questionBtn.style.display = 'block';
+                questionBtn.onclick = function() {
+                    alert("Interview Questions:\n\n" + questions);
+                };
+            } else {
+                questionBtn.style.display = 'none';
+            }
+
+            // Show modal
+            document.getElementById('interviewModal').style.display = 'flex';
         }
     });
 
     calendar.render();
 });
 </script>
-
 
 </body>
 </html>

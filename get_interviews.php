@@ -1,34 +1,28 @@
 <?php
-session_start();
-require 'connection.php'; // your database connection
-
 header('Content-Type: application/json');
+include 'connection.php'; // make sure this sets $conn
 
-$sql = "SELECT id, candidate_id, interview_date, meet_link, interview_questions 
-        FROM interview_schedules";
+// Correct table name and columns
+$sql = "SELECT interview_id AS id, candidate_id, interview_date, meeting_link, interview_questions 
+        FROM interview";
+
 $result = $conn->query($sql);
+if (!$result) {
+    die("SQL Error: " . $conn->error);
+}
 
 $events = [];
 
 while ($row = $result->fetch_assoc()) {
-
-    // Build event title
-    $title = "Interview (Candidate ID: " . $row['candidate_id'] . ")";
-
-    // Build description to show in popup
-    $description = "<b>Candidate ID:</b> " . $row['candidate_id'] . "<br>"
-                 . "<b>Meet Link:</b> " . ($row['meet_link'] ?: 'Not provided') . "<br><br>"
-                 . "<b>Questions:</b><br>" . nl2br($row['interview_questions']);
-
     $events[] = [
-        "id" => $row['id'],
-        "title" => $title,
-        "start" => $row['interview_date'],
-        "extendedProps" => [
-            "description" => $description
-        ]
+        "id" => $row["id"],
+        "title" => "Interview with Candidate " . $row["candidate_id"],
+        "start" => $row["interview_date"],
+        "meet_link" => $row["meeting_link"],
+        "questions" => $row["interview_questions"]
     ];
 }
 
 echo json_encode($events);
+$conn->close();
 ?>
