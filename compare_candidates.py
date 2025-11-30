@@ -87,9 +87,9 @@ def main():
     
     for i, c in enumerate(candidates):
         # Truncate long text to fit context window
-        edu = (c['education'] or 'N/A')[:300]
-        skills = (c['skills'] or 'N/A')[:300]
-        exp = (c['experience'] or 'N/A')[:400]
+        edu = (c['education'] or 'N/A')[:2000]
+        skills = (c['skills'] or 'N/A')[:2000]
+        exp = (c['experience'] or 'N/A')[:2000]
         
         prompt += f"--- CANDIDATE {i+1}: {c['name']} ---\n"
         prompt += f"Applied For: {c['job_name']}\n"
