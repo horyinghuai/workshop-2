@@ -31,8 +31,11 @@
     .chat-message.ai { justify-content: flex-start; }
     .chat-message.user { justify-content: flex-end; }
     .chat-message p { padding: 10px 14px; max-width: 80%; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
+    
+    /* Styles for different senders */
     .chat-message.ai p { background: #e0e0e0; color: #333; border-radius: 10px 10px 10px 0; }
     .chat-message.user p { background: #3a7c7c; color: #fff; border-radius: 10px 10px 0 10px; }
+    .chat-message.system p { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 10px; font-size: 0.85rem; }
 
     /* Input Area */
     .chat-input { display: flex; padding: 10px; border-top: 1px solid #ddd; background: #fff; }
@@ -51,7 +54,7 @@
     </div>
     <ul class="chatbox" id="chatbox">
         <li class="chat-message ai">
-            <p>Hi! 👋<br>Our working hours are 9 AM - 6 PM. How can we help?</p>
+            <p>Hi! 👋<br>How can we help you today?</p>
         </li>
     </ul>
     <div class="chat-input">
@@ -64,7 +67,12 @@
     const chatInput = document.getElementById("userMessage");
     const sendChatBtn = document.getElementById("sendBtn");
     const chatbox = document.getElementById("chatbox");
+    
+    let lastMessageId = 0; 
     let pollingInterval = null;
+    
+    // NEW: Track IDs to prevent ANY duplicates (from backend or self)
+    const displayedMessageIds = new Set();
 
     const createChatLi = (message, className) => {
         const chatLi = document.createElement("li");
@@ -77,13 +85,11 @@
         const userMessage = chatInput.value.trim();
         if (!userMessage) return;
 
-        chatbox.appendChild(createChatLi(userMessage, "user"));
+        // 1. Optimistic UI Update (Show immediately)
+        const tempLi = createChatLi(userMessage, "user");
+        chatbox.appendChild(tempLi);
         chatbox.scrollTo(0, chatbox.scrollHeight);
         chatInput.value = "";
-
-        const loadingLi = createChatLi("Sending...", "ai");
-        chatbox.appendChild(loadingLi);
-        chatbox.scrollTo(0, chatbox.scrollHeight);
 
         const formData = new FormData();
         formData.append('message', userMessage);
@@ -91,44 +97,72 @@
         fetch('send_support_message.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
-            chatbox.removeChild(loadingLi);
-            
-            if(data.status === 'success') {
-                chatbox.appendChild(createChatLi(data.message, "ai"));
-                startPolling(); // Start listening for Admin reply
-            } 
-            else if(data.status === 'auto_reply') {
-                chatbox.appendChild(createChatLi(data.message, "ai"));
+            // 2. Register the real ID from DB so poller doesn't duplicate it
+            if(data.db_message_id) {
+                displayedMessageIds.add(parseInt(data.db_message_id));
+                lastMessageId = Math.max(lastMessageId, parseInt(data.db_message_id));
             }
-            else {
-                chatbox.appendChild(createChatLi("❌ Error: " + data.message, "ai"));
+
+            // 3. Handle Auto-reply
+            if(data.status === 'auto_reply') {
+                // Check if we haven't already shown this auto-reply (rare but safe)
+                if(data.sys_message_id && !displayedMessageIds.has(parseInt(data.sys_message_id))) {
+                    chatbox.appendChild(createChatLi(data.message, "system"));
+                    chatbox.scrollTo(0, chatbox.scrollHeight);
+                    
+                    displayedMessageIds.add(parseInt(data.sys_message_id));
+                    lastMessageId = Math.max(lastMessageId, parseInt(data.sys_message_id));
+                }
             }
-            chatbox.scrollTo(0, chatbox.scrollHeight);
+            // Ensure polling is running
+            startPolling(); 
         })
         .catch(() => {
-            chatbox.removeChild(loadingLi);
-            chatbox.appendChild(createChatLi("❌ Network error.", "ai"));
+            chatbox.appendChild(createChatLi("❌ Network error. Message may not have sent.", "ai"));
         });
     }
 
-    // POLL FOR REPLIES FROM TELEGRAM
     function startPolling() {
-        if (pollingInterval) return; // Already polling
+        if (pollingInterval) return; 
         
         pollingInterval = setInterval(() => {
-            fetch('check_reply.php')
+            fetch(`check_reply.php?last_id=${lastMessageId}`)
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'success' && data.replies) {
-                    data.replies.forEach(reply => {
-                        chatbox.appendChild(createChatLi("Admin: " + reply, "ai"));
-                        chatbox.scrollTo(0, chatbox.scrollHeight);
+                if (data.status === 'success' && data.messages) {
+                    let scrolled = false;
+                    
+                    data.messages.forEach(msg => {
+                        const mId = parseInt(msg.id);
+                        
+                        // STRICT DEDUPLICATION CHECK
+                        if (displayedMessageIds.has(mId)) {
+                            return; // Skip if already shown
+                        }
+
+                        let msgClass = 'ai'; // Default Admin
+                        if (msg.sender === 'system') msgClass = 'system';
+                        if (msg.sender === 'user') msgClass = 'user';
+
+                        chatbox.appendChild(createChatLi(msg.message, msgClass));
+                        
+                        // Mark as shown
+                        displayedMessageIds.add(mId);
+                        lastMessageId = Math.max(lastMessageId, mId);
+                        scrolled = true;
                     });
+
+                    if(scrolled) {
+                        chatbox.scrollTo(0, chatbox.scrollHeight);
+                    }
                 }
             })
             .catch(err => console.error("Polling error:", err));
-        }, 3000); // Check every 3 seconds
+        }, 3000); 
     }
+
+    // Initial Poll
+    startPolling();
 
     sendChatBtn.addEventListener("click", handleChat);
     chatInput.addEventListener("keydown", (e) => {
