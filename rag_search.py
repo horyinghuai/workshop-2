@@ -54,17 +54,22 @@ async def search_candidates_rag(user_query, top_k=5):
     query_vector = np.array(response.embeddings[0].values)
 
     results = []
+    # Set a minimum score threshold (0.0 to 1.0)
+    # Adjust this value: 0.5 is strict, 0.4 is moderate, 0.3 is loose.
+    MIN_SCORE_THRESHOLD = 0.5 
+
     for item in STORED_VECTORS:
-        # --- INDENTATION FIX START ---
         similarity = cosine_similarity(query_vector, item['vector'])
         
-        # These lines were outside the loop. Move them IN (press Tab):
-        results.append({"job_id": item['job_id'], "score": similarity})
-        print(f"Job {item['job_id']} similarity: {similarity:.4f}")  # DEBUG
-        # --- INDENTATION FIX END ---
-
+        # Only add to results if the score is high enough
+        if similarity >= MIN_SCORE_THRESHOLD:
+            results.append({"job_id": item['job_id'], "score": similarity})
+    
+    # Sort by highest score
     results.sort(key=lambda x: x['score'], reverse=True)
-    return [r['job_id'] for r in results[:5]]
+    
+    # Return the top K from the filtered list
+    return [r['job_id'] for r in results[:top_k]]
 
 # Main execution
 if __name__ == "__main__":

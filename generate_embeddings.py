@@ -27,7 +27,7 @@ conn = mysql.connector.connect(
 cursor = conn.cursor(dictionary=True)
 
 # --- Fetch all jobs ---
-cursor.execute("SELECT * FROM job_position")
+cursor.execute("SELECT * FROM job_position WHERE embedding IS NULL")
 jobs = cursor.fetchall()
 
 for job in jobs:

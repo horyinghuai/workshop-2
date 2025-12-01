@@ -275,17 +275,22 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
         // --- RAG SEARCH FUNCTION ---
         function performRAGSearch() {
             var nlQuery = $('#search-input').val().trim(); // Get query from the EXISTING search bar
-            if (nlQuery === "") return;
+            
+            // 🛑 FIX: If query is empty, reload the page to reset the table
+            if (nlQuery === "") {
+                window.location.reload();
+                return;
+            }
 
             // Show loading state, assuming 10 columns total for centering messages
             $('#job-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 10; text-align: center;">Searching Semantically (RAG)...</div></div>');
 
             $.ajax({
-                url: 'execute_rag_query.php', // 🛑 Pointing to the PHP script that runs Python RAG
+                url: 'execute_rag_query.php',
                 type: 'POST',
                 data: {
                     nl_query: nlQuery
-                }, // Send the query text
+                }, 
                 success: function(response) {
                     $('#job-list').html(response);
                 },

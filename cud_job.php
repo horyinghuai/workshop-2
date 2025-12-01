@@ -38,17 +38,18 @@ if (isset($_POST['action_type'])) {
             // UPDATE (Edit Existing Department)
             $id = $_POST['job_id'];
             $sql = "UPDATE job_position
-                    SET 
-                        department_id = ?, 
-                        job_name = ?, 
-                        description = ?, 
-                        education = ?, 
-                        skills = ?, 
-                        experience = ?, 
-                        language = ?, 
-                        others = ?
-                    WHERE 
-                        job_id = ?";
+            SET 
+                embedding = NULL,  /* <--- ADD THIS LINE */
+                department_id = ?, 
+                job_name = ?, 
+                description = ?, 
+                education = ?, 
+                skills = ?, 
+                experience = ?, 
+                language = ?, 
+                others = ?
+            WHERE 
+                job_id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("isssssssi", 
                     $deptId,
@@ -64,14 +65,23 @@ if (isset($_POST['action_type'])) {
         }
 
        if ($stmt->execute()) {
+            // --- AUTO-GENERATE EMBEDDING ---
+            // This executes the python script in the background
+            // "2>&1" captures errors if needed
+            $command = "python generate_embeddings.py";
+            
+            // NOTE: If your server has path issues, use this robust version:
+            // $command = "cd " . __DIR__ . " && python generate_embeddings.py";
+            
+            shell_exec($command);
+            // -------------------------------
+
             $message = $action === 'add' ? "Job added successfully!" : "Job updated successfully!";
-            // Append status and email query string
             header("Location: jobPosition.php?status=success&message=" . urlencode($message) . $emailQuery);
         } else {
             // Append error and email query string
             header("Location: jobPosition.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery);
         }
-
         $stmt->close();
     }
 
