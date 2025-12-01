@@ -21,11 +21,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $contact = $_POST['contact_number'] ?? '';
         $address = $_POST['address'] ?? '';
 
-        $sql = "UPDATE candidate SET name=?, gender=?, email=?, contact_number=?, address=? WHERE candidate_id=?";
+        // 🛑 FIX: Reset embedding to NULL
+        $sql = "UPDATE candidate SET embedding = NULL, name=?, gender=?, email=?, contact_number=?, address=? WHERE candidate_id=?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("sssssi", $name, $gender, $email, $contact, $address, $candidate_id);
 
         if ($stmt->execute()) {
+            // 🛑 FIX: Trigger Python script
+            $command = "python generate_embeddings_candidate.py";
+            shell_exec($command);
+            
             $response['success'] = true;
             $response['message'] = 'Candidate updated successfully.';
         } else {

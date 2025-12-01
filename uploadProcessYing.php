@@ -142,6 +142,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                     
                     if ($stmt_update->execute()) {
+                        // 🛑 TRIGGER EMBEDDING GENERATION AUTOMATICALLY 🛑
+                        // This ensures the new candidate gets an embedding immediately
+                        $embedCommand = $python_path . " generate_embeddings_candidate.py";
+                        shell_exec($embedCommand);
+                        // ------------------------------------------------
+
                         echo json_encode(['status' => 'success', 'candidate_id' => $candidate_id, 'email' => $current_email]);
                     } else {
                         echo json_encode(['status' => 'error', 'message' => 'Database Update Failed: ' . $stmt_update->error]);

@@ -272,8 +272,9 @@ $currentEmail = $_GET['email'];
 
 <script>
     const currentEmail = '<?php echo $currentEmail; ?>';
-    let allCandidates = []; 
+    let allCandidates = [];
 
+    // --- Filter UI Logic ---
     document.querySelectorAll('.filter-title').forEach(button => {
         button.addEventListener('click', function() {
             const targetId = this.dataset.target;
@@ -283,28 +284,35 @@ $currentEmail = $_GET['email'];
         });
     });
 
+    // --- Fetch Dynamic Filters (Positions & Departments) ---
     async function fetchDynamicFilters() {
         try {
             const response = await fetch('get_filters.php');
             const data = await response.json();
+            
             const jobPositionOptions = document.getElementById('job-position-options');
-            jobPositionOptions.innerHTML = ''; 
+            jobPositionOptions.innerHTML = '';
             data.job_positions.forEach(job => {
                 jobPositionOptions.innerHTML += `<div class="filter-option"><label><input type="checkbox" name="job_position" value="${escapeHtml(job)}"> ${escapeHtml(job)}</label></div>`;
             });
+
             const departmentOptions = document.getElementById('department-options');
-            departmentOptions.innerHTML = ''; 
+            departmentOptions.innerHTML = '';
             data.departments.forEach(dept => {
                 departmentOptions.innerHTML += `<div class="filter-option"><label><input type="checkbox" name="department" value="${escapeHtml(dept)}"> ${escapeHtml(dept)}</label></div>`;
             });
-        } catch (error) { console.error('Error fetching dynamic filters:', error); }
+        } catch (error) {
+            console.error('Error fetching dynamic filters:', error);
+        }
     }
 
+    // --- Utility: Escape HTML ---
     function escapeHtml(text) {
         if (text === null || text === undefined) return '';
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
+    // --- Fetch Candidates (Standard Filter Search) ---
     async function fetchCandidates() {
         const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
         const selectedJobPositions = Array.from(document.querySelectorAll('input[name="job_position"]:checked')).map(cb => cb.value);
@@ -324,11 +332,11 @@ $currentEmail = $_GET['email'];
             allCandidates = await response.json();
 
             const tableBody = document.getElementById('candidateTableBody');
-            tableBody.innerHTML = ''; 
+            tableBody.innerHTML = '';
 
             if (!Array.isArray(allCandidates) || allCandidates.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="17" style="text-align: center; padding: 2rem;">No candidates found matching your criteria.</td></tr>`;
-                updateButtonVisibility(); // Update button visibility on empty
+                updateButtonVisibility();
                 return;
             }
 
@@ -346,7 +354,7 @@ $currentEmail = $_GET['email'];
                     `;
                 } else {
                     let colorStyle = 'color: #333;';
-                    if (outreachStatus.includes('Scheduled')) colorStyle = 'color: #28a745;'; 
+                    if (outreachStatus.includes('Scheduled')) colorStyle = 'color: #28a745;';
                     else if (outreachStatus.includes('Rejected')) colorStyle = 'color: #dc3545;';
                     outreachContent = `<span style="font-weight:600; font-size:0.9rem; ${colorStyle}">${escapeHtml(outreachStatus)}</span>`;
                 }
@@ -387,9 +395,45 @@ $currentEmail = $_GET['email'];
         }
     }
 
+    // --- RAG SEARCH FUNCTION ---
+    function performRAGSearch() {
+        var nlQuery = document.getElementById('searchInput').value.trim();
+
+        // If query is empty, reload standard fetch to reset table
+        if (nlQuery === "") {
+            fetchCandidates();
+            return;
+        }
+
+        const tableBody = document.getElementById('candidateTableBody');
+        // Show loading state
+        tableBody.innerHTML = '<tr><td colspan="17" style="text-align: center; padding: 2rem; font-weight: bold; color: #3a7c7c;">Searching Semantically (RAG)...</td></tr>';
+
+        const formData = new FormData();
+        formData.append('nl_query', nlQuery);
+
+        fetch('execute_rag_query_candidate.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(html => {
+            tableBody.innerHTML = html;
+            
+            // Re-attach listeners to the new HTML rows
+            attachRowEventListeners();
+            updateButtonVisibility();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            tableBody.innerHTML = '<tr><td colspan="17" style="text-align: center; color: red;">Network error during RAG process.</td></tr>';
+        });
+    }
+
+    // --- Edit Candidate ---
     function openEditCandidate(id) {
         const candidate = allCandidates.find(c => c.id == id);
-        if(!candidate) return;
+        if (!candidate) return;
         document.getElementById('edit_candidate_id').value = candidate.id;
         document.getElementById('edit_name').value = candidate.name;
         document.getElementById('edit_gender').value = candidate.gender || '';
@@ -405,16 +449,19 @@ $currentEmail = $_GET['email'];
         try {
             const resp = await fetch('cud_candidate.php', { method: 'POST', body: formData });
             const data = await resp.json();
-            if(data.success) {
+            if (data.success) {
                 alert(data.message);
                 document.getElementById('editCandidateModal').classList.remove('visible');
                 fetchCandidates();
             } else alert('Error: ' + data.message);
-        } catch(e) { console.error(e); alert("Request failed."); }
+        } catch (e) {
+            console.error(e);
+            alert("Request failed.");
+        }
     });
 
     document.getElementById('btnDeleteCandidate').addEventListener('click', async () => {
-        if(!confirm("Are you sure you want to delete this candidate?")) return;
+        if (!confirm("Are you sure you want to delete this candidate?")) return;
         const id = document.getElementById('edit_candidate_id').value;
         const formData = new FormData();
         formData.append('action_type', 'delete');
@@ -422,25 +469,27 @@ $currentEmail = $_GET['email'];
         try {
             const resp = await fetch('cud_candidate.php', { method: 'POST', body: formData });
             const data = await resp.json();
-            if(data.success) {
+            if (data.success) {
                 alert(data.message);
                 document.getElementById('editCandidateModal').classList.remove('visible');
-                fetchCandidates(); 
+                fetchCandidates();
             } else alert('Error: ' + data.message);
-        } catch(e) { console.error(e); alert("Request failed."); }
+        } catch (e) {
+            console.error(e);
+            alert("Request failed.");
+        }
     });
 
     document.getElementById('btnCloseEditModal').addEventListener('click', () => document.getElementById('editCandidateModal').classList.remove('visible'));
 
+    // --- Event Listeners for Table Rows ---
     function attachRowEventListeners() {
-        // UPDATED: Use a unified visibility updater for both buttons
         document.querySelectorAll('input[name="candidate_check"]').forEach(cb => cb.addEventListener('change', updateButtonVisibility));
-        
         document.querySelectorAll('.status-btn').forEach(btn => btn.addEventListener('click', onStatusButtonClick));
         document.querySelectorAll('.btn-original').forEach(btn => btn.addEventListener('click', onOpenResume));
         document.querySelectorAll('.btn-formatted').forEach(btn => btn.addEventListener('click', onViewFormatted));
         document.querySelectorAll('.btn-report').forEach(btn => btn.addEventListener('click', onReportClick));
-        
+
         const selectAll = document.getElementById('selectAll');
         if (selectAll) {
             selectAll.addEventListener('change', function() {
@@ -450,12 +499,15 @@ $currentEmail = $_GET['email'];
         }
     }
 
-    // --- VIEW FORMATTED RESUME (Generated from DB Data) ---
+    // --- View Formatted Resume (PDF) ---
     async function onViewFormatted(e) {
         const id = e.currentTarget.dataset.id;
         const candidate = allCandidates.find(c => c.id == id);
-        
-        if (!candidate) { alert('Candidate data not found.'); return; }
+
+        if (!candidate) {
+            alert('Candidate data not loaded for PDF generation. Please ensure standard search is used or candidate is in list.');
+            return;
+        }
 
         const popup = document.getElementById('sendingPopup');
         const progressText = document.getElementById('sendingProgress');
@@ -472,7 +524,6 @@ $currentEmail = $_GET['email'];
             container.style.color = '#333';
             container.style.lineHeight = '1.6';
 
-            // Construct HTML from DB Data
             container.innerHTML = `
                 <div style="text-align:center; border-bottom: 2px solid #3a7c7c; padding-bottom: 20px; margin-bottom: 20px;">
                     <h1 style="color:#3a7c7c; margin:0;">${escapeHtml(candidate.name)}</h1>
@@ -509,13 +560,12 @@ $currentEmail = $_GET['email'];
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
-            // Use 'output' with 'bloburl' to open in new tab instead of saving immediately
             const pdfBlobUrl = await html2pdf().set(opt).from(container).output('bloburl');
             window.open(pdfBlobUrl, '_blank');
 
             document.body.removeChild(container);
             popup.style.display = 'none';
-            popup.querySelector('h3').innerText = "Processing..."; 
+            popup.querySelector('h3').innerText = "Processing...";
 
         } catch (err) {
             console.error(err);
@@ -524,7 +574,7 @@ $currentEmail = $_GET['email'];
         }
     }
 
-    // Bulk Delete
+    // --- Bulk Actions ---
     document.getElementById('deleteSelectedBtn').addEventListener('click', async () => {
         const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);
         if (!selected.length) return;
@@ -536,35 +586,31 @@ $currentEmail = $_GET['email'];
             const result = await resp.json();
             if (result && result.success) fetchCandidates();
             else alert('Failed to delete selected rows.');
-        } catch (err) { console.error(err); alert('Error deleting rows.'); }
+        } catch (err) {
+            console.error(err);
+            alert('Error deleting rows.');
+        }
     });
 
-    // NEW: Compare Selected Handler
     document.getElementById('compareSelectedBtn').addEventListener('click', () => {
         const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);
-        
+
         if (selected.length < 2 || selected.length > 3) {
             alert("Please select 2 or 3 candidates to compare.");
             return;
         }
-        
-        // Redirect to comparison page
+
         const idsParam = selected.join(',');
         window.location.href = `compare.php?ids=${idsParam}&email=${encodeURIComponent(currentEmail)}`;
     });
 
-    // UPDATED: Generic Visibility Updater
     function updateButtonVisibility() {
         const checkedCount = document.querySelectorAll('input[name="candidate_check"]:checked').length;
-        
-        // Delete button visible if 1+ selected
         document.getElementById('deleteSelectedBtn').style.display = checkedCount > 0 ? 'inline-block' : 'none';
-        
-        // Compare button visible if 2 or 3 selected
         document.getElementById('compareSelectedBtn').style.display = (checkedCount >= 2 && checkedCount <= 3) ? 'inline-block' : 'none';
     }
 
-    // Resume Viewer (Only for Original)
+    // --- Resume Viewer ---
     const resumeOverlay = document.getElementById('resumeViewerOverlay');
     const resumeIframe = document.getElementById('resumeViewerIframe');
     function onOpenResume(e) {
@@ -574,11 +620,15 @@ $currentEmail = $_GET['email'];
         resumeOverlay.classList.add('visible');
     }
     document.getElementById('closeResumeViewer').addEventListener('click', () => resumeOverlay.classList.remove('visible'));
-    resumeOverlay.addEventListener('click', (e) => { if(e.target === resumeOverlay) resumeOverlay.classList.remove('visible'); });
+    resumeOverlay.addEventListener('click', (e) => {
+        if (e.target === resumeOverlay) resumeOverlay.classList.remove('visible');
+    });
 
+    // --- Status Updates ---
     const statusOverlay = document.getElementById('statusOverlay');
     const statusSelect = document.getElementById('statusSelect');
     let currentStatusCandidateId = null;
+
     function onStatusButtonClick(e) {
         const btn = e.currentTarget;
         currentStatusCandidateId = btn.dataset.candidateId;
@@ -592,7 +642,7 @@ $currentEmail = $_GET['email'];
         formData.append('status', statusSelect.value);
         const resp = await fetch('update_status.php', { method: 'POST', body: formData });
         const res = await resp.json();
-        if(res.success) {
+        if (res.success) {
             statusOverlay.classList.remove('visible');
             fetchCandidates();
         } else alert('Failed to update status.');
@@ -604,11 +654,13 @@ $currentEmail = $_GET['email'];
         window.location.href = `report.php?email=${currentEmail}&candidate_id=${encodeURIComponent(id)}`;
     }
 
+    // --- Outreach / Email ---
     let outreachData = { id: null, email: null, action: null, meetLink: null };
+
     function openOutreach(id, email, action) {
         outreachData = { id, email, action };
         const cand = allCandidates.find(c => c.id == id);
-        if(cand) outreachData.email = cand.email;
+        if (cand) outreachData.email = cand.email;
         document.getElementById('outreachTitle').innerText = action === 'accept' ? "Schedule Interview" : "Rejection Outreach";
         document.getElementById('dateGroup').style.display = action === 'accept' ? 'block' : 'none';
         document.getElementById('previewArea').style.display = 'none';
@@ -616,7 +668,7 @@ $currentEmail = $_GET['email'];
         document.getElementById('btnGenerate').style.display = 'inline-block';
         document.getElementById('outreachModal').classList.add('visible');
     }
-    window.openOutreach = openOutreach; 
+    window.openOutreach = openOutreach;
 
     document.getElementById('btnGenerate').addEventListener('click', () => {
         const date = document.getElementById('interviewDate').value;
@@ -627,19 +679,19 @@ $currentEmail = $_GET['email'];
         formData.append('action', outreachData.action);
         formData.append('date', date);
         fetch('get_email_draft.php', { method: 'POST', body: formData })
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('aiLoading').style.display = 'none';
-            if(data.status === 'success') {
-                document.getElementById('previewArea').style.display = 'block';
-                document.getElementById('emailSubject').value = data.subject;
-                document.getElementById('emailBody').value = data.body;
-                outreachData.meetLink = data.meet_link;
-                if(data.email_to) outreachData.email = data.email_to; 
-                document.getElementById('btnGenerate').style.display = 'none';
-                document.getElementById('btnSendEmail').style.display = 'inline-block';
-            } else alert(data.message);
-        });
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('aiLoading').style.display = 'none';
+                if (data.status === 'success') {
+                    document.getElementById('previewArea').style.display = 'block';
+                    document.getElementById('emailSubject').value = data.subject;
+                    document.getElementById('emailBody').value = data.body;
+                    outreachData.meetLink = data.meet_link;
+                    if (data.email_to) outreachData.email = data.email_to;
+                    document.getElementById('btnGenerate').style.display = 'none';
+                    document.getElementById('btnSendEmail').style.display = 'inline-block';
+                } else alert(data.message);
+            });
     });
 
     document.getElementById('btnSendEmail').addEventListener('click', () => {
@@ -650,41 +702,72 @@ $currentEmail = $_GET['email'];
         formData.append('action', outreachData.action);
         formData.append('subject', document.getElementById('emailSubject').value);
         formData.append('body', document.getElementById('emailBody').value);
-        formData.append('email', outreachData.email); 
-        if(outreachData.meetLink) formData.append('meet_link', outreachData.meetLink);
+        formData.append('email', outreachData.email);
+        if (outreachData.meetLink) formData.append('meet_link', outreachData.meetLink);
         const date = document.getElementById('interviewDate').value;
-        if(date) formData.append('interview_date', date);
+        if (date) formData.append('interview_date', date);
 
         fetch('send_outreach.php', { method: 'POST', body: formData })
-        .then(res => res.json())
-        .then(data => {
-            popup.style.display = 'none';
-            if(data.status === 'success') {
-                alert("Email sent!");
-                document.getElementById('outreachModal').classList.remove('visible');
-                fetchCandidates();
-            } else alert("Failed: " + data.message);
-        });
+            .then(res => res.json())
+            .then(data => {
+                popup.style.display = 'none';
+                if (data.status === 'success') {
+                    alert("Email sent!");
+                    document.getElementById('outreachModal').classList.remove('visible');
+                    fetchCandidates();
+                } else alert("Failed: " + data.message);
+            });
     });
 
+    // --- Initialization ---
     document.addEventListener('DOMContentLoaded', async () => {
         await fetchDynamicFilters();
         fetchCandidates();
+
+        // 🛑 Bind RAG Search Events 🛑
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.which == 13) { // Enter key
+                performRAGSearch();
+            }
+        });
+
+        // Optional: Trigger RAG when the search icon is clicked
+        const searchIcon = document.querySelector('.search-container .fa-search');
+        if(searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', performRAGSearch);
+        }
+
+        // Reset search on empty input
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            if (this.value.trim() === '') {
+                fetchCandidates();
+            }
+        });
     });
+
     document.getElementById('resetFilters').addEventListener('click', () => {
         document.querySelectorAll('.filter-sidebar input[type="checkbox"]').forEach(cb => cb.checked = false);
         document.getElementById('searchInput').value = '';
         document.getElementById('scoreDropdown').value = 'All';
         fetchCandidates();
     });
-    document.getElementById('searchInput').addEventListener('input', debounce(fetchCandidates, 300));
+
+    // Note: Debounce is kept but only applied to filtered fetch if you want normal filtering typing
+    // For RAG, we prefer explicit Enter key to avoid constant API calls.
+    // document.getElementById('searchInput').addEventListener('input', debounce(fetchCandidates, 300));
+
     document.getElementById('scoreDropdown').addEventListener('change', fetchCandidates);
     document.getElementById('status-options').addEventListener('change', fetchCandidates);
     document.getElementById('job-position-options').addEventListener('change', fetchCandidates);
     document.getElementById('department-options').addEventListener('change', fetchCandidates);
 
     function debounce(func, wait) {
-        let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); };
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
     }
 </script>
 </body>
