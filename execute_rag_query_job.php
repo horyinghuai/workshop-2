@@ -11,7 +11,7 @@ if (empty($user_query)) {
 }
 
 // 1. Execute Python RAG search script
-$python_command = "python rag_search.py " . escapeshellarg($user_query);
+$python_command = "python rag_search_job.py " . escapeshellarg($user_query);
 $json_output = shell_exec($python_command);
 $python_result = json_decode($json_output, true);
 

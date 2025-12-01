@@ -172,120 +172,97 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
     </div>
     <script>
         $(document).ready(function() {
-            // Function to handle the search logic
-            function performSearch() {
-                var searchTerm = $('#search-input').val(); // Get the value from the search input
-
-                $.ajax({
-                    url: 'search_department.php', // The new file we created to handle the request
-                    type: 'POST',
-                    data: {
-                        search_term: searchTerm
-                    }, // Send the search term to the PHP file
-                    // Before sending 
-                    beforeSend: function() {
-                        $('#department-list').html('<div class="table-row"><div class="table-cell data" style="width: 100%; text-align: center;">Searching...</div></div>');
-                    },
-                    // On success, update the content
-                    success: function(response) {
-                        // Replace the content of the department list with the new rows from the PHP file
-                        $('#department-list').html(response);
-                    },
-                    // On error
-                    error: function() {
-                        alert('An error occurred during the search.');
-                    }
-                });
-            }
-
-            // Attach the search function to the button click event
+            // Attach the search button click event
             $('#search-btn').click(function() {
-                performSearch();
+                performRAGSearch();
             });
 
-            // Optional: Also perform search when the user presses Enter in the input field
+            // Attach the Enter keypress event
             $('#search-input').keypress(function(e) {
                 if (e.which == 13) { // 13 is the Enter key code
-                    performSearch();
+                    performRAGSearch();
                 }
             });
 
-            // Optional: Initial load function to show all results (this is already handled by PHP)
-            // You could use this to reset the search if the input is cleared
+            // Initial load function/Reset on empty
             $('#search-input').on('keyup', function() {
                 if ($(this).val().trim() === '') {
-                    performSearch();
+                    performRAGSearch();
                 }
             });
         });
+
+        // --- RAG SEARCH FUNCTION ---
+        function performRAGSearch() {
+            var nlQuery = $('#search-input').val().trim(); 
+            
+            // If query is empty, reload the page to reset the table
+            if (nlQuery === "") {
+                window.location.reload();
+                return;
+            }
+
+            // Show loading state
+            $('#department-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 3; text-align: center;">Searching Semantically (RAG)...</div></div>');
+
+            $.ajax({
+                url: 'execute_rag_query_dept.php', // Points to the new Department RAG script
+                type: 'POST',
+                data: {
+                    nl_query: nlQuery
+                }, 
+                success: function(response) {
+                    $('#department-list').html(response);
+                },
+                error: function() {
+                    $('#department-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 3; text-align: center; color: red;">Network error during RAG process.</div></div>');
+                }
+            });
+        }
 
         // --- MODAL FUNCTIONALITY (ANIMATED) ---
 
         // Function to close the modal
         function closeModal() {
-            // 1. Start the hide animation (revert to scale(0.9) and opacity 0)
             $('#departmentModal').removeClass('modal-show');
-
-            // 2. After the animation finishes (300ms), hide the modal fully using display: none
             setTimeout(function() {
                 $('#departmentModal').hide();
-                // Clear form fields
                 $('#departmentForm')[0].reset();
                 $('#departmentId').val('');
-            }, 300); // 300ms matches the CSS transition duration
+            }, 300); 
         }
 
         // Function to open the modal
         function openModal() {
-            // 1. Make the overlay visible immediately (sets display: flex)
             $('#departmentModal').css('display', 'flex');
-
-            // 2. After the browser renders 'display: flex', add the class to trigger the smooth transition
-            // A small delay (or wrap in setTimeout(..., 10) or nextTick logic) is often needed to force the transition
             setTimeout(function() {
                 $('#departmentModal').addClass('modal-show');
             }, 10);
         }
-
 
         // Open Modal for Adding
         $('.add-department-btn').click(function() {
             $('#modalTitle').text('Add Department');
             $('#actionType').val('add');
             $('#confirmBtn').text('Confirm');
-            openModal(); // Use the new function
+            openModal();
         });
 
         // Open Modal for Editing 
         $('#department-list').on('click', '.edit-btn', function() {
-            // 1. Get the parent row of the clicked button
             var $row = $(this).closest('.table-row');
-
-            // 2. Get the unique ID from the button's data-id attribute
             var currentId = $(this).data('id');
-
-            // 3. Extract Department Name (It's the first .table-cell.data in the row)
-            // We use .eq(0) to target the first cell and .text().trim() to clean the data
             var currentName = $row.find('.table-cell.data').eq(0).text().trim();
-
-            // 4. Extract Description (It's the table-cell with class .description.data)
             var currentDesc = $row.find('.table-cell.description.data').text().trim();
 
-            // --- Populate the modal fields ---
-
-            // Hidden ID field (Crucial for the UPDATE query in crud_department.php)
             $('#departmentId').val(currentId);
-
-            // Visible fields
             $('#departmentNameInput').val(currentName);
             $('#departmentDescriptionInput').val(currentDesc);
 
-            // Set modal title and action type
             $('#modalTitle').text('Edit Department: ' + currentName);
             $('#actionType').val('edit');
             $('#confirmBtn').text('Save Changes');
 
-            // Open the modal with animation
             openModal();
         });
 
@@ -297,17 +274,15 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             }
         });
 
-        // Open Modal for Deleting (attached to buttons loaded via PHP)
+        // Open Modal for Deleting
         $('#department-list').on('click', '.delete-btn', function() {
             var $row = $(this).closest('.table-row');
             var currentId = $(this).data('id');
             var currentName = $row.find('.table-cell.data').eq(0).text().trim();
 
-            // Populate the modal fields
             $('#deleteDepartmentId').val(currentId);
             $('#departmentToDeleteName').text(currentName);
 
-            // Open the modal (using the flex display for centering and animation)
             $('#deleteModal').css('display', 'flex');
             setTimeout(function() {
                 $('#deleteModal').addClass('modal-show');
@@ -319,169 +294,47 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             $('#deleteModal').removeClass('modal-show');
             setTimeout(function() {
                 $('#deleteModal').hide();
-                // Clear the ID on close
                 $('#deleteDepartmentId').val('');
             }, 300);
         }
 
-    // Optional: Initial load function to show all results (this is already handled by PHP)
-    $('#search-input').on('keyup', function() {
-        if ($(this).val().trim() === '') {
-            performSearch();
-        }
+        // Close Delete Modal handlers
+        $('#cancelDeleteBtn').click(closeDeleteModal);
+        $('#deleteModal').click(function(e) {
+            if (e.target.id === 'deleteModal') {
+                closeDeleteModal();
+            }
         });
 
-// --- MODAL FUNCTIONALITY (ANIMATED) ---
+        // --- NOTIFICATION FUNCTIONALITY ---
+        function displayNotification() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+            const message = urlParams.get('message');
 
-// Function to close the modal
-function closeModal() {
-    // 1. Start the hide animation (revert to scale(0.9) and opacity 0)
-    $('#departmentModal').removeClass('modal-show');
-    
-    // 2. After the animation finishes (300ms), hide the modal fully using display: none
-    setTimeout(function() {
-        $('#departmentModal').hide();
-        // Clear form fields
-        $('#departmentForm')[0].reset(); 
-        $('#departmentId').val('');
-    }, 300); // 300ms matches the CSS transition duration
-}
+            if (status && message) {
+                const decodedMessage = decodeURIComponent(message);
+                const $box = $('#notification-box');
+                const $msg = $('#notification-message');
 
-// Function to open the modal
-function openModal() {
-    // 1. Make the overlay visible immediately (sets display: flex)
-    $('#departmentModal').css('display', 'flex');
-    
-    // 2. After the browser renders 'display: flex', add the class to trigger the smooth transition
-    setTimeout(function() {
-        $('#departmentModal').addClass('modal-show');
-    }, 10);
-}
+                $box.removeClass('success error'); 
+                $msg.text(decodedMessage);
 
+                if (status === 'success') {
+                    $box.addClass('success');
+                } else if (status === 'error') {
+                    $box.addClass('error');
+                }
 
-// Open Modal for Adding
-$('.add-department-btn').click(function() {
-    $('#modalTitle').text('Add Department');
-    $('#actionType').val('add');
-    $('#confirmBtn').text('Confirm');
-    openModal(); // Use the new function
-});
+                $box.slideDown(300);
+                history.replaceState(null, null, window.location.pathname);
 
-// Open Modal for Editing 
-$('#department-list').on('click', '.edit-btn', function() {
-   // 1. Get the parent row of the clicked button
-   var $row = $(this).closest('.table-row');
-   
-   // 2. Get the unique ID from the button's data-id attribute
-   var currentId = $(this).data('id'); 
-
-   // 3. Extract Department Name (It's the first .table-cell.data in the row)
-   var currentName = $row.find('.table-cell.data').eq(0).text().trim();
-   
-   // 4. Extract Description (It's the table-cell with class .description.data)
-   var currentDesc = $row.find('.table-cell.description.data').text().trim();
-   
-   // --- Populate the modal fields ---
-   
-   // Hidden ID field (Crucial for the UPDATE query in crud_department.php)
-   $('#departmentId').val(currentId);
-   
-   // Visible fields
-   $('#departmentNameInput').val(currentName);
-   $('#departmentDescriptionInput').val(currentDesc);
-   
-   // Set modal title and action type
-   $('#modalTitle').text('Edit Department: ' + currentName);
-   $('#actionType').val('edit');
-   $('#confirmBtn').text('Save Changes');
-   
-   // Open the modal with animation
-   openModal();
-});
-
-// Close Modal handlers
-$('#cancelBtn').click(closeModal);
-$('#departmentModal').click(function(e) {
-    if (e.target.id === 'departmentModal') {
-        closeModal();
-    }
-});
-
-// Open Modal for Deleting (attached to buttons loaded via PHP)
-$('#department-list').on('click', '.delete-btn', function() {
-    var $row = $(this).closest('.table-row');
-    var currentId = $(this).data('id'); 
-    var currentName = $row.find('.table-cell.data').eq(0).text().trim();
-    
-    // Populate the modal fields
-    $('#deleteDepartmentId').val(currentId);
-    $('#departmentToDeleteName').text(currentName);
-    
-    // Open the modal (using the flex display for centering and animation)
-    $('#deleteModal').css('display', 'flex');
-    setTimeout(function() {
-        $('#deleteModal').addClass('modal-show');
-    }, 10);
-});
-
-// Function to close the delete modal
-function closeDeleteModal() {
-    $('#deleteModal').removeClass('modal-show');
-    setTimeout(function() {
-        $('#deleteModal').hide();
-        // Clear the ID on close
-        $('#deleteDepartmentId').val(''); 
-    }, 300);
-}
-
-// Close Delete Modal handlers
-$('#cancelDeleteBtn').click(closeDeleteModal);
-
-// Close modal if user clicks outside the content area (on the overlay)
-$('#deleteModal').click(function(e) {
-    if (e.target.id === 'deleteModal') {
-        closeDeleteModal();
-    }
-});
-
-// --- NOTIFICATION FUNCTIONALITY ---
-
-function displayNotification() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const status = urlParams.get('status');
-    const message = urlParams.get('message');
-    
-    if (status && message) {
-        const decodedMessage = decodeURIComponent(message);
-        const $box = $('#notification-box');
-        const $msg = $('#notification-message');
-        
-        $box.removeClass('success error'); // Clear previous classes
-        $msg.text(decodedMessage);
-        
-        if (status === 'success') {
-            $box.addClass('success');
-        } else if (status === 'error') {
-            $box.addClass('error');
+                setTimeout(function() {
+                    $box.slideUp(500);
+                }, 5000);
+            }
         }
-        
-        $box.slideDown(300);
-        
-        // Remove the parameters from the URL after display
-        history.replaceState(null, null, window.location.pathname);
-
-        // Auto-hide after 5 seconds
-        setTimeout(function() {
-            $box.slideUp(500);
-        }, 5000);
-    }
-}
-
-// Call the function on page load
-displayNotification();
-</script>
-
-
+        displayNotification();
+    </script>
 </body>
-
 </html>

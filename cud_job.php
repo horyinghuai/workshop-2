@@ -68,7 +68,7 @@ if (isset($_POST['action_type'])) {
             // --- AUTO-GENERATE EMBEDDING ---
             // This executes the python script in the background
             // "2>&1" captures errors if needed
-            $command = "python generate_embeddings.py";
+            $command = "python generate_embeddings_job.py";
             
             // NOTE: If your server has path issues, use this robust version:
             // $command = "cd " . __DIR__ . " && python generate_embeddings.py";

@@ -286,7 +286,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             $('#job-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 10; text-align: center;">Searching Semantically (RAG)...</div></div>');
 
             $.ajax({
-                url: 'execute_rag_query.php',
+                url: 'execute_rag_query_job.php',
                 type: 'POST',
                 data: {
                     nl_query: nlQuery

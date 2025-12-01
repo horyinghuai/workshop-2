@@ -29,19 +29,23 @@ if (isset($_POST['action_type'])) {
             $message = "Department added successfully!";
         } else { // action === 'edit'
             // UPDATE (Edit Existing Department)
+            // 🛑 FIX: Reset embedding to NULL so AI regenerates it
             $id = $_POST['department_id'];
-            $sql = "UPDATE department SET department_name = ?, description = ? WHERE department_id = ?";
+            $sql = "UPDATE department SET embedding = NULL, department_name = ?, description = ? WHERE department_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssi", $name, $description, $id); // "ssi" = two strings, one integer
+            $stmt->bind_param("ssi", $name, $description, $id); 
             $message = "Department updated successfully!";
         }
         
        if ($stmt->execute()) {
-            $message = $action === 'add' ? "Job added successfully!" : "Job updated successfully!";
-            // Append status and email query string
+            // 🛑 FIX: Trigger Python script to generate embeddings
+            $command = "python generate_embeddings_dept.py";
+            shell_exec($command);
+            // --------------------------------------------------
+
+            $message = $action === 'add' ? "Department added successfully!" : "Department updated successfully!";
             header("Location: jobDepartment.php?status=success&message=" . urlencode($message) . $emailQuery);
         } else {
-            // Append error and email query string
             header("Location: jobDepartment.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery);
         }
         
@@ -52,24 +56,20 @@ if (isset($_POST['action_type'])) {
     elseif ($action === 'delete' && isset($_POST['department_id'])) {
         $id = $_POST['department_id'];
         
-        // DELETE Department
         $sql = "DELETE FROM department WHERE department_id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $id); // "i" = one integer
+        $stmt->bind_param("i", $id);
 
       if ($stmt->execute()) {
-            $message = "Job deleted successfully!";
-            // 🛑 FIX 4: Append status and email query string
+            $message = "Department deleted successfully!";
             header("Location: jobDepartment.php?status=success&message=" . urlencode($message) . $emailQuery);
         } else {
-            // 🛑 FIX 5: Append error and email query string
             header("Location: jobDepartment.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery);
         }
         
         $stmt->close();
     }
 } else {
-    // Handle direct access to the script without POST data
     header("Location: jobDepartment.php?status=error&message=" . urlencode("Invalid action request.") . $emailQuery);
 }
 
