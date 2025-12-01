@@ -55,9 +55,13 @@ async def search_candidates_rag(user_query, top_k=5):
 
     results = []
     for item in STORED_VECTORS:
+        # --- INDENTATION FIX START ---
         similarity = cosine_similarity(query_vector, item['vector'])
-    results.append({"job_id": item['job_id'], "score": similarity})
-    print(f"Job {item['job_id']} similarity: {similarity:.4f}")  # DEBUG
+        
+        # These lines were outside the loop. Move them IN (press Tab):
+        results.append({"job_id": item['job_id'], "score": similarity})
+        print(f"Job {item['job_id']} similarity: {similarity:.4f}")  # DEBUG
+        # --- INDENTATION FIX END ---
 
     results.sort(key=lambda x: x['score'], reverse=True)
     return [r['job_id'] for r in results[:5]]
