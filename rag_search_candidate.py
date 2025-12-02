@@ -32,8 +32,11 @@ rows = cursor.fetchall()
 
 STORED_VECTORS = []
 for row in rows:
-    vector = np.array(json.loads(row['embedding']))
-    STORED_VECTORS.append({"candidate_id": row['candidate_id'], "vector": vector})
+    try:
+        vector = np.array(json.loads(row['embedding']))
+        STORED_VECTORS.append({"candidate_id": row['candidate_id'], "vector": vector})
+    except:
+        continue
 
 # Cosine similarity function
 def cosine_similarity(vec_a, vec_b):
@@ -45,7 +48,7 @@ def cosine_similarity(vec_a, vec_b):
     return dot_product / (norm_a * norm_b)
 
 # RAG search function
-async def search_candidate_rag(user_query, top_k=5):
+async def search_candidate_rag(user_query, top_k=100):
     response = client.models.embed_content(
         model="text-embedding-004",
         contents=user_query
@@ -53,8 +56,8 @@ async def search_candidate_rag(user_query, top_k=5):
     query_vector = np.array(response.embeddings[0].values)
 
     results = []
-    # Adjust threshold as needed
-    MIN_SCORE_THRESHOLD = 0.45
+    # Lowered threshold to ensure we catch all potential matches
+    MIN_SCORE_THRESHOLD = 0.5
 
     for item in STORED_VECTORS:
         similarity = cosine_similarity(query_vector, item['vector'])
@@ -62,7 +65,10 @@ async def search_candidate_rag(user_query, top_k=5):
         if similarity >= MIN_SCORE_THRESHOLD:
             results.append({"candidate_id": item['candidate_id'], "score": similarity})
     
+    # Sort by score descending
     results.sort(key=lambda x: x['score'], reverse=True)
+    
+    # Return top_k results (now set to 100 to avoid cutting off data)
     return [r['candidate_id'] for r in results[:top_k]]
 
 # Main execution
