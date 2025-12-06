@@ -13,7 +13,7 @@ $sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'All';
 // New Filter: Archive status (Default 0: Active)
 $is_archived = isset($_GET['is_archived']) ? intval($_GET['is_archived']) : 0;
 
-// FIXED SQL QUERY
+// FIXED SQL QUERY with updated joins and column names
 $sql = "SELECT c.*, 
         jp.job_name as applied_job_position, 
         d.department_name as department, 

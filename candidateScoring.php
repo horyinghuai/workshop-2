@@ -30,7 +30,7 @@ $currentEmail = $_GET['email'];
 
     .edit-modal-wrapper {
         background: #fff; padding: 30px; border: 30px solid #9fc2c6; border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); width: 90%; max-width: 600px; /* Widened for 4 buttons */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); width: 90%; max-width: 650px;
         box-sizing: border-box; opacity: 0; transform: scale(0.9);
         transition: opacity 0.3s ease-out, transform 0.3s ease-out;
     }
@@ -43,19 +43,17 @@ $currentEmail = $_GET['email'];
         box-sizing: border-box; background-color: #d9ebec; font-family: 'Inter', sans-serif;
     }
     
-    /* Updated Form Actions Layout */
-    .edit-modal-wrapper .form-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 25px; flex-wrap: wrap; }
-    
-    /* Button Styles */
-    .edit-modal-wrapper button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; flex: 1; font-weight: bold; color: white; min-width: 80px; }
-    
-    .btn-confirm { background-color: #28a745; } /* Green */
-    .btn-cancel { background-color: #6c757d; } /* Grey */
+    /* Form Actions */
+    .edit-modal-wrapper .form-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 25px; }
+    .edit-modal-wrapper button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; flex: 1; font-weight: bold; color: white; }
+
+    .btn-confirm { background-color: #28a745; }
+    .btn-cancel { background-color: #6c757d; }
     
     /* Action Buttons */
-    .btn-action-archive { background-color: #fd7e14; } /* Orange */
-    .btn-action-restore { background-color: #17a2b8; } /* Teal */
-    .btn-action-delete { background-color: #dc3545; } /* Red */
+    .btn-action-archive { background-color: #fd7e14; }
+    .btn-action-restore { background-color: #17a2b8; }
+    .btn-action-delete { background-color: #dc3545; }
     
     .btn-action-archive:hover { background-color: #e36d0d; }
     .btn-action-restore:hover { background-color: #138496; }
@@ -105,7 +103,7 @@ $currentEmail = $_GET['email'];
         margin-left: 1rem; padding: 0.6rem 1rem; border-radius: 8px; border: none;
         background: #6c757d; color: white; font-weight: 600; cursor: pointer;
     }
-    #toggleArchiveBtn.active-view { background: #3a7c7c; } /* Style when viewing archives */
+    #toggleArchiveBtn.active-view { background: #3a7c7c; }
 
     .btn-accept { background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
     .btn-reject { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
@@ -177,7 +175,7 @@ $currentEmail = $_GET['email'];
                     <input type="text" class="search-input" placeholder="Search" id="searchInput">
                 </div>
             </div>
-                <h2 id="tableTitle" style="margin: 0 0 5px 10px; color: #3a7c7c;">Active Candidates</h2>
+                <h2 id="tableTitle" style="margin: 0 0 10px 10px; color: #3a7c7c;">Active Candidates</h2>
             <div class="candidate-table-container">
                 <table class="candidate-table">
                     <thead>
@@ -390,9 +388,9 @@ $currentEmail = $_GET['email'];
 
                 if (!outreachStatus && !isArchiveView) {
                      outreachContent = `
-                        <div style="display:flex; gap:5px;" id="outreach-btns-${candidate.id}">
-                            <button class="btn-accept" title="Schedule Interview" onclick="openOutreach('${escapeHtml(candidate.id)}', '', 'accept')"><i class="fas fa-check"></i></button>
-                            <button class="btn-reject" title="Reject Candidate" onclick="openOutreach('${escapeHtml(candidate.id)}', '', 'reject')"><i class="fas fa-times"></i></button>
+                        <div style="display:flex; gap:5px;" id="outreach-btns-${candidate.candidate_id}">
+                            <button class="btn-accept" title="Schedule Interview" onclick="openOutreach('${escapeHtml(candidate.candidate_id)}', '', 'accept')"><i class="fas fa-check"></i></button>
+                            <button class="btn-reject" title="Reject Candidate" onclick="openOutreach('${escapeHtml(candidate.candidate_id)}', '', 'reject')"><i class="fas fa-times"></i></button>
                         </div>
                     `;
                 } else if(outreachStatus) {
@@ -407,30 +405,30 @@ $currentEmail = $_GET['email'];
                 if(isArchiveView) {
                     statusCell = `<span style="font-weight:bold; color:#666;">${escapeHtml(candidate.status)}</span>`;
                 } else {
-                    statusCell = `<button class="status-btn" data-candidate-id="${escapeHtml(candidate.id)}" data-current-status="${escapeHtml(candidate.status)}">${escapeHtml(candidate.status)}</button>`;
+                    statusCell = `<button class="status-btn" data-candidate-id="${escapeHtml(candidate.candidate_id)}" data-current-status="${escapeHtml(candidate.status)}">${escapeHtml(candidate.status)}</button>`;
                 }
 
                 // Name and Restore Button logic (List Icon)
-                let nameCell = `<span class="clickable-name" onclick="openEditCandidate(${candidate.id})">${escapeHtml(candidate.name)}</span>`;
+                let nameCell = `<span class="clickable-name" onclick="openEditCandidate(${candidate.candidate_id})">${escapeHtml(candidate.name)}</span>`;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><input type="checkbox" name="candidate_check" value="${escapeHtml(candidate.id)}"></td>
+                    <td><input type="checkbox" name="candidate_check" value="${escapeHtml(candidate.candidate_id)}"></td>
                     <td>${nameCell}</td>
                     <td>${escapeHtml(candidate.applied_job_position)}</td>
                     <td>${escapeHtml(candidate.department)}</td>
                     <td>${escapeHtml(candidate.applied_date)}</td>
-                    <td>${escapeHtml(candidate.overall_score)}</td>
-                    <td>${escapeHtml(candidate.education_score)}</td>
-                    <td>${escapeHtml(candidate.skills_score)}</td>
-                    <td>${escapeHtml(candidate.experience_score)}</td>
-                    <td>${escapeHtml(candidate.language_score)}</td>
-                    <td>${escapeHtml(candidate.others_score)}</td>
+                    <td>${escapeHtml(candidate.score_overall)}</td>
+                    <td>${escapeHtml(candidate.score_education)}</td>
+                    <td>${escapeHtml(candidate.score_skills)}</td>
+                    <td>${escapeHtml(candidate.score_experience)}</td>
+                    <td>${escapeHtml(candidate.score_language)}</td>
+                    <td>${escapeHtml(candidate.score_others)}</td>
                     <td>${statusCell}</td>
                     <td>${outreachContent}</td>
                     <td><button class="btn-original" data-src="${escapeHtml(candidate.resume_original)}">Original Resume</button></td>
-                    <td><button class="btn-formatted" data-id="${escapeHtml(candidate.id)}">Formatted Resume</button></td>
-                    <td><button class="btn-report" data-candidate-id="${escapeHtml(candidate.id)}">Report</button></td>
+                    <td><button class="btn-formatted" data-id="${escapeHtml(candidate.candidate_id)}">Formatted Resume</button></td>
+                    <td><button class="btn-report" data-candidate-id="${escapeHtml(candidate.candidate_id)}">Report</button></td>
                     <td>${escapeHtml(candidate.staff_in_charge || '')}</td>
                 `;
                 tableBody.appendChild(row);
@@ -447,9 +445,10 @@ $currentEmail = $_GET['email'];
 
     // --- Edit Candidate ---
     function openEditCandidate(id) {
-        const candidate = allCandidates.find(c => c.id == id);
+        // Updated to use candidate_id
+        const candidate = allCandidates.find(c => c.candidate_id == id);
         if (!candidate) return;
-        document.getElementById('edit_candidate_id').value = candidate.id;
+        document.getElementById('edit_candidate_id').value = candidate.candidate_id;
         document.getElementById('edit_name').value = candidate.name;
         document.getElementById('edit_gender').value = candidate.gender || '';
         document.getElementById('edit_email').value = candidate.email || '';
@@ -464,11 +463,11 @@ $currentEmail = $_GET['email'];
         if(isArchiveView) {
             newBtnMiddle.innerText = "Restore";
             newBtnMiddle.className = "btn-middle-action btn-action-restore"; 
-            newBtnMiddle.onclick = function() { restoreCandidateFromModal(candidate.id); };
+            newBtnMiddle.onclick = function() { restoreCandidateFromModal(candidate.candidate_id); };
         } else {
             newBtnMiddle.innerText = "Archive";
             newBtnMiddle.className = "btn-middle-action btn-action-archive"; 
-            newBtnMiddle.onclick = function() { archiveCandidateFromModal(candidate.id); };
+            newBtnMiddle.onclick = function() { archiveCandidateFromModal(candidate.candidate_id); };
         }
         
         // --- Configure Delete Button (Permanent) ---
@@ -476,7 +475,7 @@ $currentEmail = $_GET['email'];
         const newBtnDelete = btnDelete.cloneNode(true);
         btnDelete.parentNode.replaceChild(newBtnDelete, btnDelete);
         
-        newBtnDelete.onclick = function() { permanentDeleteCandidateFromModal(candidate.id); };
+        newBtnDelete.onclick = function() { permanentDeleteCandidateFromModal(candidate.candidate_id); };
         
         document.getElementById('editCandidateModal').classList.add('visible');
     }
@@ -524,7 +523,7 @@ $currentEmail = $_GET['email'];
             if (data.success) {
                 alert(data.message);
                 document.getElementById('editCandidateModal').classList.remove('visible');
-                fetchCandidates();
+                fetchCandidates(); 
             } else alert('Error: ' + data.message);
         } catch(e) { console.error(e); }
     }
@@ -620,7 +619,6 @@ $currentEmail = $_GET['email'];
     }
 
     // --- Resume Viewer, Status, Outreach, Event Listeners ... (Standard) ---
-    // (Include standard event attachment and initial load)
     function attachRowEventListeners() {
         document.querySelectorAll('input[name="candidate_check"]').forEach(cb => cb.addEventListener('change', updateButtonVisibility));
         document.querySelectorAll('.status-btn').forEach(btn => btn.addEventListener('click', onStatusButtonClick));
@@ -636,8 +634,6 @@ $currentEmail = $_GET['email'];
         }
     }
     
-    // ... (Existing Functions: onOpenResume, onViewFormatted, onReportClick, onStatusButtonClick, Outreach Logic) ...
-    // Assuming standard functions are present as per previous correct version
     const resumeOverlay = document.getElementById('resumeViewerOverlay');
     const resumeIframe = document.getElementById('resumeViewerIframe');
     function onOpenResume(e) {
@@ -648,7 +644,6 @@ $currentEmail = $_GET['email'];
     }
     document.getElementById('closeResumeViewer').addEventListener('click', () => resumeOverlay.classList.remove('visible'));
     
-    // Status
     const statusOverlay = document.getElementById('statusOverlay');
     const statusSelect = document.getElementById('statusSelect');
     let currentStatusCandidateId = null;
@@ -677,7 +672,7 @@ $currentEmail = $_GET['email'];
     
     async function onViewFormatted(e) {
         const id = e.currentTarget.dataset.id;
-        const candidate = allCandidates.find(c => c.id == id);
+        const candidate = allCandidates.find(c => c.candidate_id == id);
         if (!candidate) { alert('Candidate data not loaded.'); return; }
         // ... (PDF Generation Logic) ...
         const popup = document.getElementById('sendingPopup');
@@ -704,11 +699,10 @@ $currentEmail = $_GET['email'];
         } catch (err) { console.error(err); alert("Error generating PDF"); popup.style.display = 'none'; }
     }
     
-    // ... Outreach Logic ...
     let outreachData = { id: null, email: null, action: null, meetLink: null };
     function openOutreach(id, email, action) {
         outreachData = { id, email, action };
-        const cand = allCandidates.find(c => c.id == id);
+        const cand = allCandidates.find(c => c.candidate_id == id);
         if (cand) outreachData.email = cand.email;
         document.getElementById('outreachTitle').innerText = action === 'accept' ? "Schedule Interview" : "Rejection Outreach";
         document.getElementById('dateGroup').style.display = action === 'accept' ? 'block' : 'none';
@@ -720,7 +714,6 @@ $currentEmail = $_GET['email'];
     window.openOutreach = openOutreach;
     
     document.getElementById('btnGenerate').addEventListener('click', () => {
-        // ... (API call)
         const date = document.getElementById('interviewDate').value;
         if (outreachData.action === 'accept' && !date) { alert("Please select a date."); return; }
         document.getElementById('aiLoading').style.display = 'block';
@@ -745,7 +738,6 @@ $currentEmail = $_GET['email'];
     });
     
     document.getElementById('btnSendEmail').addEventListener('click', () => {
-         // ... (API call)
         const popup = document.getElementById('sendingPopup');
         popup.style.display = 'flex';
         const formData = new FormData();
@@ -773,7 +765,7 @@ $currentEmail = $_GET['email'];
     document.addEventListener('DOMContentLoaded', async () => {
         await fetchDynamicFilters();
         fetchCandidates();
-        document.getElementById('searchInput').addEventListener('keypress', function(e) { if (e.which == 13) fetchCandidates(); }); // RAG search trigger logic 
+        document.getElementById('searchInput').addEventListener('keypress', function(e) { if (e.which == 13) fetchCandidates(); }); 
         document.getElementById('searchInput').addEventListener('keyup', function() { if (this.value.trim() === '') fetchCandidates(); });
     });
 
