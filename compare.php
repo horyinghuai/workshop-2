@@ -18,8 +18,9 @@ if (count($ids) < 2 || count($ids) > 3) {
 }
 
 // Fetch Candidates
+// Updated SQL: Removed ai_confidence_level, Added score_language and score_others
 $placeholders = implode(',', array_fill(0, count($ids), '?'));
-$sql = "SELECT c.*, jp.job_name, r.score_overall, r.score_education, r.score_skills, r.score_experience, r.ai_confidence_level 
+$sql = "SELECT c.*, jp.job_name, r.score_overall, r.score_education, r.score_skills, r.score_experience, r.score_language, r.score_others 
         FROM candidate c
         LEFT JOIN job_position jp ON c.job_id = jp.job_id
         LEFT JOIN report r ON c.candidate_id = r.candidate_id
@@ -113,7 +114,8 @@ $conn->close();
                     <div class="sub-score"><span>Education</span> <b><?php echo $c['score_education']; ?></b></div>
                     <div class="sub-score"><span>Skills</span> <b><?php echo $c['score_skills']; ?></b></div>
                     <div class="sub-score"><span>Experience</span> <b><?php echo $c['score_experience']; ?></b></div>
-                    <div class="sub-score" style="border:none;"><span>AI Confidence</span> <b><?php echo $c['ai_confidence_level']; ?>%</b></div>
+                    <div class="sub-score"><span>Language</span> <b><?php echo $c['score_language']; ?></b></div>
+                    <div class="sub-score" style="border:none;"><span>Others</span> <b><?php echo $c['score_others']; ?></b></div>
                 </td>
             <?php endforeach; ?>
         </tr>
@@ -134,6 +136,18 @@ $conn->close();
             <th>Experience</th>
             <?php foreach ($candidates as $c): ?>
                 <td><?php echo nl2br(htmlspecialchars(substr($c['experience'], 0, 400))) . (strlen($c['experience'])>400 ? '...' : ''); ?></td>
+            <?php endforeach; ?>
+        </tr>
+        <tr>
+            <th>Language</th>
+            <?php foreach ($candidates as $c): ?>
+                <td><?php echo nl2br(htmlspecialchars(substr($c['language'] ?? '', 0, 300))) . (strlen($c['language'] ?? '')>300 ? '...' : ''); ?></td>
+            <?php endforeach; ?>
+        </tr>
+        <tr>
+            <th>Others</th>
+            <?php foreach ($candidates as $c): ?>
+                <td><?php echo nl2br(htmlspecialchars(substr($c['others'] ?? '', 0, 300))) . (strlen($c['others'] ?? '')>300 ? '...' : ''); ?></td>
             <?php endforeach; ?>
         </tr>
     </table>

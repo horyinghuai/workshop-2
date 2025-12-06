@@ -50,7 +50,6 @@ function showScore($val) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume Reader | Candidate Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2pdf Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -88,7 +87,6 @@ function showScore($val) {
 
     <div class="flex flex-col md:flex-row h-[calc(100vh-72px)]">
         
-        <!-- Left Column: Original Resume -->
         <div class="resume-col w-full md:w-1/2 p-6 overflow-y-auto border-r border-gray-300">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-3xl font-bold text-gray-700">Resume</h2>
@@ -143,7 +141,6 @@ function showScore($val) {
             </div>
         </div>
 
-        <!-- Right Column: Report (Formatted Resume) -->
         <div id="report-content" class="report-col w-full md:w-1/2 p-6 overflow-y-auto">
             <div class="flex justify-between items-center mb-6" data-html2canvas-ignore="true">
                 <h2 class="text-3xl font-bold">Report</h2>
@@ -152,9 +149,7 @@ function showScore($val) {
                 </button>
             </div>
             
-            <!-- PDF Content Container -->
             <div id="pdf-area">
-                <!-- Added title for PDF only (optional, helps context in PDF) -->
                 <h2 class="text-3xl font-bold mb-6 hidden-on-screen" style="display:none;">Candidate Report</h2>
 
                 <div class="field-row">
@@ -238,11 +233,7 @@ function showScore($val) {
                     <textarea readonly><?php echo e($data['ai_comments_others']); ?></textarea>
                 </div>
 
-                <div class="mt-6 p-3 bg-gray-700 rounded-lg border border-gray-600 text-center">
-                    <span class="text-gray-300 text-sm">AI Confidence Level:</span>
-                    <strong class="text-green-400 text-lg ml-2"><?php echo showScore($data['ai_confidence_level']); ?>%</strong>
                 </div>
-            </div>
         </div>
     </div>
 

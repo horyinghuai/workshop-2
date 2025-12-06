@@ -100,7 +100,7 @@ def main():
 
     prompt += "Instructions:\n"
     prompt += "1. Highlight key strengths and weaknesses of each relative to the role.\n"
-    prompt += "2. Directly compare their experience and skills.\n"
+    prompt += "2. Directly compare their experience and skills without showing the table.\n"
     prompt += "3. Conclude with a clear recommendation: Who is the better hire and why?\n"
     prompt += "4. Keep the tone professional and objective."
 
