@@ -99,10 +99,11 @@ def main():
         prompt += f"Experience: {exp}\n\n"
 
     prompt += "Instructions:\n"
-    prompt += "1. Highlight key strengths and weaknesses of each relative to the role.\n"
-    prompt += "2. Directly compare their experience and skills without showing the table.\n"
-    prompt += "3. Conclude with a clear recommendation: Who is the better hire and why?\n"
-    prompt += "4. Keep the tone professional and objective."
+    prompt += "1. Do NOT include any intro text like 'Okay, let's analyze these two candidates'.\n"
+    prompt += "2. Highlight key strengths and weaknesses of each relative to the role.\n"
+    prompt += "3. Directly compare their experience and skills without showing the table.\n"
+    prompt += "4. Conclude with a clear recommendation: Who is the better hire and why?\n"
+    prompt += "5. Keep the tone professional and objective."
 
     analysis = call_gemini(prompt)
     

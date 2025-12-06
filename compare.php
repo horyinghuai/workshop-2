@@ -75,7 +75,7 @@ $conn->close();
         .ai-icon { font-size: 2rem; color: #3a7c7c; }
         .ai-title { font-size: 1.5rem; font-weight: 700; color: #2F3E46; }
         
-        .ai-content { white-space: pre-wrap; color: #444; line-height: 1.7; min-height: 100px; }
+        .ai-content { white-space: pre-wrap; color: #444; line-height: 1.7; min-height: 100px; text-align: justify; }
         
         .loading-pulse { display: flex; align-items: center; gap: 10px; color: #666; font-style: italic; }
         .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3a7c7c; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
