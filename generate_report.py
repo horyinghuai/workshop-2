@@ -278,21 +278,6 @@ def generate_comment(field_name, candidate_text, job_requirement_text, score):
     comment = call_gemini(prompt)
     return comment if comment else "Analysis unavailable."
 
-# --- CONFIDENCE CALCULATION ---
-def calculate_confidence(row):
-    confidence = 0.0
-    weights = {'experience': 35, 'education': 20, 'skills': 20, 'language': 10, 'others': 10}
-    
-    sections_present = 0
-    for field, points in weights.items():
-        content = str(row.get(field, ""))
-        if content.lower() not in ['none', 'n/a', ''] and len(content) > 5:
-            confidence += points
-            sections_present += 1
-            
-    if sections_present < 3: confidence -= 15
-    return round(min(99.0, max(10.0, confidence)), 2)
-
 # --- MAIN PROCESS ---
 def process_candidate(candidate_id, pid=None):
     update_progress(pid, 5)
@@ -350,16 +335,14 @@ def process_candidate(candidate_id, pid=None):
         job_title = job_reqs.get('job_name', 'the role')
         comments['overall'] = generate_comment(f"Overall Fit for {job_title}", "See sections", "See sections", overall_score)
 
-        confidence = calculate_confidence(candidate)
-
         # 5. Database Update
         cursor.execute("SELECT report_id FROM report WHERE candidate_id = %s", (candidate_id,))
         exists = cursor.fetchone()
 
         if exists:
-            sql = """UPDATE report SET score_overall=%s, ai_comments_overall=%s, score_education=%s, ai_comments_education=%s, score_skills=%s, ai_comments_skills=%s, score_experience=%s, ai_comments_experience=%s, score_language=%s, ai_comments_language=%s, score_others=%s, ai_comments_others=%s, ai_confidence_level=%s WHERE candidate_id=%s"""
+            sql = """UPDATE report SET score_overall=%s, ai_comments_overall=%s, score_education=%s, ai_comments_education=%s, score_skills=%s, ai_comments_skills=%s, score_experience=%s, ai_comments_experience=%s, score_language=%s, ai_comments_language=%s, score_others=%s, ai_comments_others=%s WHERE candidate_id=%s"""
         else:
-            sql = """INSERT INTO report (score_overall, ai_comments_overall, score_education, ai_comments_education, score_skills, ai_comments_skills, score_experience, ai_comments_experience, score_language, ai_comments_language, score_others, ai_comments_others, ai_confidence_level, candidate_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+            sql = """INSERT INTO report (score_overall, ai_comments_overall, score_education, ai_comments_education, score_skills, ai_comments_skills, score_experience, ai_comments_experience, score_language, ai_comments_language, score_others, ai_comments_others, candidate_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
         vals = (
             overall_score, comments['overall'], 
@@ -368,7 +351,7 @@ def process_candidate(candidate_id, pid=None):
             scores['experience'], comments['experience'], 
             scores['language'], comments['language'], 
             scores['others'], comments['others'], 
-            confidence, candidate_id
+            candidate_id
         )
         
         cursor.execute(sql, vals)
