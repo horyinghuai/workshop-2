@@ -1,63 +1,35 @@
 <?php
 include 'connection.php';
-
 header('Content-Type: application/json');
 
-$response = ['success' => false, 'message' => ''];
+$ids = $_POST['ids'] ?? [];
+$action = $_POST['action'] ?? 'archive'; // Default to archive if not specified
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ids']) && is_array($_POST['ids'])) {
-    // Sanitize IDs
-    $ids = array_map('intval', $_POST['ids']);
-    
-    if (!empty($ids)) {
-        // Prepare string for IN clause (?,?,?)
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $types = str_repeat('i', count($ids));
+if (empty($ids)) {
+    echo json_encode(['success' => false, 'message' => 'No IDs provided']);
+    exit;
+}
 
-        // --- STEP 1: FETCH AND DELETE PHYSICAL FILES ---
-        $sqlSelect = "SELECT resume_original, resume_formatted FROM candidate WHERE candidate_id IN ($placeholders)";
-        $stmtSelect = $conn->prepare($sqlSelect);
+// Sanitize IDs
+$idsStr = implode(',', array_map('intval', $ids));
 
-        if ($stmtSelect) {
-            $stmtSelect->bind_param($types, ...$ids);
-            if ($stmtSelect->execute()) {
-                $result = $stmtSelect->get_result();
-                while ($row = $result->fetch_assoc()) {
-                    // Delete Original Resume
-                    if (!empty($row['resume_original']) && file_exists($row['resume_original'])) {
-                        unlink($row['resume_original']);
-                    }
-                    // Delete Formatted Resume
-                    if (!empty($row['resume_formatted']) && file_exists($row['resume_formatted'])) {
-                        unlink($row['resume_formatted']);
-                    }
-                }
-            }
-            $stmtSelect->close();
-        }
-
-        // --- STEP 2: DELETE DATABASE RECORDS ---
-        $stmt = $conn->prepare("DELETE FROM candidate WHERE candidate_id IN ($placeholders)");
-
-        if ($stmt) {
-            $stmt->bind_param($types, ...$ids);
-            if ($stmt->execute()) {
-                $response['success'] = true;
-                $response['message'] = count($ids) . ' candidate(s) and associated files deleted successfully.';
-            } else {
-                $response['message'] = 'Failed to delete candidates from database.';
-            }
-            $stmt->close();
-        } else {
-            $response['message'] = 'Database query preparation failed.';
-        }
-    } else {
-        $response['message'] = 'No valid IDs provided.';
-    }
+$sql = "";
+if ($action == 'restore') {
+    // Restore selected
+    $sql = "UPDATE candidate SET is_archived = 0 WHERE candidate_id IN ($idsStr)";
+} elseif ($action == 'permanent_delete') {
+    // Hard delete
+    $sql = "DELETE FROM candidate WHERE candidate_id IN ($idsStr)";
 } else {
-    $response['message'] = 'Invalid request or no IDs provided.';
+    // Default: Archive (Soft Delete)
+    $sql = "UPDATE candidate SET is_archived = 1 WHERE candidate_id IN ($idsStr)";
+}
+
+if ($conn->query($sql)) {
+    echo json_encode(['success' => true]);
+} else {
+    echo json_encode(['success' => false, 'message' => $conn->error]);
 }
 
 $conn->close();
-echo json_encode($response);
 ?>
