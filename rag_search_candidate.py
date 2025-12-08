@@ -56,7 +56,8 @@ async def search_candidate_rag(user_query, top_k=100):
     query_vector = np.array(response.embeddings[0].values)
 
     results = []
-    # Lowered threshold to ensure we catch all potential matches
+    # UPDATED: Lowered threshold to 0.35 to improve recall
+    # 0.5 is often too strict for semantic matches that aren't exact keyword overlaps
     MIN_SCORE_THRESHOLD = 0.5
 
     for item in STORED_VECTORS:
@@ -68,7 +69,6 @@ async def search_candidate_rag(user_query, top_k=100):
     # Sort by score descending
     results.sort(key=lambda x: x['score'], reverse=True)
     
-    # Return top_k results (now set to 100 to avoid cutting off data)
     return [r['candidate_id'] for r in results[:top_k]]
 
 # Main execution

@@ -1,4 +1,3 @@
-{"id":"93145","variant":"standard","title":"Generate Embeddings Script with Debug"}
 import os
 import json
 import numpy as np
@@ -27,18 +26,27 @@ conn = mysql.connector.connect(
 cursor = conn.cursor(dictionary=True)
 
 # --- Fetch all jobs ---
-cursor.execute("SELECT * FROM job_position WHERE embedding IS NULL")
+# UPDATED: Added JOIN to get Department Name
+query = """
+    SELECT jp.*, d.department_name
+    FROM job_position jp
+    LEFT JOIN department d ON jp.department_id = d.department_id
+    WHERE jp.embedding IS NULL
+"""
+cursor.execute(query)
 jobs = cursor.fetchall()
 
 for job in jobs:
-    # Combine all textual fields
+    # --- UPDATED: Richer Context ---
     job_text = f"""
-    {job['job_name']}. Description: {job['description'] or ''}.
-    Skills: {job['skills'] or ''}.
-    Education: {job['education'] or ''}.
-    Experience: {job['experience'] or ''}.
-    Language: {job['language'] or ''}.
-    Others: {job['others'] or ''}
+    Job Title: {job['job_name']}
+    Department: {job.get('department_name', 'N/A')}
+    Description: {job['description'] or ''}
+    Required Skills: {job['skills'] or ''}
+    Education Level: {job['education'] or ''}
+    Experience Required: {job['experience'] or ''}
+    Languages: {job['language'] or ''}
+    Other Requirements: {job['others'] or ''}
     """
     try:
         # Generate embedding

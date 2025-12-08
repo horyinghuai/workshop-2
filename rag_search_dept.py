@@ -32,8 +32,11 @@ rows = cursor.fetchall()
 
 STORED_VECTORS = []
 for row in rows:
-    vector = np.array(json.loads(row['embedding']))
-    STORED_VECTORS.append({"department_id": row['department_id'], "vector": vector})
+    try:
+        vector = np.array(json.loads(row['embedding']))
+        STORED_VECTORS.append({"department_id": row['department_id'], "vector": vector})
+    except:
+        continue
 
 # Cosine similarity function
 def cosine_similarity(vec_a, vec_b):
@@ -53,8 +56,8 @@ async def search_dept_rag(user_query, top_k=5):
     query_vector = np.array(response.embeddings[0].values)
 
     results = []
-    # Adjust threshold as needed
-    MIN_SCORE_THRESHOLD = 0.5 
+    # UPDATED: Lowered threshold to 0.35
+    MIN_SCORE_THRESHOLD = 0.5
 
     for item in STORED_VECTORS:
         similarity = cosine_similarity(query_vector, item['vector'])

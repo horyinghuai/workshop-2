@@ -1,4 +1,3 @@
-{"id":"93144","variant":"standard","title":"RAG Search Script"}
 import os
 import json
 import numpy as np
@@ -33,8 +32,11 @@ rows = cursor.fetchall()
 
 STORED_VECTORS = []
 for row in rows:
-    vector = np.array(json.loads(row['embedding']))
-    STORED_VECTORS.append({"job_id": row['job_id'], "vector": vector})
+    try:
+        vector = np.array(json.loads(row['embedding']))
+        STORED_VECTORS.append({"job_id": row['job_id'], "vector": vector})
+    except:
+        continue
 
 # Cosine similarity function
 def cosine_similarity(vec_a, vec_b):
@@ -46,7 +48,7 @@ def cosine_similarity(vec_a, vec_b):
     return dot_product / (norm_a * norm_b)
 
 # RAG search function
-async def search_candidates_rag(user_query, top_k=5):
+async def search_job_rag(user_query, top_k=20):
     response = client.models.embed_content(
         model="text-embedding-004",
         contents=user_query
@@ -54,34 +56,31 @@ async def search_candidates_rag(user_query, top_k=5):
     query_vector = np.array(response.embeddings[0].values)
 
     results = []
-    # Set a minimum score threshold (0.0 to 1.0)
-    # Adjust this value: 0.5 is strict, 0.4 is moderate, 0.3 is loose.
-    MIN_SCORE_THRESHOLD = 0.5 
+    # UPDATED: Lowered threshold to 0.35
+    MIN_SCORE_THRESHOLD = 0.45
 
     for item in STORED_VECTORS:
         similarity = cosine_similarity(query_vector, item['vector'])
         
-        # Only add to results if the score is high enough
         if similarity >= MIN_SCORE_THRESHOLD:
             results.append({"job_id": item['job_id'], "score": similarity})
     
     # Sort by highest score
     results.sort(key=lambda x: x['score'], reverse=True)
     
-    # Return the top K from the filtered list
     return [r['job_id'] for r in results[:top_k]]
 
 # Main execution
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python rag_search.py 'your query'")
+        print("Usage: python rag_search_job.py 'your query'")
         sys.exit(1)
 
     user_query = sys.argv[1]
 
     try:
-        matching_ids = asyncio.run(search_candidates_rag(user_query))
+        matching_ids = asyncio.run(search_job_rag(user_query))
         print(json.dumps({"success": True, "job_ids": matching_ids}))
     except Exception as e:
         print(json.dumps({"success": False, "error": str(e)}))

@@ -26,20 +26,44 @@ conn = mysql.connector.connect(
 cursor = conn.cursor(dictionary=True)
 
 # --- Fetch candidates with missing embeddings ---
-cursor.execute("SELECT * FROM candidate WHERE embedding IS NULL")
+# UPDATED: Added JOINs to get Job Name and Department Name
+query = """
+    SELECT c.*, jp.job_name, d.department_name
+    FROM candidate c
+    LEFT JOIN job_position jp ON c.job_id = jp.job_id
+    LEFT JOIN department d ON jp.department_id = d.department_id
+    WHERE c.embedding IS NULL
+"""
+cursor.execute(query)
 candidates = cursor.fetchall()
 
 for cand in candidates:
-    # Combine textual fields
-    # Adjust fields based on your actual table columns
+    # --- UPDATED: Attempt to read resume content from file ---
+    resume_text = ""
+    resume_path = cand.get('resume_formatted')
+    
+    if resume_path and os.path.isfile(resume_path):
+        try:
+            with open(resume_path, 'r', encoding='utf-8', errors='ignore') as f:
+                # Read first 4000 chars to avoid context limits if necessary, 
+                # though Gemini handles large context well.
+                resume_text = f.read().strip()[:8000] 
+        except Exception as e:
+            print(f"Could not read resume file {resume_path}: {e}")
+            resume_text = ""
+
+    # --- UPDATED: Construct Richer Context ---
     cand_text = f"""
-    Name: {cand.get('name', '')}
-    Job Position: {cand.get('applied_job_position', '')}
-    Department: {cand.get('department', '')}
+    Candidate Name: {cand.get('name', 'N/A')}
+    Applied Job Position: {cand.get('job_name', 'N/A')}
+    Department: {cand.get('department_name', 'N/A')}
     Skills: {cand.get('skills', '')}
     Education: {cand.get('education', '')}
     Experience: {cand.get('experience', '')}
     Objective: {cand.get('objective', '')}
+    
+    Resume Content:
+    {resume_text}
     """
     
     try:
