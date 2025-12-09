@@ -4,8 +4,7 @@ include 'connection.php';
 
 // Check if the connection was successful (though connection.php handles the die() case)
 if ($conn->connect_error) {
-    // This line is mostly redundant if connection.php works, but good for safety
-    die("Database connection failed in jobDepartment.php: " . $conn->connect_error);
+    die("Database connection failed: " . $conn->connect_error);
 }
 
 // Redirect to login if user not logged in
@@ -23,9 +22,7 @@ $job_rows_html = '';
 
 // 2. Check for results and build the table rows
 if ($result->num_rows > 0) {
-    // Loop through each row fetched from the database
     while ($row = $result->fetch_assoc()) {
-        // Use PHP to dynamically generate the HTML for each job row
         $job_rows_html .= '
             <div class="table-row">
                 <div class="table-cell data">' . htmlspecialchars($row["department_name"]) . '</div>
@@ -43,17 +40,13 @@ if ($result->num_rows > 0) {
             </div>';
     }
 } else {
-    // Message if no job are found
     $job_rows_html = '
         <div class="table-row no-data">
-            <div class="table-cell data" colspan="3">No departments found.</div>
+            <div class="table-cell data" colspan="9" style="text-align: center;">No jobs found.</div>
         </div>';
 }
 
-// 3. Close the database connection
 $conn->close();
-
-// --- CAPTURE CURRENT EMAIL FOR NAVIGATION ---
 $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 ?>
 <!DOCTYPE html>
@@ -65,7 +58,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
     <title>Resume Reader | Job Positions</title>
     <link rel="stylesheet" href="jobPosition.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
 
@@ -123,7 +115,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 <?php $currentEmail = isset($_GET['email']) ? $_GET['email'] : ''; ?>
 
                 <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
-
                 <input type="hidden" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
                 <input type="hidden" id="actionType" name="action_type" value="">
 
@@ -190,7 +181,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 <input type="hidden" name="action_type" value="delete">
                 <input type="hidden" id="deleteJobId" name="job_id" value="">
                 <?php $currentEmail = isset($_GET['email']) ? $_GET['email'] : ''; ?>
-
                 <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
 
                 <div class="form-actions">
@@ -202,182 +192,87 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
     </div>
     <script>
         $(document).ready(function() {
-            // Function to handle the search logic
-            /*function performSearch() {
-                var searchTerm = $('#search-input').val(); // Get the value from the search input
+            populateDepartmentDropdown();
 
-                $.ajax({
-                    url: 'search_job.php', // The new file we created to handle the request
-                    type: 'POST',
-                    data: {
-                        search_term: searchTerm
-                    }, // Send the search term to the PHP file
-                    // Before sending (optional: for user feedback)
-                    beforeSend: function() {
-                        $('#job-list').html('<div class="table-row"><div class="table-cell data" style="width: 100%; text-align: center;">Searching...</div></div>');
-                    },
-                    // On success, update the content
-                    success: function(response) {
-                        // Replace the content of the department list with the new rows from the PHP file
-                        $('#job-list').html(response);
-                    },
-                    // On error
-                    error: function() {
-                        alert('An error occurred during the search.');
-                    }
-                });
-
-
-            }
-
-            // Attach the search function to the button click event
+            // Handle Search Button Click
             $('#search-btn').click(function() {
                 performSearch();
             });
 
-            // Optional: Also perform search when the user presses Enter in the input field
+            // Handle Enter Key in Search Input
             $('#search-input').keypress(function(e) {
-                if (e.which == 13) { // 13 is the Enter key code
+                if (e.which == 13) { 
                     performSearch();
                 }
             });
 
-            // Optional: Initial load function to show all results (this is already handled by PHP)
-            // You could use this to reset the search if the input is cleared
+            // Handle Reset (Empty Input)
             $('#search-input').on('keyup', function() {
                 if ($(this).val().trim() === '') {
                     performSearch();
-                }
-            });
-*/
-            populateDepartmentDropdown();
-
-            // 🛑 Attach the search button click event 🛑
-            $('#search-btn').click(function() {
-                performRAGSearch(); // Call the new RAG function
-            });
-
-            // 🛑 Attach the Enter keypress event 🛑
-            $('#search-input').keypress(function(e) {
-                if (e.which == 13) { // 13 is the Enter key code
-                    performRAGSearch(); // Call the new RAG function
-                }
-            });
-
-            // 🛑 Optional: keyup (for showing all results when cleared) 🛑
-            $('#search-input').on('keyup', function() {
-                if ($(this).val().trim() === '') {
-                    performRAGSearch(); // Call the new RAG function
                 }
             });
         });
 
-        // --- RAG SEARCH FUNCTION ---
-        function performRAGSearch() {
-            var nlQuery = $('#search-input').val().trim(); // Get query from the EXISTING search bar
-            
-            // 🛑 FIX: If query is empty, reload the page to reset the table
-            if (nlQuery === "") {
-                window.location.reload();
-                return;
-            }
-
-            // Show loading state, assuming 10 columns total for centering messages
-            $('#job-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 10; text-align: center;">Searching Semantically (RAG)...</div></div>');
+        // --- STANDARD SEARCH FUNCTION ---
+        function performSearch() {
+            var searchTerm = $('#search-input').val(); 
 
             $.ajax({
-                url: 'execute_rag_query_job.php',
+                url: 'search_job.php', // Points to normal SQL search
                 type: 'POST',
                 data: {
-                    nl_query: nlQuery
+                    search_term: searchTerm
                 }, 
                 success: function(response) {
                     $('#job-list').html(response);
                 },
                 error: function() {
-                    $('#job-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 10; text-align: center; color: red;">Network error during RAG process.</div></div>');
+                    alert('An error occurred during the search.');
                 }
             });
         }
 
-        // Add jQuery functionality for the modal inside $(document).ready()
-        // --- MODAL FUNCTIONALITY (ANIMATED) ---
-
-        // Function to close the modal
+        // --- MODAL FUNCTIONALITY ---
         function closeModal() {
-            // 1. Start the hide animation (revert to scale(0.9) and opacity 0)
             $('#jobModal').removeClass('modal-show');
-
-            // 2. After the animation finishes (300ms), hide the modal fully using display: none
             setTimeout(function() {
                 $('#jobModal').hide();
-                // Clear form fields
                 $('#jobForm')[0].reset();
                 $('#jobId').val('');
-            }, 300); // 300ms matches the CSS transition duration
+            }, 300); 
         }
 
-        // Function to open the modal
         function openModal() {
-            // 1. Make the overlay visible immediately (sets display: flex)
             $('#jobModal').css('display', 'flex');
-
-            // 2. After the browser renders 'display: flex', add the class to trigger the smooth transition
-            // A small delay (or wrap in setTimeout(..., 10) or nextTick logic) is often needed to force the transition
             setTimeout(function() {
                 $('#jobModal').addClass('modal-show');
             }, 10);
         }
 
-
-        // Open Modal for Adding
+        // Add Job
         $('.add-job-btn').click(function() {
             $('#modalTitle').text('Add Job');
             $('#actionType').val('add');
             $('#confirmBtn').text('Confirm');
-            openModal(); // Use the new function
+            openModal();
         });
 
-        // Open Modal for Editing 
+        // Edit Job
         $('#job-list').on('click', '.edit-btn', function() {
-            // 1. Get the parent row of the clicked button
             var $row = $(this).closest('.table-row');
-
-            // 2. Get the unique ID from the button's data-id attribute
             var currentId = $(this).data('id');
             var currentDeptId = $(this).data('dept-id');
-
-            // 3. Extract Department Name (It's the first .table-cell.data in the row)
-            // We use .eq(0) to target the first cell and .text().trim() to clean the data
             var currentName = $row.find('.table-cell.data').eq(1).text().trim();
-
-            // 4. Extract Description (It's the table-cell with class .description.data)
             var currentDesc = $row.find('.table-cell.description.data').text().trim();
-
-            // 5. Extract Education
             var currentEd = $row.find('.table-cell.education.data').text().trim();
-
-            // 6. Extract Skills 
             var currentSkills = $row.find('.table-cell.skills.data').text().trim();
-
-            // 7. Extract Experience 
             var currentExp = $row.find('.table-cell.experience.data').text().trim();
-
-            // 8. Extract Language 
             var currentLan = $row.find('.table-cell.language.data').text().trim();
-
-            // 4. Extract Others
             var currentOthers = $row.find('.table-cell.others.data').text().trim();
 
-            // --- Populate the modal fields ---
-
-            // Hidden ID field (Crucial for the UPDATE query in crud_department.php)
             $('#jobId').val(currentId);
-
-            // 🟢 Department Dropdown FIX: Set the value using the retrieved ID
             $('#departmentSelect').val(currentDeptId);
-
-            // Visible fields
             $('#jobNameInput').val(currentName);
             $('#jobDescriptionInput').val(currentDesc);
             $('#educationInput').val(currentEd);
@@ -386,16 +281,14 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             $('#languageInput').val(currentLan);
             $('#othersInput').val(currentOthers);
 
-            // Set modal title and action type
             $('#modalTitle').text('Edit Job: ' + currentName);
             $('#actionType').val('edit');
             $('#confirmBtn').text('Save Changes');
 
-            // Open the modal with animation
             openModal();
         });
 
-        // Close Modal handlers
+        // Close Modal
         $('#cancelBtn').click(closeModal);
         $('#jobModal').click(function(e) {
             if (e.target.id === 'jobModal') {
@@ -403,44 +296,37 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             }
         });
 
-        // Open Modal for Deleting (attached to buttons loaded via PHP)
+        // Delete Modal
         $('#job-list').on('click', '.delete-btn', function() {
             var $row = $(this).closest('.table-row');
             var currentId = $(this).data('id');
             var currentName = $row.find('.table-cell.data').eq(1).text().trim();
 
-            // Populate the modal fields
             $('#deleteJobId').val(currentId);
             $('#jobToDeleteName').text(currentName);
 
-            // Open the modal (using the flex display for centering and animation)
             $('#deleteModal').css('display', 'flex');
             setTimeout(function() {
                 $('#deleteModal').addClass('modal-show');
             }, 10);
         });
 
-        // Function to close the delete modal
         function closeDeleteModal() {
             $('#deleteModal').removeClass('modal-show');
             setTimeout(function() {
                 $('#deleteModal').hide();
-                // Clear the ID on close
                 $('#deleteJobId').val('');
             }, 300);
         }
 
-        // Close Delete Modal handlers
         $('#cancelDeleteBtn').click(closeDeleteModal);
-
-        // Close modal if user clicks outside the content area (on the overlay)
         $('#deleteModal').click(function(e) {
             if (e.target.id === 'deleteModal') {
                 closeDeleteModal();
             }
         });
 
-        // --- Function to fetch and populate the Department Dropdown ---
+        // Populate Dropdown
         async function populateDepartmentDropdown() {
             try {
                 const response = await $.ajax({
@@ -448,23 +334,18 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                     type: 'GET',
                     dataType: 'json'
                 });
-
                 const $select = $('#departmentSelect');
                 $select.empty();
                 $select.append('<option value="">-- Select Department --</option>');
-
-                // Loop through the results and add options
                 response.forEach(dept => {
                     $select.append(`<option value="${dept.id}">${dept.name}</option>`);
                 });
-
             } catch (error) {
                 console.error("Error fetching departments:", error);
             }
         }
 
-        // --- NOTIFICATION FUNCTIONALITY (Add this to the start of the $(document).ready function) ---
-
+        // Notifications
         function displayNotification() {
             const urlParams = new URLSearchParams(window.location.search);
             const status = urlParams.get('status');
@@ -475,7 +356,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 const $box = $('#notification-box');
                 const $msg = $('#notification-message');
 
-                $box.removeClass('success error'); // Clear previous classes
+                $box.removeClass('success error'); 
                 $msg.text(decodedMessage);
 
                 if (status === 'success') {
@@ -485,32 +366,18 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 }
 
                 $box.slideDown(300);
-
-                // Remove the parameters from the URL after display (optional, keeps URL clean)
                 urlParams.delete('status');
                 urlParams.delete('message');
-
-                // Build the new query string (which now contains only remaining params, like 'email')
                 const newQueryString = urlParams.toString();
-
-                // Reconstruct the URL: base path + '?' + remaining parameters (if any)
                 const newUrl = window.location.pathname + (newQueryString ? '?' + newQueryString : '');
-
-                // Replace the state with the new URL, preserving 'email'
                 history.replaceState(null, null, newUrl);
 
-                // Auto-hide after 5 seconds
                 setTimeout(function() {
                     $box.slideUp(500);
                 }, 5000);
             }
         }
-
-        // Call the function on page load
         displayNotification();
     </script>
-
-
 </body>
-
 </html>

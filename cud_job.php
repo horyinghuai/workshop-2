@@ -39,7 +39,6 @@ if (isset($_POST['action_type'])) {
             $id = $_POST['job_id'];
             $sql = "UPDATE job_position
             SET 
-                embedding = NULL,  /* <--- ADD THIS LINE */
                 department_id = ?, 
                 job_name = ?, 
                 description = ?, 
@@ -65,17 +64,6 @@ if (isset($_POST['action_type'])) {
         }
 
        if ($stmt->execute()) {
-            // --- AUTO-GENERATE EMBEDDING ---
-            // This executes the python script in the background
-            // "2>&1" captures errors if needed
-            $command = "python generate_embeddings_job.py";
-            
-            // NOTE: If your server has path issues, use this robust version:
-            // $command = "cd " . __DIR__ . " && python generate_embeddings.py";
-            
-            shell_exec($command);
-            // -------------------------------
-
             $message = $action === 'add' ? "Job added successfully!" : "Job updated successfully!";
             header("Location: jobPosition.php?status=success&message=" . urlencode($message) . $emailQuery);
         } else {
@@ -112,3 +100,4 @@ if (isset($_POST['action_type'])) {
 
 $conn->close();
 exit();
+?>

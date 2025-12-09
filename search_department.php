@@ -9,8 +9,7 @@ if (isset($_POST['search_term'])) {
     
     // SQL Query to fetch departments matching the search term
     // We use LIKE and the % wildcard for partial matching
-    $sql = "SELECT * 
-            FROM department 
+    $sql = "SELECT * FROM department 
             WHERE department_name LIKE ? OR description LIKE ? 
             ORDER BY department_name ASC";
 

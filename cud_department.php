@@ -29,20 +29,14 @@ if (isset($_POST['action_type'])) {
             $message = "Department added successfully!";
         } else { // action === 'edit'
             // UPDATE (Edit Existing Department)
-            // 🛑 FIX: Reset embedding to NULL so AI regenerates it
             $id = $_POST['department_id'];
-            $sql = "UPDATE department SET embedding = NULL, department_name = ?, description = ? WHERE department_id = ?";
+            $sql = "UPDATE department SET department_name = ?, description = ? WHERE department_id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("ssi", $name, $description, $id); 
             $message = "Department updated successfully!";
         }
         
        if ($stmt->execute()) {
-            // 🛑 FIX: Trigger Python script to generate embeddings
-            $command = "python generate_embeddings_dept.py";
-            shell_exec($command);
-            // --------------------------------------------------
-
             $message = $action === 'add' ? "Department added successfully!" : "Department updated successfully!";
             header("Location: jobDepartment.php?status=success&message=" . urlencode($message) . $emailQuery);
         } else {

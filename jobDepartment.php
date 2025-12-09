@@ -37,9 +37,7 @@ $department_rows_html = '';
 
 // 2. Check for results and build the table rows
 if ($result->num_rows > 0) {
-    // Loop through each row fetched from the database
     while ($row = $result->fetch_assoc()) {
-        // Use PHP to dynamically generate the HTML for each department row
         $department_rows_html .= '
             <div class="table-row">
                 <div class="table-cell data">' . htmlspecialchars($row["department_name"]) . '</div>
@@ -51,17 +49,13 @@ if ($result->num_rows > 0) {
             </div>';
     }
 } else {
-    // Message if no departments are found
     $department_rows_html = '
         <div class="table-row no-data">
-            <div class="table-cell data" colspan="3">No departments found.</div>
+            <div class="table-cell data" colspan="3" style="text-align: center;">No departments found.</div>
         </div>';
 }
 
-// 3. Close the database connection
 $conn->close();
-
-// --- CAPTURE CURRENT EMAIL FOR NAVIGATION ---
 $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 ?>
 <!DOCTYPE html>
@@ -73,7 +67,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
     <title>Resume Reader - Departments</title>
     <link rel="stylesheet" href="jobDepartment.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
 
@@ -122,9 +115,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             <form id="departmentForm" action="cud_department.php" method="POST">
                 <input type="hidden" id="departmentId" name="department_id" value="">
                 <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
-
                 <input type="hidden" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
-
                 <input type="hidden" id="actionType" name="action_type" value="">
 
                 <div class="form-group">
@@ -158,9 +149,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 <input type="hidden" name="action_type" value="delete">
                 <input type="hidden" id="deleteDepartmentId" name="department_id" value="">
                 <?php $currentEmail = isset($_GET['email']) ? $_GET['email'] : ''; ?>
-
                 <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
-
                 <input  type="hidden" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
 
                 <div class="form-actions">
@@ -174,55 +163,44 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
         $(document).ready(function() {
             // Attach the search button click event
             $('#search-btn').click(function() {
-                performRAGSearch();
+                performSearch();
             });
 
             // Attach the Enter keypress event
             $('#search-input').keypress(function(e) {
-                if (e.which == 13) { // 13 is the Enter key code
-                    performRAGSearch();
+                if (e.which == 13) { 
+                    performSearch();
                 }
             });
 
-            // Initial load function/Reset on empty
+            // Reset on empty
             $('#search-input').on('keyup', function() {
                 if ($(this).val().trim() === '') {
-                    performRAGSearch();
+                    performSearch();
                 }
             });
         });
 
-        // --- RAG SEARCH FUNCTION ---
-        function performRAGSearch() {
-            var nlQuery = $('#search-input').val().trim(); 
+        // --- STANDARD SEARCH FUNCTION ---
+        function performSearch() {
+            var searchTerm = $('#search-input').val(); 
             
-            // If query is empty, reload the page to reset the table
-            if (nlQuery === "") {
-                window.location.reload();
-                return;
-            }
-
-            // Show loading state
-            $('#department-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 3; text-align: center;">Searching Semantically (RAG)...</div></div>');
-
             $.ajax({
-                url: 'execute_rag_query_dept.php', // Points to the new Department RAG script
+                url: 'search_department.php', // Points to normal SQL search
                 type: 'POST',
                 data: {
-                    nl_query: nlQuery
+                    search_term: searchTerm
                 }, 
                 success: function(response) {
                     $('#department-list').html(response);
                 },
                 error: function() {
-                    $('#department-list').html('<div class="table-row"><div class="table-cell data" style="grid-column: 1 / span 3; text-align: center; color: red;">Network error during RAG process.</div></div>');
+                    alert('An error occurred during the search.');
                 }
             });
         }
 
-        // --- MODAL FUNCTIONALITY (ANIMATED) ---
-
-        // Function to close the modal
+        // --- MODAL FUNCTIONALITY ---
         function closeModal() {
             $('#departmentModal').removeClass('modal-show');
             setTimeout(function() {
@@ -232,7 +210,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             }, 300); 
         }
 
-        // Function to open the modal
         function openModal() {
             $('#departmentModal').css('display', 'flex');
             setTimeout(function() {
@@ -240,7 +217,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             }, 10);
         }
 
-        // Open Modal for Adding
         $('.add-department-btn').click(function() {
             $('#modalTitle').text('Add Department');
             $('#actionType').val('add');
@@ -248,7 +224,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             openModal();
         });
 
-        // Open Modal for Editing 
         $('#department-list').on('click', '.edit-btn', function() {
             var $row = $(this).closest('.table-row');
             var currentId = $(this).data('id');
@@ -266,7 +241,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             openModal();
         });
 
-        // Close Modal handlers
         $('#cancelBtn').click(closeModal);
         $('#departmentModal').click(function(e) {
             if (e.target.id === 'departmentModal') {
@@ -274,7 +248,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             }
         });
 
-        // Open Modal for Deleting
         $('#department-list').on('click', '.delete-btn', function() {
             var $row = $(this).closest('.table-row');
             var currentId = $(this).data('id');
@@ -289,7 +262,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             }, 10);
         });
 
-        // Function to close the delete modal
         function closeDeleteModal() {
             $('#deleteModal').removeClass('modal-show');
             setTimeout(function() {
@@ -298,7 +270,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             }, 300);
         }
 
-        // Close Delete Modal handlers
         $('#cancelDeleteBtn').click(closeDeleteModal);
         $('#deleteModal').click(function(e) {
             if (e.target.id === 'deleteModal') {
@@ -306,7 +277,6 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             }
         });
 
-        // --- NOTIFICATION FUNCTIONALITY ---
         function displayNotification() {
             const urlParams = new URLSearchParams(window.location.search);
             const status = urlParams.get('status');
