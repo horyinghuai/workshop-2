@@ -154,9 +154,15 @@ $currentEmail = $_GET['email'];
         <div class="content-area">
             <div class="top-controls">
                 <div style="display:flex; align-items:center; gap:0.5rem;">
-                    <div class="dropdown-container">
+                    <div class="dropdown-container" style="display: flex; gap: 5px;">
+                        <select class="dropdown-select" id="nameSortDropdown">
+                            <option value="NameAZ">Name (A-Z)</option>
+                            <option value="NameZA">Name (Z-A)</option>
+                        </select>
+                        
                         <select class="dropdown-select" id="scoreDropdown">
-                            <option value="All">All</option>
+                            <option value="All">Sort by Score</option>
+                            <option value="Overall">Overall</option>
                             <option value="Education">Education</option>
                             <option value="Skills">Skills</option>
                             <option value="Experience">Experience</option>
@@ -357,7 +363,17 @@ $currentEmail = $_GET['email'];
         const selectedJobPositions = Array.from(document.querySelectorAll('input[name="job_position"]:checked')).map(cb => cb.value);
         const selectedDepartments = Array.from(document.querySelectorAll('input[name="department"]:checked')).map(cb => cb.value);
         const searchTerm = document.getElementById('searchInput').value;
-        const sortBy = document.getElementById('scoreDropdown').value;
+        
+        // Sorting Logic
+        const scoreSort = document.getElementById('scoreDropdown').value;
+        const nameSort = document.getElementById('nameSortDropdown').value;
+        
+        // If "Sort by Score" (value=All) is selected, fallback to Name Sort. 
+        // Otherwise use the specific score sort.
+        let sortBy = scoreSort;
+        if (sortBy === 'All') {
+            sortBy = nameSort; // 'NameAZ' or 'NameZA'
+        }
 
         const params = new URLSearchParams();
         selectedStatuses.forEach(s => params.append('status[]', s));
@@ -773,10 +789,30 @@ $currentEmail = $_GET['email'];
         document.querySelectorAll('.filter-sidebar input[type="checkbox"]').forEach(cb => cb.checked = false);
         document.getElementById('searchInput').value = '';
         document.getElementById('scoreDropdown').value = 'All';
+        document.getElementById('nameSortDropdown').value = 'NameAZ';
         fetchCandidates();
     });
 
+    // --- Bulk Compare ---
+    document.getElementById('compareSelectedBtn').addEventListener('click', () => {
+        // 1. Get all selected candidate IDs
+        const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);
+        
+        // 2. Validate selection count (Must be 2 or 3)
+        if (selected.length < 2 || selected.length > 3) {
+            alert('Please select exactly 2 or 3 candidates to compare.');
+            return;
+        }
+
+        // 3. Create the URL parameters
+        const ids = selected.join(',');
+
+        // 4. Redirect to compare.php with email and IDs
+        window.location.href = `compare.php?email=${encodeURIComponent(currentEmail)}&ids=${ids}`;
+    });
+
     document.getElementById('scoreDropdown').addEventListener('change', fetchCandidates);
+    document.getElementById('nameSortDropdown').addEventListener('change', fetchCandidates);
     document.getElementById('status-options').addEventListener('change', fetchCandidates);
     document.getElementById('job-position-options').addEventListener('change', fetchCandidates);
     document.getElementById('department-options').addEventListener('change', fetchCandidates);

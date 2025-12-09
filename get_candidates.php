@@ -8,7 +8,7 @@ $status = isset($_GET['status']) ? $_GET['status'] : [];
 $job_positions = isset($_GET['job_position']) ? $_GET['job_position'] : [];
 $departments = isset($_GET['department']) ? $_GET['department'] : [];
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'All';
+$sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'All'; // 'All' now generally maps to NameAZ in JS if not overruled
 $is_archived = isset($_GET['is_archived']) ? intval($_GET['is_archived']) : 0;
 
 // Initialize ID arrays
@@ -57,8 +57,6 @@ if ($search_active) {
     }
 
     // C. Merge Results
-    // We merge them, keeping RAG results first implicitly by order of merge if we were just listing them,
-    // but for SQL IN clause, order doesn't matter until the ORDER BY clause.
     $final_ids = array_unique(array_merge($rag_ids, $keyword_ids));
 
     // If search was run but found nothing, return empty immediately
@@ -73,9 +71,9 @@ if ($search_active) {
 $sql = "SELECT c.*, 
         jp.job_name as applied_job_position, 
         d.department_name as department, 
-        c.resume_formatted, /* Ensure we fetch this for the frontend */
+        c.resume_formatted, 
         c.resume_original,
-        c.outreach as outreach_status, /* Renamed in frontend JS, fetching raw column here */
+        c.outreach as outreach_status, 
         r.score_overall, r.score_education, r.score_skills, r.score_experience, r.score_language, r.score_others,
         u.name as staff_in_charge
         FROM candidate c 
@@ -115,23 +113,21 @@ $orderBy = "";
 
 if ($search_active && !empty($final_ids) && $sort_by === 'All') {
     // If searching and no specific sort selected, prioritize Search Relevance
-    // RAG IDs come first.
-    // Logic: ORDER BY FIELD(candidate_id, [rag_ids...], [keyword_ids...])
-    // Note: FIELD returns 0 if not found, so we list all valid IDs.
-    
-    // Create a prioritized list: RAG IDs first, then Keywords
     $prioritized_ids = array_unique(array_merge($rag_ids, $keyword_ids));
     $priority_str = implode(",", array_map('intval', $prioritized_ids));
-    
     $orderBy = "ORDER BY FIELD(c.candidate_id, $priority_str)"; 
 } else {
     // Standard Sorting
     switch ($sort_by) {
+        case 'NameAZ': $orderBy = "ORDER BY c.name ASC"; break;
+        case 'NameZA': $orderBy = "ORDER BY c.name DESC"; break;
+        case 'Overall': $orderBy = "ORDER BY r.score_overall DESC"; break;
         case 'Education': $orderBy = "ORDER BY r.score_education DESC"; break;
         case 'Skills': $orderBy = "ORDER BY r.score_skills DESC"; break;
         case 'Experience': $orderBy = "ORDER BY r.score_experience DESC"; break;
         case 'Language': $orderBy = "ORDER BY r.score_language DESC"; break;
-        default: $orderBy = "ORDER BY c.applied_date DESC"; break;
+        // Default changed to Name A-Z
+        default: $orderBy = "ORDER BY c.name ASC"; break;
     }
 }
 
