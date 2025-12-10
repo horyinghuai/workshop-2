@@ -100,7 +100,7 @@ $currentEmail = $_GET['email'];
 
     /* Archive Toggle Button */
     #toggleArchiveBtn {
-        margin-left: 1rem; padding: 0.6rem 1rem; border-radius: 8px; border: none;
+        padding: 0.6rem 1rem; border-radius: 8px; border: none;
         background: #6c757d; color: white; font-weight: 600; cursor: pointer;
     }
     #toggleArchiveBtn.active-view { background: #3a7c7c; }
@@ -115,6 +115,34 @@ $currentEmail = $_GET['email'];
     .loading-spinner { border: 5px solid #f3f3f3; border-top: 5px solid #3a7c7c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .progress-text { font-weight: bold; color: #3a7c7c; margin-top: 10px; font-size: 1.2rem; }
+
+    /* Sortable Header Styles */
+    th.sortable {
+        cursor: pointer;
+        position: relative;
+        user-select: none;
+    }
+    th.sortable:hover {
+        background-color: #265a61; /* Slightly darker than default header */
+    }
+    th.sortable i {
+        margin-left: 5px;
+        font-size: 0.8em;
+        opacity: 0.7;
+    }
+
+    /* Date Filter Styles */
+    .date-filter-container {
+        padding: 0.5rem;
+    }
+    .date-filter-container select {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 8px;
+        border: 1px solid #2e6c73;
+        border-radius: 5px;
+        background-color: #f4f7f6;
+    }
 
     @media (max-width: 768px) { .status-modal-wrapper { width: 92%; padding: .5rem; } .resume-modal { width: 92%; } .edit-modal-wrapper { width: 95%; border-width: 15px; } }
     </style>
@@ -132,43 +160,58 @@ $currentEmail = $_GET['email'];
     <div class="main-content">
         <div class="filter-sidebar">
             <div class="filter-header"><h2>Filter</h2><button class="reset-btn" id="resetFilters">Reset</button></div>
+            
             <div class="filter-group">
                 <button class="filter-title" data-target="status-options">Status <i class="fas fa-chevron-right"></i></button>
                 <div class="filter-options" id="status-options">
                     <div class="filter-option"><label><input type="checkbox" name="status" value="Active"> Active</label></div>
+                    <div class="filter-option"><label><input type="checkbox" name="status" value="Interviewed"> Interviewed</label></div>
                     <div class="filter-option"><label><input type="checkbox" name="status" value="Hired"> Hired</label></div>
                     <div class="filter-option"><label><input type="checkbox" name="status" value="Rejected"> Rejected</label></div>
                     <div class="filter-option"><label><input type="checkbox" name="status" value="Cancelled"> Cancelled</label></div>
                 </div>
             </div>
+            
             <div class="filter-group">
                 <button class="filter-title" data-target="job-position-options">Job Position <i class="fas fa-chevron-right"></i></button>
                 <div class="filter-options" id="job-position-options"></div>
             </div>
+            
             <div class="filter-group">
                 <button class="filter-title" data-target="department-options">Department <i class="fas fa-chevron-right"></i></button>
                 <div class="filter-options" id="department-options"></div>
+            </div>
+
+            <div class="filter-group">
+                <button class="filter-title" data-target="date-options">Applied Date <i class="fas fa-chevron-right"></i></button>
+                <div class="filter-options" id="date-options">
+                    <div class="date-filter-container">
+                        <select id="filterYear">
+                            <option value="">Select Year</option>
+                            </select>
+                        <select id="filterMonth">
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="content-area">
             <div class="top-controls">
                 <div style="display:flex; align-items:center; gap:0.5rem;">
-                    <div class="dropdown-container" style="display: flex; gap: 5px;">
-                        <select class="dropdown-select" id="nameSortDropdown">
-                            <option value="NameAZ">Name (A-Z)</option>
-                            <option value="NameZA">Name (Z-A)</option>
-                        </select>
-                        
-                        <select class="dropdown-select" id="scoreDropdown">
-                            <option value="All">Sort by Score</option>
-                            <option value="Overall">Overall</option>
-                            <option value="Education">Education</option>
-                            <option value="Skills">Skills</option>
-                            <option value="Experience">Experience</option>
-                            <option value="Language">Language</option>
-                        </select>
-                    </div>
                     <button id="toggleArchiveBtn"><i class="fas fa-archive"></i> View Archive</button>
                     <button id="compareSelectedBtn"><i class="fas fa-balance-scale"></i> Compare</button>
                     
@@ -187,16 +230,18 @@ $currentEmail = $_GET['email'];
                     <thead>
                         <tr>
                             <th><input type="checkbox" id="selectAll"></th>
-                            <th>Name</th>
-                            <th>Applied Job Position</th>
-                            <th>Department</th>
-                            <th>Applied Date</th>
-                            <th>Overall Score</th>
-                            <th>Education Score</th>
-                            <th>Skills Score</th>
-                            <th>Experience Score</th>
-                            <th>Language Score</th>
-                            <th>Others Score</th>
+                            <th class="sortable" onclick="toggleSort('name')">Name <i class="fas fa-sort" id="sortIcon-name"></i></th>
+                            <th class="sortable" onclick="toggleSort('job_position')">Applied Job Position <i class="fas fa-sort" id="sortIcon-job_position"></i></th>
+                            <th class="sortable" onclick="toggleSort('department')">Department <i class="fas fa-sort" id="sortIcon-department"></i></th>
+                            <th class="sortable" onclick="toggleSort('applied_date')">Applied Date <i class="fas fa-sort" id="sortIcon-applied_date"></i></th>
+                            
+                            <th class="sortable" onclick="toggleSort('score_overall')">Overall Score <i class="fas fa-sort" id="sortIcon-score_overall"></i></th>
+                            <th class="sortable" onclick="toggleSort('score_education')">Education Score <i class="fas fa-sort" id="sortIcon-score_education"></i></th>
+                            <th class="sortable" onclick="toggleSort('score_skills')">Skills Score <i class="fas fa-sort" id="sortIcon-score_skills"></i></th>
+                            <th class="sortable" onclick="toggleSort('score_experience')">Experience Score <i class="fas fa-sort" id="sortIcon-score_experience"></i></th>
+                            <th class="sortable" onclick="toggleSort('score_language')">Language Score <i class="fas fa-sort" id="sortIcon-score_language"></i></th>
+                            <th class="sortable" onclick="toggleSort('score_others')">Others Score <i class="fas fa-sort" id="sortIcon-score_others"></i></th>
+                            
                             <th>Status</th>
                             <th>Outreach</th>
                             <th>Original Resume</th>
@@ -234,11 +279,8 @@ $currentEmail = $_GET['email'];
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn-confirm" id="btnUpdateCandidate">Confirm</button>
-                    
                     <button type="button" class="btn-middle-action" id="btnArchiveRestoreCandidate">Archive</button>
-                    
                     <button type="button" class="btn-action-delete" id="btnDeletePermanentCandidate">Delete</button>
-
                     <button type="button" class="btn-cancel" id="btnCloseEditModal">Cancel</button>
                 </div>
             </form>
@@ -262,6 +304,7 @@ $currentEmail = $_GET['email'];
                     <label for="statusSelect">Change Status</label>
                     <select id="statusSelect">
                         <option value="Active">Active</option>
+                        <option value="Interviewed">Interviewed</option>
                         <option value="Hired">Hired</option>
                         <option value="Rejected">Rejected</option>
                         <option value="Cancelled">Cancelled</option>
@@ -311,6 +354,21 @@ $currentEmail = $_GET['email'];
     let allCandidates = [];
     let isArchiveView = false; // Toggle state
 
+    // --- Sorting State ---
+    let currentSortColumn = 'name'; // default
+    let currentSortOrder = 'ASC';   // default
+
+    // --- Populate Year Dropdown (Current year - 5) ---
+    const yearSelect = document.getElementById('filterYear');
+    const currentYear = new Date().getFullYear();
+    for(let i = 0; i < 6; i++) {
+        const y = currentYear - i;
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.innerText = y;
+        yearSelect.appendChild(opt);
+    }
+
     // --- Archive Toggle ---
     document.getElementById('toggleArchiveBtn').addEventListener('click', function() {
         isArchiveView = !isArchiveView;
@@ -349,6 +407,10 @@ $currentEmail = $_GET['email'];
             data.departments.forEach(dept => {
                 departmentOptions.innerHTML += `<div class="filter-option"><label><input type="checkbox" name="department" value="${escapeHtml(dept)}"> ${escapeHtml(dept)}</label></div>`;
             });
+            // Re-attach event listeners for dynamic elements
+            document.querySelectorAll('#job-position-options input, #department-options input').forEach(input => {
+                input.addEventListener('change', fetchCandidates);
+            });
         } catch (error) { console.error('Error fetching dynamic filters:', error); }
     }
 
@@ -357,30 +419,63 @@ $currentEmail = $_GET['email'];
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
+    // --- Sorting Function ---
+    function toggleSort(column) {
+        if (currentSortColumn === column) {
+            // Toggle order
+            currentSortOrder = (currentSortOrder === 'ASC') ? 'DESC' : 'ASC';
+        } else {
+            // New column, set default order based on column type
+            currentSortColumn = column;
+            if (column.startsWith('score_') || column === 'applied_date') {
+                currentSortOrder = 'DESC'; // Scores: High->Low, Date: Latest->Oldest by default
+            } else {
+                currentSortOrder = 'ASC';  // Text: A-Z by default
+            }
+        }
+        updateSortIcons();
+        fetchCandidates();
+    }
+
+    function updateSortIcons() {
+        // Reset all icons
+        document.querySelectorAll('thead th i').forEach(icon => {
+            icon.className = 'fas fa-sort';
+            icon.style.opacity = '0.3';
+        });
+
+        // Set active icon
+        const activeIcon = document.getElementById(`sortIcon-${currentSortColumn}`);
+        if (activeIcon) {
+            activeIcon.className = (currentSortOrder === 'ASC') ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            activeIcon.style.opacity = '1';
+        }
+    }
+
     // --- Fetch Candidates ---
     async function fetchCandidates() {
         const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
         const selectedJobPositions = Array.from(document.querySelectorAll('input[name="job_position"]:checked')).map(cb => cb.value);
         const selectedDepartments = Array.from(document.querySelectorAll('input[name="department"]:checked')).map(cb => cb.value);
+        
+        const filterYear = document.getElementById('filterYear').value;
+        const filterMonth = document.getElementById('filterMonth').value;
+        
         const searchTerm = document.getElementById('searchInput').value;
-        
-        // Sorting Logic
-        const scoreSort = document.getElementById('scoreDropdown').value;
-        const nameSort = document.getElementById('nameSortDropdown').value;
-        
-        // If "Sort by Score" (value=All) is selected, fallback to Name Sort. 
-        // Otherwise use the specific score sort.
-        let sortBy = scoreSort;
-        if (sortBy === 'All') {
-            sortBy = nameSort; // 'NameAZ' or 'NameZA'
-        }
 
         const params = new URLSearchParams();
         selectedStatuses.forEach(s => params.append('status[]', s));
         selectedJobPositions.forEach(jp => params.append('job_position[]', jp));
         selectedDepartments.forEach(d => params.append('department[]', d));
         if (searchTerm) params.append('search', searchTerm);
-        if (sortBy) params.append('sort_by', sortBy);
+        
+        // Append Date Filters
+        if (filterYear) params.append('year', filterYear);
+        if (filterMonth) params.append('month', filterMonth);
+
+        // Append Sort Params
+        params.append('sort_column', currentSortColumn);
+        params.append('sort_order', currentSortOrder);
         
         // Send Archive Flag
         params.append('is_archived', isArchiveView ? 1 : 0);
@@ -787,11 +882,21 @@ $currentEmail = $_GET['email'];
 
     document.getElementById('resetFilters').addEventListener('click', () => {
         document.querySelectorAll('.filter-sidebar input[type="checkbox"]').forEach(cb => cb.checked = false);
+        document.getElementById('filterYear').value = '';
+        document.getElementById('filterMonth').value = '';
         document.getElementById('searchInput').value = '';
-        document.getElementById('scoreDropdown').value = 'All';
-        document.getElementById('nameSortDropdown').value = 'NameAZ';
+        currentSortColumn = 'name';
+        currentSortOrder = 'ASC';
+        updateSortIcons();
         fetchCandidates();
     });
+    
+    // Attach change events for Year/Month filters
+    document.getElementById('filterYear').addEventListener('change', fetchCandidates);
+    document.getElementById('filterMonth').addEventListener('change', fetchCandidates);
+    document.getElementById('status-options').addEventListener('change', fetchCandidates);
+    document.getElementById('job-position-options').addEventListener('change', fetchCandidates);
+    document.getElementById('department-options').addEventListener('change', fetchCandidates);
 
     // --- Bulk Compare ---
     document.getElementById('compareSelectedBtn').addEventListener('click', () => {
@@ -810,12 +915,6 @@ $currentEmail = $_GET['email'];
         // 4. Redirect to compare.php with email and IDs
         window.location.href = `compare.php?email=${encodeURIComponent(currentEmail)}&ids=${ids}`;
     });
-
-    document.getElementById('scoreDropdown').addEventListener('change', fetchCandidates);
-    document.getElementById('nameSortDropdown').addEventListener('change', fetchCandidates);
-    document.getElementById('status-options').addEventListener('change', fetchCandidates);
-    document.getElementById('job-position-options').addEventListener('change', fetchCandidates);
-    document.getElementById('department-options').addEventListener('change', fetchCandidates);
 </script>
 </body>
 </html>

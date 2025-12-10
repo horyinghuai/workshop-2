@@ -8,8 +8,15 @@ $status = isset($_GET['status']) ? $_GET['status'] : [];
 $job_positions = isset($_GET['job_position']) ? $_GET['job_position'] : [];
 $departments = isset($_GET['department']) ? $_GET['department'] : [];
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'All'; // 'All' now generally maps to NameAZ in JS if not overruled
 $is_archived = isset($_GET['is_archived']) ? intval($_GET['is_archived']) : 0;
+
+// New Filters
+$filter_year = isset($_GET['year']) ? intval($_GET['year']) : 0;
+$filter_month = isset($_GET['month']) ? intval($_GET['month']) : 0;
+
+// Sorting
+$sort_column = isset($_GET['sort_column']) ? $_GET['sort_column'] : 'name';
+$sort_order = isset($_GET['sort_order']) && strtoupper($_GET['sort_order']) === 'DESC' ? 'DESC' : 'ASC';
 
 // Initialize ID arrays
 $rag_ids = [];
@@ -19,18 +26,6 @@ $search_active = !empty($search);
 
 // --- 2. Perform RAG & Keyword Search (If search is active) ---
 if ($search_active) {
-    // A. AI (RAG) Search
-    // Execute the Python script and capture JSON output
-    $python_command = "python rag_search_candidate.py " . escapeshellarg($search);
-    $json_output = shell_exec($python_command);
-    $python_result = json_decode($json_output, true);
-
-    if ($python_result && isset($python_result['success']) && $python_result['success']) {
-        $rag_ids = $python_result['ids'];
-    }
-
-    // B. Keyword Fallback Search (SQL LIKE)
-    // Matches logic from execute_rag_query_candidate.php to ensure robustness
     $search_term = "%{$search}%";
     $keyword_sql = "
         SELECT c.candidate_id 
@@ -87,7 +82,6 @@ $sql = "SELECT c.*,
 
 // A. Search ID Filter
 if ($search_active && !empty($final_ids)) {
-    // Sanitize IDs
     $id_list = implode(",", array_map('intval', $final_ids));
     $sql .= " AND c.candidate_id IN ($id_list)";
 }
@@ -108,28 +102,43 @@ if (!empty($departments)) {
     $sql .= " AND d.department_name IN ($deptList)";
 }
 
+// C. Year/Month Filters
+if ($filter_year > 0) {
+    $sql .= " AND YEAR(c.applied_date) = $filter_year";
+}
+if ($filter_month > 0) {
+    $sql .= " AND MONTH(c.applied_date) = $filter_month";
+}
+
 // --- 5. Sorting Logic ---
 $orderBy = "";
 
-if ($search_active && !empty($final_ids) && $sort_by === 'All') {
-    // If searching and no specific sort selected, prioritize Search Relevance
-    $prioritized_ids = array_unique(array_merge($rag_ids, $keyword_ids));
-    $priority_str = implode(",", array_map('intval', $prioritized_ids));
-    $orderBy = "ORDER BY FIELD(c.candidate_id, $priority_str)"; 
-} else {
-    // Standard Sorting
-    switch ($sort_by) {
-        case 'NameAZ': $orderBy = "ORDER BY c.name ASC"; break;
-        case 'NameZA': $orderBy = "ORDER BY c.name DESC"; break;
-        case 'Overall': $orderBy = "ORDER BY r.score_overall DESC"; break;
-        case 'Education': $orderBy = "ORDER BY r.score_education DESC"; break;
-        case 'Skills': $orderBy = "ORDER BY r.score_skills DESC"; break;
-        case 'Experience': $orderBy = "ORDER BY r.score_experience DESC"; break;
-        case 'Language': $orderBy = "ORDER BY r.score_language DESC"; break;
-        // Default changed to Name A-Z
-        default: $orderBy = "ORDER BY c.name ASC"; break;
-    }
+// Map sort_column to SQL field
+$sortField = "c.name"; // Default
+switch ($sort_column) {
+    case 'name': $sortField = "c.name"; break;
+    case 'job_position': $sortField = "jp.job_name"; break;
+    case 'department': $sortField = "d.department_name"; break;
+    case 'applied_date': $sortField = "c.applied_date"; break;
+    case 'score_overall': $sortField = "r.score_overall"; break;
+    case 'score_education': $sortField = "r.score_education"; break;
+    case 'score_skills': $sortField = "r.score_skills"; break;
+    case 'score_experience': $sortField = "r.score_experience"; break;
+    case 'score_language': $sortField = "r.score_language"; break;
+    case 'score_others': $sortField = "r.score_others"; break;
+    default: $sortField = "c.name"; break;
 }
+
+// Apply Sort
+$orderBy = "ORDER BY $sortField $sort_order";
+
+// NOTE: If user explicitly clicked a header, we prioritize that sort over the 'search relevance' logic.
+// If you want search relevance to persist UNLESS a sort is triggered, checking if 'sort_column' was passed from defaults vs user action is needed.
+// Here, we assume if the table is loaded, it sorts by Name ASC (default) or whatever the user clicks.
+// RAG relevance sorting is usually only desired if the user JUST searched and didn't click a column yet.
+// However, the current logic in candidateScoring.php defaults 'sort_column' to 'name' on load.
+// If you want to keep RAG relevance on search, you would need to handle "no sort param" logic.
+// For now, consistent column sorting is usually preferred in tables.
 
 $sql .= " " . $orderBy;
 
