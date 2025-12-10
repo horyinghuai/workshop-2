@@ -211,7 +211,7 @@ $currentEmail = $_GET['email'];
 
         <div class="content-area">
             <div class="top-controls">
-                <div style="display:flex; align-items:center; gap:0.5rem;">
+                <div style="margin-top: -1rem; display:flex; align-items:center; gap:0.5rem;">
                     <button id="toggleArchiveBtn"><i class="fas fa-archive"></i> View Archive</button>
                     <button id="compareSelectedBtn"><i class="fas fa-balance-scale"></i> Compare</button>
                     
@@ -219,12 +219,12 @@ $currentEmail = $_GET['email'];
                     <button id="restoreSelectedBtn"><i class="fas fa-trash-restore"></i> Restore</button>
                     <button id="permanentDeleteSelectedBtn"><i class="fas fa-trash"></i> Delete</button>
                 </div>
-                <div class="search-container" style="margin-left:auto;">
+                <div class="search-container" style="margin-left:auto; margin-top:-0.5rem;">
                     <i class="fas fa-search"></i>
                     <input type="text" class="search-input" placeholder="Search" id="searchInput">
                 </div>
             </div>
-                <h2 id="tableTitle" style="margin: 0 0 10px 10px; color: #3a7c7c;">Active Candidates</h2>
+                <h2 id="tableTitle" style="margin: -8px 0 0 10px; color: #3a7c7c;">Active Candidates</h2>
             <div class="candidate-table-container">
                 <table class="candidate-table">
                     <thead>
