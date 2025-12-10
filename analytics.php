@@ -48,47 +48,94 @@ while ($row = $deptQuery->fetch_assoc()) {
     $deptCounts[] = (int)$row['cnt'];
 }
 
-/* ================= AI CONFIDENCE STATS ================= */
-$high = $mid = $low = 0;
+/* ================= MONTHLY APPLICANTS STATS ================= */
+$monthLabels = [];
+$monthCounts = [];
 
-$confQuery = $conn->query("SELECT ai_confidence_level FROM REPORT WHERE ai_confidence_level IS NOT NULL");
+$monthQuery = $conn->query("
+    SELECT DATE_FORMAT(applied_date, '%M %Y') as month_label, COUNT(*) as cnt
+    FROM CANDIDATE
+    GROUP BY YEAR(applied_date), MONTH(applied_date)
+    ORDER BY applied_date ASC
+");
 
-while ($row = $confQuery->fetch_assoc()) {
-    $value = (float)$row['ai_confidence_level'];
-
-    if ($value >= 75) $high++;
-    else if ($value >= 40) $mid++;
-    else $low++;
+while ($row = $monthQuery->fetch_assoc()) {
+    $monthLabels[] = $row['month_label'];
+    $monthCounts[] = (int)$row['cnt'];
 }
 
-/* ================= TOP CANDIDATES FUNCTION ================= */
-function topCandidatesFor($role, $conn) {
-    $list = [];
+/* ================= TOP CANDIDATE PER JOB POSITION (GROUPED BY DEPT) ================= */
+$topJobCandidates = []; // Keyed by Department Name
 
+// 1. Get all Job Positions linked with their Departments
+$jobListQ = $conn->query("
+    SELECT j.job_id, j.job_name, d.department_name 
+    FROM JOB_POSITION j
+    JOIN DEPARTMENT d ON j.department_id = d.department_id
+    ORDER BY d.department_name ASC, j.job_name ASC
+");
+
+while ($j = $jobListQ->fetch_assoc()) {
+    // 2. Get top candidate for this Job Position based on Overall Score
     $stmt = $conn->prepare("
-        SELECT c.name, j.job_name, r.score_overall, r.ai_confidence_level
+        SELECT c.name, r.score_overall
+        FROM CANDIDATE c
+        JOIN REPORT r ON c.candidate_id = r.candidate_id
+        WHERE c.job_id = ?
+        ORDER BY r.score_overall DESC
+        LIMIT 1
+    ");
+    $stmt->bind_param("i", $j['job_id']);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    
+    if ($cand = $res->fetch_assoc()) {
+        $dept = $j['department_name'];
+        if (!isset($topJobCandidates[$dept])) {
+            $topJobCandidates[$dept] = [];
+        }
+        $topJobCandidates[$dept][] = [
+            'name' => $cand['name'],
+            'job_name' => $j['job_name'],
+            'score' => $cand['score_overall']
+        ];
+    }
+    $stmt->close();
+}
+
+/* ================= TOP CANDIDATE PER RESUME FIELD ================= */
+$resumeFields = [
+    'Education' => 'score_education',
+    'Skills' => 'score_skills',
+    'Experience' => 'score_experience',
+    'Language' => 'score_language',
+    'Others' => 'score_others'
+];
+
+$topFieldCandidates = [];
+
+foreach ($resumeFields as $label => $col) {
+    // Sort by specific field DESC, then Overall DESC (tie-breaker)
+    $sql = "
+        SELECT c.name, j.job_name, r.score_overall, r.$col AS field_score
         FROM CANDIDATE c
         JOIN JOB_POSITION j ON c.job_id = j.job_id
-        JOIN REPORT r ON r.candidate_id = c.candidate_id
-        WHERE j.job_name = ?
-        ORDER BY r.ai_confidence_level DESC, r.score_overall DESC
-        LIMIT 3
-    ");
-
-    $stmt->bind_param("s", $role);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $list[] = $row;
+        JOIN REPORT r ON c.candidate_id = r.candidate_id
+        ORDER BY r.$col DESC, r.score_overall DESC
+        LIMIT 1
+    ";
+    
+    $res = $conn->query($sql);
+    if ($cand = $res->fetch_assoc()) {
+        $topFieldCandidates[] = [
+            'category' => $label,
+            'name' => $cand['name'],
+            'job_name' => $cand['job_name'],
+            'field_score' => $cand['field_score'],
+            'overall' => $cand['score_overall']
+        ];
     }
-
-    $stmt->close();
-    return $list;
 }
-
-$topDataAnalyst = topCandidatesFor("Data Analyst", $conn);
-$topHRAssistant = topCandidatesFor("HR Assistant", $conn);
 
 /* ================= JSON FOR CHARTS ================= */
 $jobLabelsJSON  = json_encode($jobLabels);
@@ -97,15 +144,14 @@ $jobCountsJSON  = json_encode($jobCounts);
 $deptLabelsJSON = json_encode($deptLabels);
 $deptCountsJSON = json_encode($deptCounts);
 
-$confJSON       = json_encode([$high, $mid, $low]);
+$monthLabelsJSON = json_encode($monthLabels);
+$monthCountsJSON = json_encode($monthCounts);
 
-// Close DB
 $conn->close();
 ?>
 
 <!doctype html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <title>Resume Reader — Analytics</title>
@@ -113,8 +159,96 @@ $conn->close();
     <link rel="stylesheet" href="analytics.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+    <style>
+        /* Small overrides for list display */
+        .cand-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .cand-list li:last-child { border-bottom: none; }
+        
+        .cand-info { display: flex; flex-direction: column; }
+        .cand-meta { font-size: 0.85rem; color: #666; margin-top: 2px; }
+        .cand-score { text-align: right; }
+        
+        .score-main { 
+            font-weight: bold; 
+            color: #3a7c7c; 
+            font-size: 1.1rem; 
+        }
+        
+        /* Default Score Sub Color */
+        .score-sub { 
+            font-size: 0.8rem; 
+            color: black; 
+        }
+        
+        .badge { 
+            display: inline-block; 
+            padding: 2px 8px; 
+            border-radius: 12px; 
+            background: #e0f2f1; 
+            color: #00695c; 
+            font-size: 0.75rem; 
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
 
+        .bottom-row .card {
+            padding: 1rem;
+        }
+
+        /* --- Department Group Styling (Left Side Graph) --- */
+        .dept-group {
+            margin-bottom: 20px; /* Maintains margin between departments */
+            border: 1px solid #00695c;
+            border-radius: 8px;
+            overflow: hidden; /* Ensures child radius doesn't leak */
+            background: #fff;
+        }
+        
+        .dept-header {
+            background-color: #3a7c7c;
+            color: white;
+            padding: 10px 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Specific Overrides for Lists Inside Dept Group */
+        .dept-group .cand-list {
+            padding: 0;
+            margin: 0;
+            display: block; /* Removes flex gap behavior */
+        }
+
+        .dept-group .cand-list li {
+            padding: 12px;
+            border-bottom: 1px solid #444; /* Darker border for black background */
+            margin: 0; /* No margin between items */
+            border-radius: 0; /* No radius */
+            background: #e0f2f1;
+        }
+
+        .dept-group .cand-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Override text colors for black background to ensure readability */
+        .dept-group .cand-list .name {
+            color: black;
+        }
+        .dept-group .cand-list .cand-meta {
+            color: #666;
+        }
+        .dept-group .cand-list .score-sub {
+            color: black; /* Lighter text for black background */
+        }
+    </style>
+</head>
 <body>
     <header class="header">
       <div class="header-left">
@@ -127,7 +261,6 @@ $conn->close();
           <a href="logout.php" class="logout">Log Out</a>
       </div>
     </header>
-
 
 <main class="main">
 
@@ -156,52 +289,62 @@ $conn->close();
       <canvas id="deptsChart"></canvas>
     </div>
 
-<div class="card chart-card">
-    <h4>AI Confidence Level Distribution</h4>
-    <canvas id="confChart"></canvas>
-    
-</div>
+    <div class="card chart-card">
+        <h4>Candidates Applied (Monthly)</h4>
+        <canvas id="monthlyChart"></canvas>
+    </div>
   </section>
 
   <section class="bottom-row">
     <div class="card list-card">
-      <h4>Top Candidates: Data Analyst</h4>
-      <ul class="cand-list">
-        <?php if (empty($topDataAnalyst)): ?>
-          <li class="empty">No candidates</li>
+      <h4>Top Candidates by Job Position</h4>
+      <div style="max-height: 450px; overflow-y: auto;">
+        <?php if (empty($topJobCandidates)): ?>
+          <div class="empty" style="text-align:center; color:#999; padding:2rem;">No candidates found.</div>
+        <?php else: ?>
+            <?php foreach ($topJobCandidates as $deptName => $candidates): ?>
+                <div class="dept-group">
+                    <div class="dept-header">
+                        <?= htmlspecialchars($deptName) ?>
+                    </div>
+                    <ul class="cand-list">
+                        <?php foreach ($candidates as $c): ?>
+                            <li>
+                                <div class="cand-info">
+                                    <span class="name" style="font-weight:600;"><?= htmlspecialchars($c['name']) ?></span>
+                                    <span class="cand-meta"><?= htmlspecialchars($c['job_name']) ?></span>
+                                </div>
+                                <div class="cand-score">
+                                    <div class="score-main"><?= htmlspecialchars($c['score']) ?></div>
+                                    <div class="score-sub">Overall Score</div>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endforeach; ?>
         <?php endif; ?>
-
-        <?php foreach ($topDataAnalyst as $c): ?>
-          <li>
-            <div>
-              <div class="name"><?= htmlspecialchars($c['name']) ?></div>
-              <div class="muted"><?= htmlspecialchars($c['job_name']) ?></div>
-            </div>
-            <div class="score">
-              <div>Score: <?= htmlspecialchars($c['score_overall']) ?></div>
-              <div class="confidence">AI Confidence: <?= htmlspecialchars(number_format($c['ai_confidence_level'], 1)) ?>%</div>
-            </div>
-          </li>
-        <?php endforeach; ?>
-      </ul>
+      </div>
     </div>
 
     <div class="card list-card">
-      <h4>Top Candidates: HR Assistant</h4>
+      <h4>Top Candidates by Category</h4>
       <ul class="cand-list">
-        <?php if (empty($topHRAssistant)): ?>
-          <li class="empty">No candidates</li>
+        <?php if (empty($topFieldCandidates)): ?>
+          <li class="empty" style="text-align:center; color:#9fc2c6; padding:2rem;">No candidates found.</li>
         <?php endif; ?>
 
-        <?php foreach ($topHRAssistant as $c): ?>
-          <li>
-            <div>
-              <div class="name"><?= htmlspecialchars($c['name']) ?></div>
-              <div class="muted"><?= htmlspecialchars($c['job_name']) ?></div>
+        <?php foreach ($topFieldCandidates as $c): ?>
+          <li style="padding: 1rem;">
+            <div class="cand-info">
+              <span class="badge" style="background:#3a7c7c; color:white;"><?= htmlspecialchars($c['category']) ?> Highest</span>
+              <span class="name" style="font-weight:600;"><?= htmlspecialchars($c['name']) ?></span>
+              <span class="cand-meta"><?= htmlspecialchars($c['job_name']) ?></span>
             </div>
-            <div class="score">
-              <div>Score: <?= htmlspecialchars($c['score_overall']) ?></div>
-              <div class="confidence">AI Confidence: <?= htmlspecialchars(number_format($c['ai_confidence_level'], 1)) ?>%</div>
+            <div class="cand-score">
+              <div class="score-main"><?= htmlspecialchars($c['field_score']) ?></div>
+              <div class="score-sub">Field Score</div>
+              <div class="score-sub" style="font-size:0.7rem; color: #555;">Overall: <?= htmlspecialchars($c['overall']) ?></div>
             </div>
           </li>
         <?php endforeach; ?>
@@ -215,7 +358,7 @@ $conn->close();
 /* ============ SAFE CHART SETUP ============ */
 let jobsChartInstance = null;
 let deptsChartInstance = null;
-let confChartInstance = null;
+let monthlyChartInstance = null;
 
 /* ============ JOB POSITIONS BAR ============ */
 if (jobsChartInstance) jobsChartInstance.destroy();
@@ -231,11 +374,7 @@ jobsChartInstance = new Chart(document.getElementById("jobsChart"), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
-        }
+        plugins: { legend: { display: false } }
     }
 });
 
@@ -253,65 +392,49 @@ deptsChartInstance = new Chart(document.getElementById("deptsChart"), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
-        }
+        plugins: { legend: { display: false } }
     }
 });
 
-/* ============ CONFIDENCE PIE ============ */
-if (confChartInstance) confChartInstance.destroy();
-confChartInstance = new Chart(document.getElementById("confChart"), {
-    type: "pie",
+/* ============ MONTHLY LINE CHART ============ */
+if (monthlyChartInstance) monthlyChartInstance.destroy();
+monthlyChartInstance = new Chart(document.getElementById("monthlyChart"), {
+    type: "line",
     data: {
-        labels: ["High Confidence", "Medium Confidence", "Low Confidence"],
+        labels: <?= $monthLabelsJSON ?>,
         datasets: [{
-            data: <?= $confJSON ?>,
-            backgroundColor: ["#3a7c7c", "#C4C6CC", "#CE3A3A"],
-            borderWidth: 0
+            label: "Total Applicants",
+            data: <?= $monthCountsJSON ?>,
+            borderColor: "#3a7c7c",
+            backgroundColor: "rgba(58, 124, 124, 0.2)",
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
         }]
     },
     options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    usePointStyle: true,
-                    padding: 20,
-                    font: {
-                        size: 14
-                    }
-                }
-            },
+            legend: { display: false },
             tooltip: {
                 callbacks: {
-                    label: function(context) {
-                        const label = context.label || '';
-                        const value = context.raw || 0;
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        const percentage = Math.round((value / total) * 100);
-                        return `${label}: ${value} (${percentage}%)`;
-                    }
+                    label: function(context) { return `Applicants: ${context.raw}`; }
                 }
             }
         },
-        layout: {
-            padding: {
-                top: 10,
-                bottom: 10
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { precision: 0 }
             }
-        }
+        },
+        layout: { padding: { top: 10, bottom: 10 } }
     }
 });
-// Add navigation confirmation for logout
+
 document.querySelector('.logout').addEventListener('click', function(e) {
-    if (!confirm('Are you sure you want to log out?')) {
-        e.preventDefault();
-    }
+    if (!confirm('Are you sure you want to log out?')) { e.preventDefault(); }
 });
 </script>
 </body>

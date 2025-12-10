@@ -144,6 +144,86 @@ $currentEmail = $_GET['email'];
         background-color: #f4f7f6;
     }
 
+    /* --- UPDATED: Fixed Table Layout & Sticky Columns --- */
+    .candidate-table-container {
+        max-height: 400px; 
+        overflow-y: auto;  
+    }
+
+    .candidate-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .candidate-table th:first-child,
+    .candidate-table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 11;
+        background-color: #9fc2c6; 
+    }
+
+    .candidate-table th:nth-child(2),
+    .candidate-table td:nth-child(2) {
+        position: sticky;
+        left: 60px; 
+        z-index: 11;
+        background-color: #9fc2c6; 
+        border-right: 2px solid #7c9da1;
+    }
+
+    .candidate-table thead th:first-child,
+    .candidate-table thead th:nth-child(2) {
+        z-index: 15;
+        background-color: #2e6c73;
+    }
+
+    /* --- Multi-Level Sort Bar Styles --- */
+    .sort-wrapper {
+        background-color: #d9ebec;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #9fc2c6;
+    }
+    .sort-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .sort-row label {
+        font-weight: bold;
+        color: #3a7c7c;
+        width: 80px;
+    }
+    .sort-select, .order-select {
+        padding: 6px;
+        border: 1px solid #2e6c73;
+        border-radius: 4px;
+        background: white;
+    }
+    .btn-remove-sort {
+        background: #dc3545; color: white; border: none;
+        width: 24px; height: 24px; border-radius: 50%;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        font-size: 0.8rem;
+    }
+    .sort-actions {
+        display: flex; gap: 10px; margin-top: 10px;
+    }
+    .btn-add-level {
+        background-color: #17a2b8; color: white;
+        border: none; padding: 6px 12px; border-radius: 4px;
+        cursor: pointer; font-weight: 600;
+    }
+    .btn-apply-sort {
+        background-color: #3a7c7c; color: white;
+        border: none; padding: 6px 12px; border-radius: 4px;
+        cursor: pointer; font-weight: bold; margin-left: auto;
+    }
+
     @media (max-width: 768px) { .status-modal-wrapper { width: 92%; padding: .5rem; } .resume-modal { width: 92%; } .edit-modal-wrapper { width: 95%; border-width: 15px; } }
     </style>
 </head>
@@ -224,7 +304,17 @@ $currentEmail = $_GET['email'];
                     <input type="text" class="search-input" placeholder="Search" id="searchInput">
                 </div>
             </div>
-                <h2 id="tableTitle" style="margin: -8px 0 0 10px; color: #3a7c7c;">Active Candidates</h2>
+
+            <div class="sort-wrapper">
+                <div id="sortRowsContainer">
+                    </div>
+                <div class="sort-actions">
+                    <button type="button" class="btn-add-level" onclick="addSortRow()"><i class="fas fa-plus"></i> Add Level</button>
+                    <button type="button" class="btn-apply-sort" id="btnApplySort">Apply Sort</button>
+                </div>
+            </div>
+
+            <h2 id="tableTitle" style="margin: -8px 0 0 10px; color: #3a7c7c;">Active Candidates</h2>
             <div class="candidate-table-container">
                 <table class="candidate-table">
                     <thead>
@@ -354,11 +444,12 @@ $currentEmail = $_GET['email'];
     let allCandidates = [];
     let isArchiveView = false; // Toggle state
 
-    // --- Sorting State ---
-    let currentSortColumn = 'name'; // default
-    let currentSortOrder = 'ASC';   // default
+    // --- Sort State ---
+    let useMultiLevelSort = false;
+    let singleSortColumn = 'name';
+    let singleSortOrder = 'ASC';
 
-    // --- Populate Year Dropdown (Current year - 5) ---
+    // --- Populate Year Dropdown ---
     const yearSelect = document.getElementById('filterYear');
     const currentYear = new Date().getFullYear();
     for(let i = 0; i < 6; i++) {
@@ -369,16 +460,56 @@ $currentEmail = $_GET['email'];
         yearSelect.appendChild(opt);
     }
 
+    // --- Dynamic Sort Rows Logic ---
+    const sortContainer = document.getElementById('sortRowsContainer');
+    
+    // Available Score Columns only
+    const scoreOptions = `
+        <option value="score_overall">Overall Score</option>
+        <option value="score_education">Education Score</option>
+        <option value="score_skills">Skills Score</option>
+        <option value="score_experience">Experience Score</option>
+        <option value="score_language">Language Score</option>
+        <option value="score_others">Others Score</option>
+    `;
+
+    function addSortRow() {
+        const row = document.createElement('div');
+        row.className = 'sort-row';
+        const level = sortContainer.children.length + 1;
+        
+        row.innerHTML = `
+            <label>Level ${level}:</label>
+            <select class="sort-select name="sort_col">
+                ${scoreOptions}
+            </select>
+            <select class="order-select" name="sort_order">
+                <option value="DESC">High-Low</option>
+                <option value="ASC">Low-High</option>
+            </select>
+            ${level > 1 ? '<button type="button" class="btn-remove-sort" onclick="removeSortRow(this)"><i class="fas fa-times"></i></button>' : ''}
+        `;
+        sortContainer.appendChild(row);
+    }
+
+    function removeSortRow(btn) {
+        btn.closest('.sort-row').remove();
+        // Re-label levels
+        Array.from(sortContainer.children).forEach((row, index) => {
+            row.querySelector('label').innerText = `Level ${index + 1}:`;
+        });
+    }
+
+    // Initialize with 1 level
+    addSortRow();
+
     // --- Archive Toggle ---
     document.getElementById('toggleArchiveBtn').addEventListener('click', function() {
         isArchiveView = !isArchiveView;
         this.innerHTML = isArchiveView ? '<i class="fas fa-list"></i> View Active' : '<i class="fas fa-archive"></i> View Archive';
         this.classList.toggle('active-view', isArchiveView);
         document.getElementById('tableTitle').innerText = isArchiveView ? "Archived Candidates" : "Active Candidates";
-        
-        // Reset bulk selection
         document.getElementById('selectAll').checked = false;
-        
         fetchCandidates();
     });
 
@@ -407,7 +538,6 @@ $currentEmail = $_GET['email'];
             data.departments.forEach(dept => {
                 departmentOptions.innerHTML += `<div class="filter-option"><label><input type="checkbox" name="department" value="${escapeHtml(dept)}"> ${escapeHtml(dept)}</label></div>`;
             });
-            // Re-attach event listeners for dynamic elements
             document.querySelectorAll('#job-position-options input, #department-options input').forEach(input => {
                 input.addEventListener('change', fetchCandidates);
             });
@@ -419,18 +549,19 @@ $currentEmail = $_GET['email'];
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    // --- Sorting Function ---
+    // --- Sorting Handlers ---
+    
+    // 1. Header Click (Single Sort - Resets Multi)
     function toggleSort(column) {
-        if (currentSortColumn === column) {
-            // Toggle order
-            currentSortOrder = (currentSortOrder === 'ASC') ? 'DESC' : 'ASC';
+        useMultiLevelSort = false;
+        if (singleSortColumn === column) {
+            singleSortOrder = (singleSortOrder === 'ASC') ? 'DESC' : 'ASC';
         } else {
-            // New column, set default order based on column type
-            currentSortColumn = column;
+            singleSortColumn = column;
             if (column.startsWith('score_') || column === 'applied_date') {
-                currentSortOrder = 'DESC'; // Scores: High->Low, Date: Latest->Oldest by default
+                singleSortOrder = 'DESC'; 
             } else {
-                currentSortOrder = 'ASC';  // Text: A-Z by default
+                singleSortOrder = 'ASC';
             }
         }
         updateSortIcons();
@@ -438,19 +569,29 @@ $currentEmail = $_GET['email'];
     }
 
     function updateSortIcons() {
-        // Reset all icons
         document.querySelectorAll('thead th i').forEach(icon => {
             icon.className = 'fas fa-sort';
             icon.style.opacity = '0.3';
         });
-
-        // Set active icon
-        const activeIcon = document.getElementById(`sortIcon-${currentSortColumn}`);
-        if (activeIcon) {
-            activeIcon.className = (currentSortOrder === 'ASC') ? 'fas fa-sort-up' : 'fas fa-sort-down';
-            activeIcon.style.opacity = '1';
+        if (!useMultiLevelSort) {
+            const activeIcon = document.getElementById(`sortIcon-${singleSortColumn}`);
+            if (activeIcon) {
+                activeIcon.className = (singleSortOrder === 'ASC') ? 'fas fa-sort-up' : 'fas fa-sort-down';
+                activeIcon.style.opacity = '1';
+            }
         }
     }
+
+    // 2. Apply Multi-Level Sort
+    document.getElementById('btnApplySort').addEventListener('click', () => {
+        useMultiLevelSort = true;
+        // Reset header icons visual
+        document.querySelectorAll('thead th i').forEach(icon => {
+            icon.className = 'fas fa-sort';
+            icon.style.opacity = '0.3';
+        });
+        fetchCandidates();
+    });
 
     // --- Fetch Candidates ---
     async function fetchCandidates() {
@@ -460,7 +601,6 @@ $currentEmail = $_GET['email'];
         
         const filterYear = document.getElementById('filterYear').value;
         const filterMonth = document.getElementById('filterMonth').value;
-        
         const searchTerm = document.getElementById('searchInput').value;
 
         const params = new URLSearchParams();
@@ -468,17 +608,25 @@ $currentEmail = $_GET['email'];
         selectedJobPositions.forEach(jp => params.append('job_position[]', jp));
         selectedDepartments.forEach(d => params.append('department[]', d));
         if (searchTerm) params.append('search', searchTerm);
-        
-        // Append Date Filters
         if (filterYear) params.append('year', filterYear);
         if (filterMonth) params.append('month', filterMonth);
-
-        // Append Sort Params
-        params.append('sort_column', currentSortColumn);
-        params.append('sort_order', currentSortOrder);
-        
-        // Send Archive Flag
         params.append('is_archived', isArchiveView ? 1 : 0);
+
+        // Sorting Logic
+        if (useMultiLevelSort) {
+            // Gather from Sort Bar
+            const rows = document.querySelectorAll('#sortRowsContainer .sort-row');
+            rows.forEach((row, index) => {
+                const col = row.querySelector('.sort-select').value;
+                const order = row.querySelector('.order-select').value;
+                params.append(`sort_cols[]`, col);
+                params.append(`sort_orders[]`, order);
+            });
+        } else {
+            // Use Single Sort
+            params.append('sort_cols[]', singleSortColumn);
+            params.append('sort_orders[]', singleSortOrder);
+        }
 
         try {
             const response = await fetch(`get_candidates.php?${params.toString()}`);
@@ -494,6 +642,7 @@ $currentEmail = $_GET['email'];
             }
 
             allCandidates.forEach(candidate => {
+                // ... (Row Construction Logic Same as Before) ...
                 let outreachContent = '';
                 const outreachStatus = candidate.outreach_status || null;
 
@@ -511,7 +660,6 @@ $currentEmail = $_GET['email'];
                     outreachContent = `<span style="font-weight:600; font-size:0.9rem; ${colorStyle}">${escapeHtml(outreachStatus)}</span>`;
                 }
 
-                // Status Logic
                 let statusCell = '';
                 if(isArchiveView) {
                     statusCell = `<span style="font-weight:bold; color:#666;">${escapeHtml(candidate.status)}</span>`;
@@ -519,7 +667,6 @@ $currentEmail = $_GET['email'];
                     statusCell = `<button class="status-btn" data-candidate-id="${escapeHtml(candidate.candidate_id)}" data-current-status="${escapeHtml(candidate.status)}">${escapeHtml(candidate.status)}</button>`;
                 }
 
-                // Name and Restore Button logic (List Icon)
                 let nameCell = `<span class="clickable-name" onclick="openEditCandidate(${candidate.candidate_id})">${escapeHtml(candidate.name)}</span>`;
 
                 const row = document.createElement('tr');
@@ -554,9 +701,8 @@ $currentEmail = $_GET['email'];
         }
     }
 
-    // --- Edit Candidate ---
+    // --- Standard Modal & Action Functions (Same as previous) ---
     function openEditCandidate(id) {
-        // Updated to use candidate_id
         const candidate = allCandidates.find(c => c.candidate_id == id);
         if (!candidate) return;
         document.getElementById('edit_candidate_id').value = candidate.candidate_id;
@@ -566,7 +712,6 @@ $currentEmail = $_GET['email'];
         document.getElementById('edit_contact').value = candidate.contact_number || '';
         document.getElementById('edit_address').value = candidate.address || '';
         
-        // --- Configure Middle Button (Archive/Restore) ---
         const btnMiddle = document.getElementById('btnArchiveRestoreCandidate');
         const newBtnMiddle = btnMiddle.cloneNode(true);
         btnMiddle.parentNode.replaceChild(newBtnMiddle, btnMiddle);
@@ -581,11 +726,9 @@ $currentEmail = $_GET['email'];
             newBtnMiddle.onclick = function() { archiveCandidateFromModal(candidate.candidate_id); };
         }
         
-        // --- Configure Delete Button (Permanent) ---
         const btnDelete = document.getElementById('btnDeletePermanentCandidate');
         const newBtnDelete = btnDelete.cloneNode(true);
         btnDelete.parentNode.replaceChild(newBtnDelete, btnDelete);
-        
         newBtnDelete.onclick = function() { permanentDeleteCandidateFromModal(candidate.candidate_id); };
         
         document.getElementById('editCandidateModal').classList.add('visible');
@@ -605,11 +748,10 @@ $currentEmail = $_GET['email'];
         } catch (e) { alert("Request failed."); }
     });
 
-    // Archive Action (Modal)
     async function archiveCandidateFromModal(id) {
         if (!confirm("Are you sure you want to archive this candidate?")) return;
         const formData = new FormData();
-        formData.append('action_type', 'delete'); // 'delete' maps to Archive in PHP
+        formData.append('action_type', 'delete');
         formData.append('candidate_id', id);
         try {
             const resp = await fetch('cud_candidate.php', { method: 'POST', body: formData });
@@ -622,7 +764,6 @@ $currentEmail = $_GET['email'];
         } catch (e) { alert("Request failed."); }
     }
 
-    // Restore Action (Modal)
     async function restoreCandidateFromModal(id) {
         if (!confirm("Restore this candidate to Active list?")) return;
         const formData = new FormData();
@@ -639,7 +780,6 @@ $currentEmail = $_GET['email'];
         } catch(e) { console.error(e); }
     }
     
-    // Permanent Delete Action (Modal)
     async function permanentDeleteCandidateFromModal(id) {
         if (!confirm("WARNING: This will PERMANENTLY delete the candidate record. This action cannot be undone. Proceed?")) return;
         const formData = new FormData();
@@ -656,32 +796,11 @@ $currentEmail = $_GET['email'];
         } catch(e) { console.error(e); }
     }
 
-    // --- Single Restore (List Icon) ---
-    async function restoreCandidate(id) {
-        if (!confirm("Restore this candidate to Active list?")) return;
-        const formData = new FormData();
-        formData.append('action_type', 'restore');
-        formData.append('candidate_id', id);
-        try {
-            const resp = await fetch('cud_candidate.php', { method: 'POST', body: formData });
-            const data = await resp.json();
-            if (data.success) {
-                alert(data.message);
-                fetchCandidates();
-            } else alert('Error: ' + data.message);
-        } catch(e) { console.error(e); }
-    }
-    window.restoreCandidate = restoreCandidate;
-
     document.getElementById('btnCloseEditModal').addEventListener('click', () => document.getElementById('editCandidateModal').classList.remove('visible'));
 
-    // --- Bulk Actions ---
     function updateButtonVisibility() {
         const checkedCount = document.querySelectorAll('input[name="candidate_check"]:checked').length;
-        
-        // Permanent Delete is always available if selected
         document.getElementById('permanentDeleteSelectedBtn').style.display = checkedCount > 0 ? 'inline-block' : 'none';
-        
         if (isArchiveView) {
             document.getElementById('archiveSelectedBtn').style.display = 'none';
             document.getElementById('restoreSelectedBtn').style.display = checkedCount > 0 ? 'inline-block' : 'none';
@@ -689,11 +808,9 @@ $currentEmail = $_GET['email'];
             document.getElementById('archiveSelectedBtn').style.display = checkedCount > 0 ? 'inline-block' : 'none';
             document.getElementById('restoreSelectedBtn').style.display = 'none';
         }
-        
         document.getElementById('compareSelectedBtn').style.display = (checkedCount >= 2 && checkedCount <= 3) ? 'inline-block' : 'none';
     }
     
-    // Bulk Archive
     document.getElementById('archiveSelectedBtn').addEventListener('click', async () => {
         const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);
         if (!selected.length) return;
@@ -701,7 +818,6 @@ $currentEmail = $_GET['email'];
         await performBulkAction(selected, 'archive');
     });
 
-    // Bulk Restore
     document.getElementById('restoreSelectedBtn').addEventListener('click', async () => {
         const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);
         if (!selected.length) return;
@@ -709,7 +825,6 @@ $currentEmail = $_GET['email'];
         await performBulkAction(selected, 'restore');
     });
     
-    // Bulk Permanent Delete
     document.getElementById('permanentDeleteSelectedBtn').addEventListener('click', async () => {
         const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);
         if (!selected.length) return;
@@ -729,7 +844,6 @@ $currentEmail = $_GET['email'];
         } catch (err) { console.error(err); alert('Error.'); }
     }
 
-    // --- Resume Viewer, Status, Outreach, Event Listeners ... (Standard) ---
     function attachRowEventListeners() {
         document.querySelectorAll('input[name="candidate_check"]').forEach(cb => cb.addEventListener('change', updateButtonVisibility));
         document.querySelectorAll('.status-btn').forEach(btn => btn.addEventListener('click', onStatusButtonClick));
@@ -785,7 +899,6 @@ $currentEmail = $_GET['email'];
         const id = e.currentTarget.dataset.id;
         const candidate = allCandidates.find(c => c.candidate_id == id);
         if (!candidate) { alert('Candidate data not loaded.'); return; }
-        // ... (PDF Generation Logic) ...
         const popup = document.getElementById('sendingPopup');
         popup.style.display = 'flex';
         try {
@@ -885,34 +998,30 @@ $currentEmail = $_GET['email'];
         document.getElementById('filterYear').value = '';
         document.getElementById('filterMonth').value = '';
         document.getElementById('searchInput').value = '';
-        currentSortColumn = 'name';
-        currentSortOrder = 'ASC';
+        
+        // Reset sort to defaults
+        useMultiLevelSort = false;
+        singleSortColumn = 'name';
+        singleSortOrder = 'ASC';
+        sortContainer.innerHTML = '';
+        addSortRow(); // Reset UI to 1 level
         updateSortIcons();
         fetchCandidates();
     });
     
-    // Attach change events for Year/Month filters
     document.getElementById('filterYear').addEventListener('change', fetchCandidates);
     document.getElementById('filterMonth').addEventListener('change', fetchCandidates);
     document.getElementById('status-options').addEventListener('change', fetchCandidates);
     document.getElementById('job-position-options').addEventListener('change', fetchCandidates);
     document.getElementById('department-options').addEventListener('change', fetchCandidates);
 
-    // --- Bulk Compare ---
     document.getElementById('compareSelectedBtn').addEventListener('click', () => {
-        // 1. Get all selected candidate IDs
         const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);
-        
-        // 2. Validate selection count (Must be 2 or 3)
         if (selected.length < 2 || selected.length > 3) {
             alert('Please select exactly 2 or 3 candidates to compare.');
             return;
         }
-
-        // 3. Create the URL parameters
         const ids = selected.join(',');
-
-        // 4. Redirect to compare.php with email and IDs
         window.location.href = `compare.php?email=${encodeURIComponent(currentEmail)}&ids=${ids}`;
     });
 </script>
