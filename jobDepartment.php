@@ -2,75 +2,54 @@
 // Include the database connection file
 include 'connection.php';
 
+// Check if the connection was successful
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
+}
+
 // Redirect to login if user not logged in
 if (!isset($_GET['email'])) {
     header('Location: login.php');
     exit();
 }
 
-$current_email = $conn->real_escape_string($_GET['email']);
-
-// Fetch user details
-$sql = "SELECT name FROM user WHERE email = '$current_email'";
-$result = $conn->query($sql);
-if ($result && $result->num_rows === 1) {
-    $row = $result->fetch_assoc();
-    $user_name = $row['name'];
-} else {
-    header('Location: login.php');
-    exit();
-}
-
-if ($conn->connect_error) {
-    die("Database connection failed in jobDepartment.php: " . $conn->connect_error);
-}
+$currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 
 // --- ARCHIVE LOGIC ---
 $isArchived = isset($_GET['view']) && $_GET['view'] === 'archive' ? 1 : 0;
-$viewParam = $isArchived ? '&view=archive' : '';
 
-// 1. SQL Query to fetch department data based on is_archived
+// 1. SQL Query to fetch department data based on Archive Status
 $sql = "SELECT * FROM department WHERE is_archived = $isArchived ORDER BY department_name ASC";
 $result = $conn->query($sql);
 
+// Initialize a variable to hold the HTML for the table rows
 $department_rows_html = '';
 
 // 2. Check for results and build the table rows
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        
-        if ($isArchived == 0) {
-            // Active View
-            $actions = '
-                <button class="edit-btn" data-id="' . $row["department_id"] . '"><i class="fas fa-edit"></i> Edit</button>
-                <button class="archive-btn" data-id="' . $row["department_id"] . '" style="background-color: #fd7e14;"><i class="fas fa-box-archive"></i> Archive</button>
-            ';
-        } else {
-            // Archive View
-            $actions = '
-                <button class="restore-btn" data-id="' . $row["department_id"] . '" style="background-color: #17a2b8;"><i class="fas fa-trash-restore"></i> Restore</button>
-                <button class="delete-permanent-btn" data-id="' . $row["department_id"] . '" style="background-color: #dc3545;"><i class="fas fa-trash"></i> Delete</button>
-            ';
-        }
+        // Prepare data attributes for the Edit Modal (attached to Dept Name)
+        $dataAttrs = 'data-id="' . $row["department_id"] . '" ' .
+                     'data-name="' . htmlspecialchars($row["department_name"]) . '" ' .
+                     'data-desc="' . htmlspecialchars($row["description"]) . '"';
 
         $department_rows_html .= '
             <div class="table-row">
-                <div class="table-cell data">' . htmlspecialchars($row["department_name"]) . '</div>
-                <div class="table-cell description data">' . htmlspecialchars($row["description"]) . '</div>
-                <div class="table-cell action data" style="display:flex; gap:5px; justify-content:center;">
-                    ' . $actions . '
+                <div class="table-cell center-align"><input type="checkbox" name="dept_check" value="' . $row["department_id"] . '"></div>
+                <div class="table-cell data clickable-dept" ' . $dataAttrs . ' onclick="openEditFromRow(this)">
+                    ' . htmlspecialchars($row["department_name"]) . '
                 </div>
+                <div class="table-cell description data">' . htmlspecialchars($row["description"]) . '</div>
             </div>';
     }
 } else {
     $department_rows_html = '
         <div class="table-row no-data">
-            <div class="table-cell data" colspan="3" style="text-align: center;">No ' . ($isArchived ? 'archived' : 'active') . ' departments found.</div>
+            <div class="table-cell data" style="grid-column: 1 / -1; text-align: center; justify-content:center;">No ' . ($isArchived ? 'archived' : 'active') . ' departments found.</div>
         </div>';
 }
 
 $conn->close();
-$currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -83,18 +62,27 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <style>
-        .archive-btn, .restore-btn, .delete-permanent-btn {
-            border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; display: inline-flex; align-items: center; gap: 5px;
+        /* Local overrides for layout controls */
+        .top-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        
+        .bulk-btn {
+            border: none; color: white; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 1rem; display: none; align-items: center; gap: 5px;
         }
-        .archive-btn:hover { background-color: #e36d0d !important; }
-        .restore-btn:hover { background-color: #138496 !important; }
-        .delete-permanent-btn:hover { background-color: #c82333 !important; }
-
-        .toggle-view-btn {
-            padding: 8px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 10px; font-size: 0.9rem;
-        }
+        #archiveSelectedBtn { background-color: #fd7e14; }
+        #archiveSelectedBtn:hover { background-color: #e36d0d; }
+        #restoreSelectedBtn { background-color: #17a2b8; }
+        #restoreSelectedBtn:hover { background-color: #138496; }
+        #deleteSelectedBtn { background-color: #dc3545; }
+        #deleteSelectedBtn:hover { background-color: #c82333; }
+        
+        .clickable-dept { cursor: pointer; color: #3a7c7c; font-weight: 600; text-decoration: underline; }
+        .clickable-dept:hover { color: #2a5c5c; }
+        
+        .toggle-view-btn { padding: 10px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; }
         .toggle-view-btn:hover { background-color: #5a6268; }
         .toggle-view-btn.active-view { background-color: #3a7c7c; }
+
+        .center-align { justify-content: center; }
     </style>
 </head>
 
@@ -118,25 +106,31 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
     </div>
 
     <main class="content-area">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <div>
-                <button class="add-department-btn">Add Department</button>
-                <a href="jobDepartment.php?email=<?php echo urlencode($currentEmail); ?>&view=<?php echo $isArchived ? 'active' : 'archive'; ?>" class="toggle-view-btn <?php echo $isArchived ? 'active-view' : ''; ?>">
-                    <i class="fas <?php echo $isArchived ? 'fa-list' : 'fa-archive'; ?>"></i> 
-                    <?php echo $isArchived ? 'View Active' : 'View Archive'; ?>
-                </a>
-            </div>
-            <div class="search-bar" style="margin-left:auto;">
-                <input type="text" id="search-input" placeholder="Search">
-                <button class="search-btn" id="search-btn"><i class="fas fa-search"></i></button>
-            </div>
+        <div class="top-controls">
+            <button class="add-department-btn">Add Department</button>
+
+            <button id="archiveSelectedBtn" class="bulk-btn"><i class="fas fa-box-archive"></i> Archive Selected</button>
+            <button id="restoreSelectedBtn" class="bulk-btn"><i class="fas fa-trash-restore"></i> Restore Selected</button>
+            <button id="deleteSelectedBtn" class="bulk-btn"><i class="fas fa-trash"></i> Delete Selected</button>
+
+            <div style="flex-grow: 1;"></div> 
+            
+            <a href="jobDepartment.php?email=<?php echo urlencode($currentEmail); ?>&view=<?php echo $isArchived ? 'active' : 'archive'; ?>" class="toggle-view-btn <?php echo $isArchived ? 'active-view' : ''; ?>">
+                <i class="fas <?php echo $isArchived ? 'fa-list' : 'fa-archive'; ?>"></i> 
+                <?php echo $isArchived ? 'View Active' : 'View Archive'; ?>
+            </a>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search">
+            <button class="search-btn" id="search-btn"><i class="fas fa-search"></i></button>
         </div>
 
         <div class="department-table">
             <div class="table-row header-row">
+                <div class="table-cell center-align"><input type="checkbox" id="selectAll"></div>
                 <div class="table-cell">Department</div>
                 <div class="table-cell description">Description</div>
-                <div class="table-cell action">Action</div>
             </div>
 
             <div id="department-list">
@@ -150,7 +144,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             <h2 id="modalTitle"></h2>
             <form id="departmentForm" action="cud_department.php" method="POST">
                 <input type="hidden" id="departmentId" name="department_id" value="">
-                <input type="hidden" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
+                <input type="hidden" id="emailInput" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
                 <input type="hidden" name="view_type" value="<?php echo $isArchived ? 'archive' : 'active'; ?>">
                 <input type="hidden" id="actionType" name="action_type" value="">
 
@@ -172,22 +166,20 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
         </div>
     </div>
 
-    <div id="deleteModal" class="modal-overlay">
+    <div id="bulkActionModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 400px; padding: 25px;">
-            <h2 style="color: #dc3545; margin-bottom: 15px;" id="actionModalTitle">Confirm Action</h2>
-            <p style="text-align: center; margin-bottom: 25px;" id="actionModalText">
-                Are you sure?
-            </p>
+            <h2 style="color: #dc3545; margin-bottom: 15px;" id="bulkModalTitle">Confirm Action</h2>
+            <p style="text-align: center; margin-bottom: 25px;" id="bulkModalText">Are you sure?</p>
 
-            <form id="deleteForm" action="cud_department.php" method="POST">
-                <input type="hidden" id="deleteActionType" name="action_type" value="">
-                <input type="hidden" id="deleteDepartmentId" name="department_id" value="">
+            <form id="bulkForm" action="cud_department.php" method="POST">
+                <input type="hidden" id="bulkActionType" name="action_type" value="">
                 <input type="hidden" name="email" value="<?php echo htmlspecialchars($currentEmail); ?>">
                 <input type="hidden" name="view_type" value="<?php echo $isArchived ? 'archive' : 'active'; ?>">
+                <div id="bulkIdsContainer"></div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-confirm" style="background-color: #3a7c7c;" id="actionConfirmBtn">Yes</button>
-                    <button type="button" class="btn btn-cancel" id="cancelDeleteBtn">Cancel</button>
+                    <button type="submit" class="btn btn-confirm" style="background-color: #3a7c7c;" id="bulkConfirmBtn">Yes</button>
+                    <button type="button" class="btn btn-cancel" id="cancelBulkBtn">Cancel</button>
                 </div>
             </form>
         </div>
@@ -197,6 +189,7 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
         const isArchived = <?php echo $isArchived; ?>;
 
         $(document).ready(function() {
+            attachCheckboxListeners();
             $('#search-btn').click(performSearch);
             $('#search-input').keypress(function(e) { if (e.which == 13) performSearch(); });
             $('#search-input').on('keyup', function() { if ($(this).val().trim() === '') performSearch(); });
@@ -213,13 +206,48 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 }, 
                 success: function(response) {
                     $('#department-list').html(response);
+                    attachCheckboxListeners();
+                    updateButtonVisibility();
                 },
-                error: function() {
-                    alert('An error occurred during the search.');
-                }
+                error: function() { alert('An error occurred during the search.'); }
             });
         }
 
+        // --- CHECKBOX LOGIC ---
+        function attachCheckboxListeners() {
+            // Select All
+            $('#selectAll').off('change').on('change', function() {
+                $('input[name="dept_check"]').prop('checked', this.checked);
+                updateButtonVisibility();
+            });
+
+            // Individual
+            $('input[name="dept_check"]').off('change').on('change', function() {
+                updateButtonVisibility();
+                const all = $('input[name="dept_check"]').length;
+                const checked = $('input[name="dept_check"]:checked').length;
+                $('#selectAll').prop('checked', all > 0 && all === checked);
+            });
+        }
+
+        function updateButtonVisibility() {
+            const checkedCount = $('input[name="dept_check"]:checked').length;
+            const hasSelection = checkedCount > 0;
+
+            if (isArchived) {
+                // Archive View: Show Restore & Delete
+                $('#restoreSelectedBtn').css('display', hasSelection ? 'inline-flex' : 'none');
+                $('#deleteSelectedBtn').css('display', hasSelection ? 'inline-flex' : 'none');
+                $('#archiveSelectedBtn').hide();
+            } else {
+                // Active View: Show Archive & Delete
+                $('#archiveSelectedBtn').css('display', hasSelection ? 'inline-flex' : 'none');
+                $('#deleteSelectedBtn').css('display', hasSelection ? 'inline-flex' : 'none');
+                $('#restoreSelectedBtn').hide();
+            }
+        }
+
+        // --- MODAL & FORM LOGIC ---
         function closeModal() {
             $('#departmentModal').removeClass('modal-show');
             setTimeout(function() { $('#departmentModal').hide(); $('#departmentForm')[0].reset(); $('#departmentId').val(''); }, 300); 
@@ -233,83 +261,68 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
             openModal();
         });
 
-        $('#department-list').on('click', '.edit-btn', function() {
-            var $row = $(this).closest('.table-row');
-            var currentId = $(this).data('id');
-            var currentName = $row.find('.table-cell.data').eq(0).text().trim();
-            var currentDesc = $row.find('.table-cell.description.data').text().trim();
+        // Open Edit from click on Department Name
+        window.openEditFromRow = function(element) {
+            const id = element.dataset.id;
+            const name = element.dataset.name;
+            const desc = element.dataset.desc;
 
-            $('#departmentId').val(currentId);
-            $('#departmentNameInput').val(currentName);
-            $('#departmentDescriptionInput').val(currentDesc);
-            $('#modalTitle').text('Edit Department: ' + currentName);
+            $('#departmentId').val(id);
+            $('#departmentNameInput').val(name);
+            $('#departmentDescriptionInput').val(desc);
+            $('#modalTitle').text('Edit Department: ' + name);
             $('#actionType').val('edit');
             $('#confirmBtn').text('Save Changes');
             openModal();
-        });
+        };
 
         $('#cancelBtn').click(closeModal);
         $('#departmentModal').click(function(e) { if (e.target.id === 'departmentModal') closeModal(); });
 
-        // --- ACTION MODAL ---
-        function openActionModal(id, name, type) {
-            $('#deleteDepartmentId').val(id);
-            const titleElem = $('#actionModalTitle');
-            const textElem = $('#actionModalText');
-            const confirmBtn = $('#actionConfirmBtn');
-            const inputType = $('#deleteActionType');
+        // --- BULK ACTIONS ---
+        function openBulkModal(actionType) {
+            const selected = [];
+            $('input[name="dept_check"]:checked').each(function() {
+                selected.push($(this).val());
+            });
+            if (selected.length === 0) return;
 
-            if (type === 'archive') {
-                titleElem.text('Confirm Archive');
-                textElem.html(`Are you sure you want to archive <strong>${name}</strong>?`);
-                confirmBtn.text('Archive');
-                confirmBtn.css('background-color', '#fd7e14');
-                inputType.val('delete');
-            } else if (type === 'restore') {
-                titleElem.text('Confirm Restore');
-                textElem.html(`Restore <strong>${name}</strong> to active list?`);
-                confirmBtn.text('Restore');
-                confirmBtn.css('background-color', '#17a2b8');
-                inputType.val('restore');
-            } else if (type === 'permanent_delete') {
-                titleElem.text('Permanent Delete');
-                textElem.html(`PERMANENTLY delete <strong>${name}</strong>? This cannot be undone.`);
-                confirmBtn.text('Delete Permanently');
-                confirmBtn.css('background-color', '#dc3545');
-                inputType.val('permanent_delete');
+            $('#bulkActionType').val(actionType);
+            $('#bulkIdsContainer').html('');
+            selected.forEach(id => {
+                $('#bulkIdsContainer').append(`<input type="hidden" name="ids[]" value="${id}">`);
+            });
+
+            const title = $('#bulkModalTitle');
+            const text = $('#bulkModalText');
+            const btn = $('#bulkConfirmBtn');
+
+            if (actionType === 'delete') { // 'delete' = Archive (Soft Delete)
+                title.text('Confirm Archive');
+                text.text(`Archive ${selected.length} selected department(s)?`);
+                btn.css('background-color', '#fd7e14');
+            } else if (actionType === 'restore') {
+                title.text('Confirm Restore');
+                text.text(`Restore ${selected.length} selected department(s)?`);
+                btn.css('background-color', '#17a2b8');
+            } else if (actionType === 'permanent_delete') {
+                title.text('Permanent Delete');
+                text.text(`PERMANENTLY DELETE ${selected.length} selected department(s)? This cannot be undone.`);
+                btn.css('background-color', '#dc3545');
             }
 
-            $('#deleteModal').css('display', 'flex');
-            setTimeout(() => $('#deleteModal').addClass('modal-show'), 10);
+            $('#bulkActionModal').css('display', 'flex');
+            setTimeout(() => $('#bulkActionModal').addClass('modal-show'), 10);
         }
 
-        $('#department-list').on('click', '.archive-btn', function() {
-            var $row = $(this).closest('.table-row');
-            var currentId = $(this).data('id');
-            var currentName = $row.find('.table-cell.data').eq(0).text().trim();
-            openActionModal(currentId, currentName, 'archive');
-        });
+        $('#archiveSelectedBtn').click(() => openBulkModal('delete'));
+        $('#restoreSelectedBtn').click(() => openBulkModal('restore'));
+        $('#deleteSelectedBtn').click(() => openBulkModal('permanent_delete'));
 
-        $('#department-list').on('click', '.restore-btn', function() {
-            var $row = $(this).closest('.table-row');
-            var currentId = $(this).data('id');
-            var currentName = $row.find('.table-cell.data').eq(0).text().trim();
-            openActionModal(currentId, currentName, 'restore');
+        $('#cancelBulkBtn').click(() => {
+            $('#bulkActionModal').removeClass('modal-show');
+            setTimeout(() => $('#bulkActionModal').hide(), 300);
         });
-
-        $('#department-list').on('click', '.delete-permanent-btn', function() {
-            var $row = $(this).closest('.table-row');
-            var currentId = $(this).data('id');
-            var currentName = $row.find('.table-cell.data').eq(0).text().trim();
-            openActionModal(currentId, currentName, 'permanent_delete');
-        });
-
-        function closeDeleteModal() {
-            $('#deleteModal').removeClass('modal-show');
-            setTimeout(function() { $('#deleteModal').hide(); $('#deleteDepartmentId').val(''); }, 300);
-        }
-        $('#cancelDeleteBtn').click(closeDeleteModal);
-        $('#deleteModal').click(function(e) { if (e.target.id === 'deleteModal') closeDeleteModal(); });
 
         function displayNotification() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -323,7 +336,9 @@ $currentEmail = isset($_GET['email']) ? $_GET['email'] : '';
                 $msg.text(decodedMessage);
                 if (status === 'success') $box.addClass('success'); else if (status === 'error') $box.addClass('error');
                 $box.slideDown(300);
-                history.replaceState(null, null, window.location.pathname);
+                urlParams.delete('status'); urlParams.delete('message');
+                const newQuery = urlParams.toString();
+                history.replaceState(null, null, window.location.pathname + (newQuery ? '?' + newQuery : ''));
                 setTimeout(() => $box.slideUp(500), 5000);
             }
         }

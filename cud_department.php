@@ -17,7 +17,7 @@ if (isset($_POST['action_type'])) {
     $action = $_POST['action_type'];
     $redirectView = isset($_POST['view_type']) && $_POST['view_type'] === 'archive' ? '&view=archive' : '';
 
-    // --- 1. HANDLE ADD and EDIT ---
+    // --- 1. HANDLE ADD and EDIT (Single Item) ---
     if ($action === 'add' || $action === 'edit') {
         $name = $_POST['department_name'];
         $description = $_POST['description'];
@@ -28,8 +28,7 @@ if (isset($_POST['action_type'])) {
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("ss", $name, $description);
             $message = "Department added successfully!";
-        } else { // action === 'edit'
-            // UPDATE
+        } else { // edit
             $id = $_POST['department_id'];
             $sql = "UPDATE department SET department_name = ?, description = ? WHERE department_id = ?";
             $stmt = $conn->prepare($sql);
@@ -45,53 +44,49 @@ if (isset($_POST['action_type'])) {
         $stmt->close();
     } 
 
-    // --- 2. HANDLE ARCHIVE (Soft Delete) ---
-    elseif ($action === 'delete' && isset($_POST['department_id'])) {
-        $id = $_POST['department_id'];
-        
-        $sql = "UPDATE department SET is_archived = 1 WHERE department_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $id);
+    // --- 2. HANDLE BULK ACTIONS ---
+    else {
+        // Collect IDs
+        $ids = [];
+        if (isset($_POST['ids']) && is_array($_POST['ids'])) {
+            $ids = $_POST['ids'];
+        } elseif (isset($_POST['department_id'])) {
+            $ids[] = $_POST['department_id'];
+        }
 
-      if ($stmt->execute()) {
-            $message = "Department moved to archive!";
+        if (empty($ids)) {
+             header("Location: jobDepartment.php?status=error&message=" . urlencode("No items selected.") . $emailQuery . $redirectView);
+             exit();
+        }
+
+        // Prepare IN clause
+        $types = str_repeat('i', count($ids));
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        if ($action === 'delete') {
+            // ARCHIVE (Soft Delete)
+            $sql = "UPDATE department SET is_archived = 1 WHERE department_id IN ($placeholders)";
+            $message = "Selected department(s) moved to archive!";
+        } elseif ($action === 'restore') {
+            // RESTORE
+            $sql = "UPDATE department SET is_archived = 0 WHERE department_id IN ($placeholders)";
+            $message = "Selected department(s) restored successfully!";
+        } elseif ($action === 'permanent_delete') {
+            // PERMANENT DELETE
+            $sql = "DELETE FROM department WHERE department_id IN ($placeholders)";
+            $message = "Selected department(s) permanently deleted!";
+        } else {
+            header("Location: jobDepartment.php?status=error&message=" . urlencode("Invalid action.") . $emailQuery . $redirectView);
+            exit();
+        }
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$ids);
+
+        if ($stmt->execute()) {
             header("Location: jobDepartment.php?status=success&message=" . urlencode($message) . $emailQuery . $redirectView);
         } else {
             header("Location: jobDepartment.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery . $redirectView);
-        }
-        $stmt->close();
-    }
-
-    // --- 3. HANDLE RESTORE ---
-    elseif ($action === 'restore' && isset($_POST['department_id'])) {
-        $id = $_POST['department_id'];
-        
-        $sql = "UPDATE department SET is_archived = 0 WHERE department_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $id);
-
-      if ($stmt->execute()) {
-            $message = "Department restored successfully!";
-            header("Location: jobDepartment.php?status=success&message=" . urlencode($message) . $emailQuery . "&view=archive");
-        } else {
-            header("Location: jobDepartment.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery . "&view=archive");
-        }
-        $stmt->close();
-    }
-
-    // --- 4. HANDLE PERMANENT DELETE ---
-    elseif ($action === 'permanent_delete' && isset($_POST['department_id'])) {
-        $id = $_POST['department_id'];
-        
-        $sql = "DELETE FROM department WHERE department_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $id);
-
-      if ($stmt->execute()) {
-            $message = "Department permanently deleted!";
-            header("Location: jobDepartment.php?status=success&message=" . urlencode($message) . $emailQuery . "&view=archive");
-        } else {
-            header("Location: jobDepartment.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery . "&view=archive");
         }
         $stmt->close();
     }

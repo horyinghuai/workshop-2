@@ -51,7 +51,7 @@ body {
 }
 
 .header-right {
-    justify-content: flex-end; /* Align right links to the right edge of their grid column */
+    justify-content: flex-end;
 }
 
 .header h1 {
@@ -75,14 +75,11 @@ body {
     left: 2rem;
     display: flex;
     align-items: center;
-
     transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
 }
 
 .back-link:hover {
-    /* Lift the text up by 2 pixels */
     transform: translateY(-2px) scale(1.05); 
-    
     text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
@@ -97,18 +94,13 @@ body {
     padding: 0 15px;
     font-size: 1.5rem;
     border-right: 1px solid rgba(255, 255, 255, 0.5);
-
     transition: color 0.2s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out;
-
     position: relative; 
     display: inline-block; 
 }
 
 .header-right a:hover {
- /* 1. Lift the text up by 2 pixels */
     transform: translateY(-2px) scale(1.05); 
-    
-    /* Optional: Brighten the shadow slightly for a 'glow' effect */
     text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
@@ -116,7 +108,6 @@ body {
     border-right: none;
 }
 
-/* Highlight 'Department' link */
 .header-right a:nth-child(2) {
     font-weight: bold;
     text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.4);
@@ -127,7 +118,7 @@ body {
     padding: 30px 20px;
 }
 
-/* Add Department Button */
+/* Add Department Button - No bottom margin to align with bulk buttons */
 .add-department-btn {
     background-color: var(--primary-color);
     color: var(--white);
@@ -136,13 +127,19 @@ body {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    margin-bottom: 25px;
+    margin-bottom: 0;
     border-radius: 4px;
     transition: background-color 0.2s;
 }
 
 .add-department-btn:hover {
     background-color: #307a79;
+}
+
+/* Checkboxes */
+input[type="checkbox"] {
+    transform: scale(1.5);
+    cursor: pointer;
 }
 
 /* Search Bar */
@@ -179,12 +176,13 @@ body {
 /* --- Department Table (CSS Grid) --- */
 .department-table {
     border: 1px solid var(--primary-color);
+    width: 100%;
 }
 
 .table-row {
     display: grid;
-    /* Define grid columns for Department, Description, and Action */
-    grid-template-columns: 200px 1fr 180px; 
+    /* UPDATED COLUMNS: Checkbox (50px), Department (200px), Description (Remaining space) */
+    grid-template-columns: 50px 200px 1fr; 
     border-bottom: 1px solid var(--secondary-color);
     background-color: #9fc2c6;
 }
@@ -198,7 +196,7 @@ body {
     padding: 15px;
     border-right: 1px solid var(--secondary-color);
     display: flex;
-    align-items: center; /* Vertical Center for everything */
+    align-items: center; 
 }
 
 .table-cell:last-child {
@@ -216,174 +214,29 @@ body {
 
 .header-row .table-cell {
     border-right: 1px solid rgba(255, 255, 255, 0.3);
-    /* UPDATED: Center both horizontally and vertically */
     justify-content: center; 
     align-items: center;
     text-align: center;
 }
 
-/* UPDATED: Action Column Header Specifics */
-.header-row .table-cell.action {
-    padding: 0; 
-    /* justify-content: center inherited from .header-row .table-cell */
-}
-
-/* UPDATED: All Data Cells (TD) */
+/* Data Cells (TD) */
 .table-cell.data {
-    /* Horizontal Left, Vertical Center */
     justify-content: flex-start; 
     align-items: center;
     text-align: left;
 }
 
-/* UPDATED: Action Column Data (Buttons) */
-/* Applying specific gap for buttons, but inheriting alignment from .table-cell.data (left/center) */
-.table-cell.action.data {
-    gap: 10px;
-}
-
-.edit-btn, .delete-btn {
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: opacity 0.2s;
-}
-
-.edit-btn {
-    background-color: var(--edit-blue);
-    color: var(--white);
-    border: 1px solid var(--edit-blue);
-}
-
-.delete-btn {
-    background-color: var(--delete-red);
-    color: var(--white);
-    border: 1px solid var(--delete-red);
-}
-
-.edit-btn:hover, .delete-btn:hover {
-    opacity: 0.8;
-}
-
-/* -------------------- Modal/Popup Styling -------------------- */
-
-.modal-overlay {
-    /* Existing centering styles */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    /* Ensure display: none is the default hide state */
-    display: none; 
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-/* Modal Content Styles (Add transition and initial hidden state) */
-.modal-content {
-    /* Existing styles */
-    background: #fff;
-    padding: 30px;
-    border: 30px solid #9fc2c6;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    width: 90%;
-    max-width: 500px; 
-    box-sizing: border-box;
-    
-    /*Invisible and smaller */
-    opacity: 0;
-    transform: scale(0.9);
-    
-    /* Apply transition to opacity and transform */
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-}
-
-/* Class added by JavaScript to show and animate the modal */
-.modal-show .modal-content {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.modal-content h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 1.5em;
-    color: #333;
-}
-
-/* Form Styling */
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.modal-content input[type="text"],
-.modal-content textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    background-color: #d9ebec;
-}
-
-/* Action Buttons */
-.form-actions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 25px;
-}
-
-.btn-confirm {
-    background-color: #28a745; /* Green */
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 48%;
-}
-
-.btn-cancel {
-    background-color: #dc3545; /* Red */
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 48%;
-}
-
-/* --- Notification Styling --- */
-.notification-box {
-    padding: 15px 20px;
-    margin: 10px auto;
-    width: 90%;
-    max-width: 1000px;
-    border-radius: 4px;
-    font-weight: bold;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.notification-box.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.notification-box.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
+/* Modal and Notification Styles */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background: #fff; padding: 30px; border: 30px solid #9fc2c6; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); width: 90%; max-width: 500px; box-sizing: border-box; max-height: 90vh; overflow-y: auto; opacity: 0; transform: scale(0.9); transition: opacity 0.3s ease-out, transform 0.3s ease-out; }
+.modal-show .modal-content { opacity: 1; transform: scale(1); }
+.modal-content h2 { text-align: center; margin-bottom: 20px; font-size: 1.5em; color: #333; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+.modal-content input[type="text"], .modal-content textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #d9ebec; }
+.form-actions { display: flex; justify-content: space-between; margin-top: 25px; }
+.btn-confirm { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 48%; }
+.btn-cancel { background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 48%; }
+.notification-box { padding: 15px 20px; margin: 10px auto; width: 90%; max-width: 1000px; border-radius: 4px; font-weight: bold; text-align: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+.notification-box.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.notification-box.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }

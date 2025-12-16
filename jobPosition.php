@@ -47,7 +47,7 @@ if ($result->num_rows > 0) {
                 <div class="table-cell center-align"><input type="checkbox" name="job_check" value="' . $row["job_id"] . '"></div>
                 <div class="table-cell data">' . htmlspecialchars($row["department_name"]) . '</div>
                 <div class="table-cell data clickable-job" ' . $dataAttrs . ' onclick="openEditFromRow(this)">
-                    ' . htmlspecialchars($row["job_name"]) . ' </i>
+                    ' . htmlspecialchars($row["job_name"]) . '
                 </div>
                 <div class="table-cell description data">' . htmlspecialchars($row["description"]) . '</div>
                 <div class="table-cell education data">' . htmlspecialchars($row["education"]) . '</div>
