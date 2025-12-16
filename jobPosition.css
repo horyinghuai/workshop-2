@@ -21,7 +21,6 @@ body {
 }
 
 .container {
-    /* UPDATED: maximize width to 98% of the screen */
     max-width: 98%;
     margin: 0 auto;
     background-color: var(--white);
@@ -119,7 +118,7 @@ body {
     padding: 30px 20px;
 }
 
-/* Add Department Button */
+/* Add Job Button - UPDATED: No margin bottom for single line alignment */
 .add-job-btn {
     background-color: var(--primary-color);
     color: var(--white);
@@ -128,13 +127,19 @@ body {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    margin-bottom: 25px;
+    margin-bottom: 0; 
     border-radius: 4px;
     transition: background-color 0.2s;
 }
 
 .add-job-btn:hover {
     background-color: #307a79;
+}
+
+/* Checkboxes - UPDATED: Bigger size */
+input[type="checkbox"] {
+    transform: scale(1.5);
+    cursor: pointer;
 }
 
 /* Search Bar */
@@ -171,25 +176,22 @@ body {
 /* --- Department Table (CSS Grid) --- */
 .job-table {
     border: 1px solid var(--primary-color);
-    width: 100%; /* Ensure it fills the container */
+    width: 100%; 
 }
 
 .table-row {
     display: grid;
-    /* UPDATED for Full Screen Mode: 
-       - Description and Education use 'fr' (fraction) units to fill available space.
-       - Others are fixed width or minmax to maintain structure. 
-    */
+    /* Grid Columns including Checkbox */
     grid-template-columns: 
+        50px                /* Checkbox */
         130px               /* Department */
-        130px               /* Job Position */
-        1.5fr               /* Description (Flexible) */
-        1.2fr               /* Education (Flexible) */
-        130px               /* Skills */
-        120px               /* Experience */
-        120px               /* Language */
-        130px               /* Others */
-        200px;              /* Action */
+        200px               /* Job Position */
+        0.8fr               /* Description */
+        0.8fr               /* Education */
+        170px               /* Skills */
+        170px               /* Experience */
+        150px               /* Language */
+        150px;              /* Others */
     border-bottom: 1px solid var(--secondary-color);
     background-color: #9fc2c6;
 }
@@ -211,16 +213,14 @@ body {
 }
 
 /* --- SCROLLING BEHAVIOR FOR SMALLER SCREENS --- */
-/* When screen is smaller than 1400px, revert to fixed widths and enable scrollbar */
 @media (max-width: 1400px) {
     .job-table {
-        width: 1500px; /* Force width to trigger scroll */
+        width: 1500px; 
     }
     
     .table-row {
-        /* Switch back to fixed pixels so content doesn't squash */
         grid-template-columns: 
-            150px 150px 260px 220px 150px 120px 120px 150px 200px;
+            50px 150px 150px 260px 220px 150px 120px 120px 150px;
     }
 
     .table-scroll-wrapper {
@@ -248,154 +248,24 @@ body {
     text-align: center;
 }
 
-/* DATA CELLS (TD) - Left Aligned, Vertically Centered */
+/* DATA CELLS (TD) */
 .table-cell.data {
     justify-content: flex-start; 
     align-items: center;         
     text-align: left; 
 }
 
-/* ACTION DATA CELL - Left Aligned Buttons */
-.table-cell.action.data {
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
-
-.edit-btn, .delete-btn {
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: opacity 0.2s;
-}
-
-.edit-btn {
-    background-color: var(--edit-blue);
-    color: var(--white);
-    border: 1px solid var(--edit-blue);
-}
-
-.delete-btn {
-    background-color: var(--delete-red);
-    color: var(--white);
-    border: 1px solid var(--delete-red);
-}
-
-.edit-btn:hover, .delete-btn:hover {
-    opacity: 0.8;
-}
-
-/* -------------------- Modal/Popup Styling -------------------- */
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: none; 
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: #fff;
-    padding: 30px;
-    border: 30px solid #9fc2c6;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    width: 90%;
-    max-width: 500px; 
-    box-sizing: border-box;
-    max-height: 90vh; 
-    overflow-y: auto; 
-    opacity: 0;
-    transform: scale(0.9);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-}
-
-.modal-show .modal-content {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.modal-content h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 1.5em;
-    color: #333;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.modal-content input[type="text"],
-.modal-content textarea,
-.modal-content select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    background-color: #d9ebec;
-}
-
-.form-actions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 25px;
-}
-
-.btn-confirm {
-    background-color: #28a745; 
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 48%;
-}
-
-.btn-cancel {
-    background-color: #dc3545; 
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 48%;
-}
-
-/* --- Notification Styling --- */
-.notification-box {
-    padding: 15px 20px;
-    margin: 10px auto;
-    width: 90%;
-    max-width: 1000px;
-    border-radius: 4px;
-    font-weight: bold;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.notification-box.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.notification-box.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
+/* Modal and Notification Styles */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background: #fff; padding: 30px; border: 30px solid #9fc2c6; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); width: 90%; max-width: 500px; box-sizing: border-box; max-height: 90vh; overflow-y: auto; opacity: 0; transform: scale(0.9); transition: opacity 0.3s ease-out, transform 0.3s ease-out; }
+.modal-show .modal-content { opacity: 1; transform: scale(1); }
+.modal-content h2 { text-align: center; margin-bottom: 20px; font-size: 1.5em; color: #333; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+.modal-content input[type="text"], .modal-content textarea, .modal-content select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #d9ebec; }
+.form-actions { display: flex; justify-content: space-between; margin-top: 25px; }
+.btn-confirm { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 48%; }
+.btn-cancel { background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 48%; }
+.notification-box { padding: 15px 20px; margin: 10px auto; width: 90%; max-width: 1000px; border-radius: 4px; font-weight: bold; text-align: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+.notification-box.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.notification-box.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }

@@ -15,8 +15,9 @@ if (isset($_POST['email']) && !empty($_POST['email'])) {
 // Check the action type sent via POST
 if (isset($_POST['action_type'])) {
     $action = $_POST['action_type'];
+    $redirectView = isset($_POST['view_type']) && $_POST['view_type'] === 'archive' ? '&view=archive' : '';
 
-    // --- 1. HANDLE ADD and EDIT (from the main form modal) ---
+    // --- 1. HANDLE ADD and EDIT (Single Item) ---
     if ($action === 'add' || $action === 'edit') {
         $jobId = $_POST['job_id'];
         $name = $_POST['job_name'];
@@ -29,72 +30,73 @@ if (isset($_POST['action_type'])) {
         $others = $_POST['others'];
 
         if ($action === 'add') {
-            // INSERT (Add New Department)
-            $sql = "INSERT INTO job_position (department_id, job_name, description, education, skills, experience, language, others) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO job_position (department_id, job_name, description, education, skills, experience, language, others, is_archived) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("isssssss", $deptId, $name, $description, $education, $skills, $experience, $language, $others);
             $message = "Job added successfully!";
-        } else { // action === 'edit'
-            // UPDATE (Edit Existing Department)
-            $id = $_POST['job_id'];
-            $sql = "UPDATE job_position
-            SET 
-                department_id = ?, 
-                job_name = ?, 
-                description = ?, 
-                education = ?, 
-                skills = ?, 
-                experience = ?, 
-                language = ?, 
-                others = ?
-            WHERE 
-                job_id = ?";
+        } else { // edit
+            $sql = "UPDATE job_position SET department_id = ?, job_name = ?, description = ?, education = ?, skills = ?, experience = ?, language = ?, others = ? WHERE job_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("isssssssi", 
-                    $deptId,
-                    $name,
-                    $description,
-                    $education, 
-                    $skills,
-                    $experience,
-                    $language,
-                    $others,
-                    $jobId); // "ssi" = two strings, one integer
+            $stmt->bind_param("isssssssi", $deptId, $name, $description, $education, $skills, $experience, $language, $others, $jobId);
             $message = "Job updated successfully!";
         }
 
        if ($stmt->execute()) {
-            $message = $action === 'add' ? "Job added successfully!" : "Job updated successfully!";
-            header("Location: jobPosition.php?status=success&message=" . urlencode($message) . $emailQuery);
+            header("Location: jobPosition.php?status=success&message=" . urlencode($message) . $emailQuery . $redirectView);
         } else {
-            // Append error and email query string
-            header("Location: jobPosition.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery);
+            header("Location: jobPosition.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery . $redirectView);
         }
         $stmt->close();
     }
 
-    // --- 2. HANDLE DELETE (from the delete modal) ---
-    elseif ($action === 'delete' && isset($_POST['job_id'])) {
-        $id = $_POST['job_id'];
+    // --- 2. HANDLE BULK ACTIONS ---
+    else {
+        // Collect IDs (support both array and single value for backward compatibility)
+        $ids = [];
+        if (isset($_POST['ids']) && is_array($_POST['ids'])) {
+            $ids = $_POST['ids'];
+        } elseif (isset($_POST['job_id'])) {
+            $ids[] = $_POST['job_id'];
+        }
 
-        // DELETE Department
-        $sql = "DELETE FROM job_position WHERE job_id = ?";
+        if (empty($ids)) {
+             header("Location: jobPosition.php?status=error&message=" . urlencode("No items selected.") . $emailQuery . $redirectView);
+             exit();
+        }
+
+        // Prepare the IN clause (?,?,?)
+        $types = str_repeat('i', count($ids));
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        if ($action === 'delete') {
+            // ARCHIVE (Soft Delete)
+            $sql = "UPDATE job_position SET is_archived = 1 WHERE job_id IN ($placeholders)";
+            $message = "Selected job(s) moved to archive!";
+        } elseif ($action === 'restore') {
+            // RESTORE
+            $sql = "UPDATE job_position SET is_archived = 0 WHERE job_id IN ($placeholders)";
+            $message = "Selected job(s) restored successfully!";
+        } elseif ($action === 'permanent_delete') {
+            // PERMANENT DELETE
+            $sql = "DELETE FROM job_position WHERE job_id IN ($placeholders)";
+            $message = "Selected job(s) permanently deleted!";
+        } else {
+            header("Location: jobPosition.php?status=error&message=" . urlencode("Invalid action.") . $emailQuery . $redirectView);
+            exit();
+        }
+
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $id); // "i" = one integer
+        $stmt->bind_param($types, ...$ids);
 
-       if ($stmt->execute()) {
-            $message = "Job deleted successfully!";
-            // 🛑 FIX 4: Append status and email query string
-            header("Location: jobPosition.php?status=success&message=" . urlencode($message) . $emailQuery);
+        if ($stmt->execute()) {
+            header("Location: jobPosition.php?status=success&message=" . urlencode($message) . $emailQuery . $redirectView);
         } else {
-            // 🛑 FIX 5: Append error and email query string
-            header("Location: jobPosition.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery);
+            header("Location: jobPosition.php?status=error&message=" . urlencode("Database error: " . $stmt->error) . $emailQuery . $redirectView);
         }
-
         $stmt->close();
     }
+
 } else {
-    // Handle direct access to the script without POST data
    header("Location: jobPosition.php?status=error&message=" . urlencode("Invalid action request.") . $emailQuery);
 }
 
