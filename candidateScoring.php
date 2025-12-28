@@ -1016,7 +1016,20 @@ $currentEmail = $_GET['email'];
     
     document.getElementById('btnSendEmail').addEventListener('click', () => {
         const popup = document.getElementById('sendingPopup');
+        const progressText = document.getElementById('sendingProgress');
         popup.style.display = 'flex';
+        progressText.innerText = '0%';
+        
+        // --- Simulated Progress Bar ---
+        let progress = 0;
+        const interval = setInterval(() => {
+            if (progress < 90) {
+                progress += Math.floor(Math.random() * 5) + 1; // Increment by random 1-5%
+                if (progress > 90) progress = 90;
+                progressText.innerText = progress + '%';
+            }
+        }, 100);
+
         const formData = new FormData();
         formData.append('candidate_id', outreachData.id);
         formData.append('action', outreachData.action);
@@ -1030,12 +1043,25 @@ $currentEmail = $_GET['email'];
         fetch('send_outreach.php', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
+                // Finish progress
+                clearInterval(interval);
+                progressText.innerText = '100%';
+                
+                // Slight delay to let user see 100%
+                setTimeout(() => {
+                    popup.style.display = 'none';
+                    if (data.status === 'success') {
+                        alert("Email sent!");
+                        document.getElementById('outreachModal').classList.remove('visible');
+                        fetchCandidates();
+                    } else alert("Failed: " + data.message);
+                }, 500);
+            })
+            .catch(err => {
+                clearInterval(interval);
                 popup.style.display = 'none';
-                if (data.status === 'success') {
-                    alert("Email sent!");
-                    document.getElementById('outreachModal').classList.remove('visible');
-                    fetchCandidates();
-                } else alert("Failed: " + data.message);
+                alert("An error occurred.");
+                console.error(err);
             });
     });
 

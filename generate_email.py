@@ -48,13 +48,29 @@ def generate_email(candidate_id, action, interview_date=None):
         if action == 'accept':
             subject = f"Interview Invitation: {job} at {company_name}"
             
-            # Format the date if provided
-            date_str = interview_date if interview_date else "[Date and Time]"
+            # Logic to separate Date and Time from the input string
+            # Assumes input format is like "YYYY-MM-DD HH:MM:SS" or similar
+            date_display = "[Date]"
+            time_display = "[Time]"
+
+            if interview_date:
+                parts = str(interview_date).split(' ')
+                if len(parts) >= 2:
+                    date_display = parts[0]
+                    # Join the rest in case time has AM/PM or other parts
+                    time_display = " ".join(parts[1:])
+                elif 'T' in str(interview_date): # Handle ISO format YYYY-MM-DDTHH:MM
+                    parts = str(interview_date).split('T')
+                    date_display = parts[0]
+                    time_display = parts[1]
+                else:
+                    date_display = interview_date
 
             email_body = (
                 f"Dear {name},\n\n"
                 f"Thank you for applying to the {job} position at {company_name}. We were impressed with your application and would like to invite you for an interview to discuss your qualifications further.\n\n"
-                f"We have scheduled the interview for: {date_str}\n\n"
+                f"Date: {date_display}\n"
+                f"Time: {time_display}\n\n"
                 f"Please join the meeting using the link below:\n"
                 f"[Meeting Link]\n\n"
                 f"If this time does not work for you, please let us know so we can reschedule.\n\n"

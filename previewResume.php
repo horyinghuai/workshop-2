@@ -150,7 +150,7 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
 
             <div id="formatted-container" class="report-col w-full lg:w-1/2 p-6 h-full overflow-y-auto">
                 <div class="flex justify-between items-center mb-6">
-                    <h2>Extracted Data (Translated)</h2>
+                    <h2>Extracted Data</h2>
                 </div>
                 
                 <form id="aiForm" class="space-y-1">
