@@ -647,10 +647,10 @@ $currentEmail = $_GET['email'];
                 const outreachStatus = candidate.outreach_status || null;
 
                 if (!outreachStatus && !isArchiveView) {
-                     outreachContent = `
+                      outreachContent = `
                         <div style="display:flex; gap:5px;" id="outreach-btns-${candidate.candidate_id}">
-                            <button class="btn-accept" title="Schedule Interview" onclick="openOutreach('${escapeHtml(candidate.candidate_id)}', '', 'accept')"><i class="fas fa-check"></i></button>
-                            <button class="btn-reject" title="Reject Candidate" onclick="openOutreach('${escapeHtml(candidate.candidate_id)}', '', 'reject')"><i class="fas fa-times"></i></button>
+                            <button class="btn-accept" title="Schedule Interview" onclick="openOutreach('${escapeHtml(candidate.candidate_id)}', '', 'accept')">Schedule Interview</button>
+                            <button class="btn-reject" title="Reject Candidate" onclick="openOutreach('${escapeHtml(candidate.candidate_id)}', '', 'reject')">Reject</button>
                         </div>
                     `;
                 } else if(outreachStatus) {

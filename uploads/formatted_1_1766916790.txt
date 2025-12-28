@@ -1,0 +1,15 @@
+--- EXTRACTED RESUME DATA ---
+
+Name: Farah Martin
+Email: farahmartin@email.com
+Contact: 1234567890
+
+--- SKILLS ---
+SQL, Excel, Google Sheets, A/B Testing, Experimentation, Tableau, Python (Pandas, Scikit-learn), Google Analytics, Leadership
+
+--- EXPERIENCE ---
+Data Analyst at Fountain House (May 2018 - Current): Built data and reporting infrastructure using Tableau and SQL, providing insights into product, marketing funnels, and business KPIs. Designed and implemented A/B experiments improving conversion and reducing churn. Implemented a pricing experiment that improved customer value. Built operational reporting in Tableau to improve contractor efficiency, resulting in $250K incremental revenue. Led a team of 2 full-time employees and 4 contractors.
+
+Data Analyst at Wavely (August 2016 - May 2018): Partnered with the executive team to report on KPIs across web properties using SQL and Google Sheets. Built a logistic regression model, resulting in a 15% lift in YoY site visitors. Reduced pricing by 22% for a user segment to boost yearly revenue by $730K. Developed root cause reports to address customer conversion issues, boosting conversions by 32%.
+
+Product Modeling Analyst at Geico (August 2014 - August 2016): Developed reporting for a nationwide retention program using Python, SQL, and Excel, saving ~90 hours of monthly labor. Improved profitability of a retention program by 8% using SQL. Applied models and data to predict repair costs for vehicles and presented findings to stakeholders.
