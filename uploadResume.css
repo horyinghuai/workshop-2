@@ -1,121 +1,262 @@
-body {
+/* Google Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* --- Global Styles --- */
+* {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* Top Bar */
-.top-bar {
-    background: #4d777a;
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f6f8;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- Header --- */
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background-color: #3a7c7c;
     color: white;
-    padding: 20px;
+    padding: 1.25rem 2rem;
+}
+
+.back-link {
+    color: white;
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: 500;
+    position: absolute;
+    left: 2rem;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 0.5rem;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.header-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0;
+    text-align: center;
+}
+
+.header .logout-link {
+    position: absolute;
+    right: 2rem;
+    font-size: 1.5rem; 
+    text-decoration: none;
+    color: white;
+}
+
+.logout-link:hover {
+    text-decoration: underline;
+}
+
+/* --- Main Content --- */
+.main-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 5rem 1rem;
+    flex-grow: 1;
+}
+
+.upload-container {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 30px solid #9fc2c6;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
     position: relative;
 }
 
-.top-bar h1 {
-    flex-grow: 1;
-    text-align: center;
-    margin: 0;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.back-btn {
-    font-size: 20px;
-    text-decoration: none;
-    color: white;
+.upload-container::before {
+    content: '';
     position: absolute;
-    left: 20px;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 20px;
+    background-color: #d9e6e8; /* Light green border */
+    z-index: -1;
 }
 
-/* Centered Upload Card */
-.upload-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-top: 50px;
+.upload-container h2 {
+    color: #1f3f46;
+    margin-bottom: 2rem;
+    font-size: 1.75rem;
+    font-weight: 600;
 }
 
-.upload-card {
-    background: #d0e3e3;
-    width: 550px;
-    padding: 40px;
-    border-radius: 15px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+/* --- Form --- */
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
 }
 
-.upload-card h2 {
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 28px;
-}
-
-/* Dropdown */
-.label-title {
-    font-weight: bold;
+.form-group label {
+    font-weight: 600;
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
+    color: #333;
 }
 
-.dropdown {
+select#job_position {
     width: 100%;
-    padding: 12px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #a2c1c2;
     border-radius: 8px;
-    border: none;
-    background: #c7dcdc;
-    margin-bottom: 25px;
-}
-
-/* Drag Area */
-.drag-area {
-    width: 100%;
-    height: 150px;
-    border: 2px dashed #b1b1b1;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+    background-color: #d9ebec;
+    color: #333;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%233a7c7c' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
     cursor: pointer;
-    background: white;
-    margin-bottom: 30px;
 }
 
-.drag-area.drag-over {
-    background: #e8f2f2;
-    border-color: #4d777a;
+/* --- File Input Area --- */
+.file-choose-btn {
+    width: 100%;
+    background-color: #3a7b7c;
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
-.drag-area p {
-    color: #555;
-    font-size: 15px;
+.file-choose-btn:hover {
+    background-color: #2d5556;
 }
 
-/* Buttons */
-.buttons {
+.drop-zone {
+    border: 2px dashed #3a7b7c;
+    border-radius: 12px;
+    padding: 2.5rem 1rem;
+    background-color: #f0f8f8;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.drop-zone.active {
+    background-color: #e1f4f4;
+    border-style: solid;
+}
+
+.drop-zone p {
+    color: #3a7b7c;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* --- Buttons --- */
+.button-container {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.confirm-btn,
+.cancel-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.3s;
+    flex: 1;
+    max-width: 250px;
+    margin-top: 20px;
 }
 
 .confirm-btn {
-    background: #22cc55;
-    border: none;
-    padding: 12px 40px;
+    background-color: #00c04b;
     color: white;
-    font-size: 18px;
+}
+
+.cancel-btn {
+    background-color: #d93a3a;
+    color: white;
+}
+
+.confirm-btn:hover,
+.cancel-btn:hover {
+    opacity: 0.85;
+}
+
+/* --- Alert Messages --- */
+.alert {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.alert-success {
+    background-color: #e6f7ec;
+    color: #008a38;
+    border: 1px solid #b7ebc9;
+}
+
+.alert-error {
+    background-color: #fdecea;
+    color: #d93a3a;
+    border: 1px solid #f9c6c6;
+}
+
+.file-btn-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.remove-file-btn {
+    margin-left: auto;
+    padding: 15px 15px;
+    background: #c0392b;
+    color: white;
+    border: none;
     border-radius: 8px;
     cursor: pointer;
 }
 
-.cancel-btn {
-    background: #d64545;
-    border: none;
-    padding: 12px 40px;
-    color: white;
-    font-size: 18px;
-    border-radius: 8px;
-    cursor: pointer;
+.remove-file-btn:hover {
+    background: #a93226;
 }

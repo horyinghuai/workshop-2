@@ -75,7 +75,7 @@ $conn->close();
     <h3 class="quick-actions-title">Quick Actions</h3>
 
     <div class="actions-grid">
-        <a href="<?php echo $is_logged_in ? "uploadResumeYing.php?email=" . urlencode($current_email) : "javascript:requireLogin()"; ?>" class="action-card">
+        <a href="<?php echo $is_logged_in ? "uploadResume.php?email=" . urlencode($current_email) : "javascript:requireLogin()"; ?>" class="action-card">
             <div class="card-icon"><i class="fas fa-upload"></i></div>
             <h4 class="card-title">Upload Resume</h4>
             <p class="card-description">Easily submit new candidate resumes for review.</p>
