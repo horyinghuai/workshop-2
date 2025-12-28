@@ -44,6 +44,11 @@
         <div id="emailError" class="error-msg" style="display:none;"></div>
         <label for="fpEmail">Email</label>
         <input type="email" id="fpEmail" placeholder="Enter your email">
+        
+        <div id="emailProgressBar" class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+
         <div class="modal-actions">
             <button onclick="sendCode()" class="confirm-btn">Confirm</button>
             <button onclick="closeEmailModal()" class="cancel-btn">Cancel</button>
@@ -118,7 +123,7 @@ function toggleInfoBox() {
     }
 }
 
-// Close info box when clicking outside (Optional UX improvement)
+// Close info box when clicking outside
 document.addEventListener('click', function(event) {
     const box = document.getElementById("infoBox");
     const icon = document.getElementById("toggleInfo");
@@ -132,15 +137,24 @@ function openEmailModal(e) {
     if(e) e.preventDefault();
     document.getElementById("fpEmail").value = '';
     document.getElementById("emailError").style.display = 'none';
+    
+    // Hide progress bar on fresh open
+    document.getElementById("emailProgressBar").style.display = 'none';
+    
     document.getElementById("emailModal").style.display = "flex";
     document.getElementById("emailError").style.textAlign = 'center';
 }
 function closeEmailModal() { document.getElementById("emailModal").style.display = "none"; }
 
-/* --- Step 2: Send Code --- */
+/* --- Step 2: Send Code (Updated with Progress Bar) --- */
 function sendCode() {
     const emailInput = document.getElementById("fpEmail").value.trim();
     const emailError = document.getElementById("emailError");
+    
+    // Progress Bar Elements
+    const progressContainer = document.getElementById("emailProgressBar");
+    const progressBar = progressContainer.querySelector(".progress-bar");
+
     emailError.style.display = 'none';
 
     if (!emailInput || !emailInput.includes("@")) {
@@ -149,12 +163,41 @@ function sendCode() {
         return;
     }
 
+    // 1. Show Progress Bar
+    progressContainer.style.display = "block";
+    progressBar.style.width = "0%";
+
+    // 2. Animate from 0% to 100%
+    let width = 0;
+    const interval = setInterval(() => {
+        width += 2; // Speed: 2% every 30ms -> approx 1.5 seconds total
+        
+        if (width >= 100) {
+            width = 100;
+            progressBar.style.width = width + '%';
+            clearInterval(interval);
+            
+            // 3. Only proceed to fetch AFTER hitting 100%
+            performEmailFetch(emailInput);
+        } else {
+            progressBar.style.width = width + '%'; 
+        }
+    }, 30);
+}
+
+// Separated Fetch Logic
+function performEmailFetch(emailInput) {
+    const emailError = document.getElementById("emailError");
+    const progressContainer = document.getElementById("emailProgressBar");
     const formData = new FormData();
     formData.append('email', emailInput);
 
     fetch('send_code.php', { method: 'POST', body: formData })
     .then(res => res.json())
     .then(data => {
+        // Hide progress bar after response
+        progressContainer.style.display = "none";
+
         if (data.status === 'error') {
             emailError.innerText = data.message;
             emailError.style.display = "block";
@@ -168,12 +211,18 @@ function sendCode() {
             document.getElementById("emailDisplay").innerHTML = `Verification code sent to <b>${masked}</b>`;
             document.getElementById("verifyCode").value = '';
             document.getElementById("codeError").style.display = 'none';
+            
             closeEmailModal();
             document.getElementById("codeModal").style.display = "flex";
             startResendCountdown(RESEND_SECONDS);
         }
     })
-    .catch(err => console.error(err));
+    .catch(err => {
+        console.error(err);
+        progressContainer.style.display = "none";
+        emailError.innerText = "An error occurred.";
+        emailError.style.display = "block";
+    });
 }
 
 function maskEmail(email) {
@@ -259,8 +308,6 @@ function updatePassword() {
     const updateError = document.getElementById("updateError");
     updateError.style.display = 'none';
 
-    // We allow the Server to do the heavy validation now to match your request
-    // But we still check basic match client-side to save a request
     if (pass1 !== pass2) {
         updateError.innerText = "Passwords do not match.";
         updateError.style.display = "block";
@@ -282,7 +329,6 @@ function updatePassword() {
             alert("Password updated successfully. Please use the new password to login.");
             closeUpdateModal();
         } else {
-            // Display the specific error from PHP validation
             updateError.innerText = data.error;
             updateError.style.display = "block";
         }
