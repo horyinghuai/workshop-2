@@ -63,7 +63,7 @@ $currentEmail = $_GET['email'];
     .clickable-name:hover { color: #2e6c73; }
 
     /* Resume Viewer */
-    .resume-modal { width: 900px; max-width: calc(100% - 4rem); border-radius: 18px; background: transparent; padding: 1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+    .resume-modal { width: 900px; max-width: calc(100% - 4rem); border-radius: 18px; background: #9fc2c6; padding: 1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
     .resume-modal .inner { border-radius: 12px; background: white; padding: 1rem; height: 80vh; display: flex; flex-direction: column; }
     .resume-modal .modal-header { display: flex; justify-content: flex-end; }
     .resume-modal .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
@@ -958,14 +958,30 @@ $currentEmail = $_GET['email'];
             const container = document.createElement('div');
             container.style.width = '700px'; container.style.padding = '40px'; container.style.background = '#ffffff'; container.style.color = '#333';
             container.innerHTML = `
-                <div style="text-align:center; border-bottom: 2px solid #3a7c7c; padding-bottom: 20px; margin-bottom: 20px;">
-                    <h1 style="color:#3a7c7c; margin:0;">${escapeHtml(candidate.name)}</h1>
-                    <p>${escapeHtml(candidate.email)} | ${escapeHtml(candidate.contact_number)}</p>
+                <div style="text-align:center; border-bottom: 3px solid #3a7c7c; padding-bottom: 25px; margin-bottom: 30px;">
+                    <h1 style="color:#3a7c7c; margin:0; font-size: 28px; text-transform: uppercase; letter-spacing: 1px;">${escapeHtml(candidate.name)}</h1>
+                    <p style="margin-top: 8px; font-size: 14px; color: #555;">${escapeHtml(candidate.email)}  |  ${escapeHtml(candidate.contact_number)}</p>
                 </div>
-                <h3>Objective</h3><p>${escapeHtml(candidate.objective || 'N/A')}</p>
-                <h3>Education</h3><p>${escapeHtml(candidate.education || 'N/A')}</p>
-                <h3>Skills</h3><p>${escapeHtml(candidate.skills || 'N/A')}</p>
-                <h3>Experience</h3><p>${escapeHtml(candidate.experience || 'N/A')}</p>
+
+                <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
+                    <h3 style="color:#3a7c7c; margin-bottom: 8px; font-size: 18px; text-transform: uppercase;">Objective</h3>
+                    <p style="font-size: 14px; line-height: 1.6; color: #333; text-align: justify;">${escapeHtml(candidate.objective || 'N/A')}</p>
+                </div>
+
+                <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
+                    <h3 style="color:#3a7c7c; margin-bottom: 8px; font-size: 18px; text-transform: uppercase;">Education</h3>
+                    <p style="font-size: 14px; line-height: 1.6; color: #333; white-space: pre-line; text-align: justify;">${escapeHtml(candidate.education || 'N/A')}</p>
+                </div>
+
+                <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
+                    <h3 style="color:#3a7c7c; margin-bottom: 8px; font-size: 18px; text-transform: uppercase;">Skills</h3>
+                    <p style="font-size: 14px; line-height: 1.6; color: #333; white-space: pre-line; text-align: justify;">${escapeHtml(candidate.skills || 'N/A')}</p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color:#3a7c7c; margin-bottom: 8px; font-size: 18px; text-transform: uppercase;">Experience</h3>
+                    <p style="font-size: 14px; line-height: 1.6; color: #333; white-space: pre-line; text-align: justify;">${escapeHtml(candidate.experience || 'N/A')}</p>
+                </div>
             `;
             document.body.appendChild(container);
             const opt = { margin: 0.5, filename: `${candidate.name}_Formatted_Resume.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
