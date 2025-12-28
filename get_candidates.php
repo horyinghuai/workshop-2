@@ -7,14 +7,17 @@ header('Content-Type: application/json');
 $status = isset($_GET['status']) ? $_GET['status'] : [];
 $job_positions = isset($_GET['job_position']) ? $_GET['job_position'] : [];
 $departments = isset($_GET['department']) ? $_GET['department'] : [];
+$outreach_statuses = isset($_GET['outreach_status']) ? $_GET['outreach_status'] : []; // NEW
+$staff_in_charge = isset($_GET['staff_in_charge']) ? $_GET['staff_in_charge'] : []; // NEW
+
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $is_archived = isset($_GET['is_archived']) ? intval($_GET['is_archived']) : 0;
 
-// New Filters
+// Filters
 $filter_year = isset($_GET['year']) ? intval($_GET['year']) : 0;
 $filter_month = isset($_GET['month']) ? intval($_GET['month']) : 0;
 
-// Dynamic Sorting Parameters (Arrays)
+// Dynamic Sorting Parameters
 $sort_cols = isset($_GET['sort_cols']) ? $_GET['sort_cols'] : [];
 $sort_orders = isset($_GET['sort_orders']) ? $_GET['sort_orders'] : [];
 
@@ -36,23 +39,27 @@ if ($search_active) {
     }
 
     // B. Keyword Fallback Search (SQL LIKE)
+    // FIX: Added LEFT JOIN user u and u.name LIKE to search Staff Name
     $search_term = "%{$search}%";
     $keyword_sql = "
         SELECT c.candidate_id 
         FROM candidate c
         LEFT JOIN job_position jp ON c.job_id = jp.job_id
         LEFT JOIN department d ON jp.department_id = d.department_id
+        LEFT JOIN user u ON c.email_user = u.email
         WHERE 
             c.name LIKE ? OR 
             c.email LIKE ? OR 
             c.contact_number LIKE ? OR 
             c.skills LIKE ? OR 
             jp.job_name LIKE ? OR 
-            d.department_name LIKE ?
+            d.department_name LIKE ? OR
+            u.name LIKE ?
     ";
 
     if ($stmt = $conn->prepare($keyword_sql)) {
-        $stmt->bind_param("ssssss", $search_term, $search_term, $search_term, $search_term, $search_term, $search_term);
+        // Bind 7 strings (added u.name)
+        $stmt->bind_param("sssssss", $search_term, $search_term, $search_term, $search_term, $search_term, $search_term, $search_term);
         $stmt->execute();
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {
@@ -110,6 +117,18 @@ if (!empty($departments)) {
     $sql .= " AND d.department_name IN ($deptList)";
 }
 
+// NEW FILTER: Outreach Status
+if (!empty($outreach_statuses)) {
+    $outreachList = "'" . implode("','", array_map([$conn, 'real_escape_string'], $outreach_statuses)) . "'";
+    $sql .= " AND c.outreach IN ($outreachList)";
+}
+
+// NEW FILTER: Staff In Charge
+if (!empty($staff_in_charge)) {
+    $staffList = "'" . implode("','", array_map([$conn, 'real_escape_string'], $staff_in_charge)) . "'";
+    $sql .= " AND u.name IN ($staffList)";
+}
+
 if ($filter_year > 0) {
     $sql .= " AND YEAR(c.applied_date) = $filter_year";
 }
@@ -119,39 +138,41 @@ if ($filter_month > 0) {
 
 // --- 5. Sorting Logic (Dynamic Multi-Level) ---
 
-// Helper function to map frontend columns to SQL fields
 function mapSortColumn($col) {
     switch ($col) {
         case 'name': return "c.name";
         case 'job_position': return "jp.job_name";
         case 'department': return "d.department_name";
         case 'applied_date': return "c.applied_date";
+        // Scores
         case 'score_overall': return "r.score_overall";
         case 'score_education': return "r.score_education";
         case 'score_skills': return "r.score_skills";
         case 'score_experience': return "r.score_experience";
         case 'score_language': return "r.score_language";
         case 'score_others': return "r.score_others";
+        // New Sorts
+        case 'status': return "c.status";
+        case 'outreach_status': return "c.outreach";
+        case 'staff_in_charge': return "u.name";
+        
         default: return "c.name";
     }
 }
 
 $orderByClauses = [];
 
-// Handle dynamic sort arrays
 if (!empty($sort_cols) && is_array($sort_cols)) {
     foreach ($sort_cols as $index => $col) {
         if (empty($col)) continue;
         $field = mapSortColumn($col);
         
-        // Get corresponding order, default to ASC if missing
         $order = (isset($sort_orders[$index]) && strtoupper($sort_orders[$index]) === 'DESC') ? 'DESC' : 'ASC';
         
         $orderByClauses[] = "$field $order";
     }
 }
 
-// Fallback if no valid sort provided
 if (empty($orderByClauses)) {
     $orderByClauses[] = "c.name ASC";
 }

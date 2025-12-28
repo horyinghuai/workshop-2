@@ -150,6 +150,13 @@ $currentEmail = $_GET['email'];
         overflow-y: auto;  
     }
 
+    /* --- CENTER ALIGNMENT FOR TABLE HEADER AND DATA --- */
+    .candidate-table th, 
+    .candidate-table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+
     .candidate-table thead th {
         position: sticky;
         top: 0;
@@ -261,6 +268,16 @@ $currentEmail = $_GET['email'];
                 <button class="filter-title" data-target="department-options">Department <i class="fas fa-chevron-right"></i></button>
                 <div class="filter-options" id="department-options"></div>
             </div>
+            
+            <div class="filter-group">
+                <button class="filter-title" data-target="outreach-options">Outreach Status <i class="fas fa-chevron-right"></i></button>
+                <div class="filter-options" id="outreach-options"></div>
+            </div>
+
+            <div class="filter-group">
+                <button class="filter-title" data-target="staff-options">Staff In Charge <i class="fas fa-chevron-right"></i></button>
+                <div class="filter-options" id="staff-options"></div>
+            </div>
 
             <div class="filter-group">
                 <button class="filter-title" data-target="date-options">Applied Date <i class="fas fa-chevron-right"></i></button>
@@ -332,12 +349,14 @@ $currentEmail = $_GET['email'];
                             <th class="sortable" onclick="toggleSort('score_language')">Language Score <i class="fas fa-sort" id="sortIcon-score_language"></i></th>
                             <th class="sortable" onclick="toggleSort('score_others')">Others Score <i class="fas fa-sort" id="sortIcon-score_others"></i></th>
                             
-                            <th>Status</th>
-                            <th>Outreach</th>
+                            <th class="sortable" onclick="toggleSort('status')">Status <i class="fas fa-sort" id="sortIcon-status"></i></th>
+                            <th class="sortable" onclick="toggleSort('outreach_status')">Outreach <i class="fas fa-sort" id="sortIcon-outreach_status"></i></th>
+                            
                             <th>Original Resume</th>
                             <th>Formatted Resume</th>
                             <th>Report</th>
-                            <th>Staff In Charge</th>
+                            
+                            <th class="sortable" onclick="toggleSort('staff_in_charge')">Staff In Charge <i class="fas fa-sort" id="sortIcon-staff_in_charge"></i></th>
                         </tr>
                     </thead>
                     <tbody id="candidateTableBody"></tbody>
@@ -528,17 +547,45 @@ $currentEmail = $_GET['email'];
         try {
             const response = await fetch('get_filters.php');
             const data = await response.json();
+            
+            // Job Positions
             const jobPositionOptions = document.getElementById('job-position-options');
             jobPositionOptions.innerHTML = '';
             data.job_positions.forEach(job => {
                 jobPositionOptions.innerHTML += `<div class="filter-option"><label><input type="checkbox" name="job_position" value="${escapeHtml(job)}"> ${escapeHtml(job)}</label></div>`;
             });
+            
+            // Departments
             const departmentOptions = document.getElementById('department-options');
             departmentOptions.innerHTML = '';
             data.departments.forEach(dept => {
                 departmentOptions.innerHTML += `<div class="filter-option"><label><input type="checkbox" name="department" value="${escapeHtml(dept)}"> ${escapeHtml(dept)}</label></div>`;
             });
-            document.querySelectorAll('#job-position-options input, #department-options input').forEach(input => {
+
+            // NEW: Outreach Statuses
+            const outreachOptions = document.getElementById('outreach-options');
+            outreachOptions.innerHTML = '';
+            if (data.outreach_statuses && data.outreach_statuses.length > 0) {
+                data.outreach_statuses.forEach(status => {
+                     outreachOptions.innerHTML += `<div class="filter-option"><label><input type="checkbox" name="outreach_status" value="${escapeHtml(status)}"> ${escapeHtml(status)}</label></div>`;
+                });
+            } else {
+                 outreachOptions.innerHTML = '<div style="padding:5px; color:#666; font-size:0.9em;">No outreach data</div>';
+            }
+
+            // NEW: Staff In Charge
+            const staffOptions = document.getElementById('staff-options');
+            staffOptions.innerHTML = '';
+            if (data.staff_in_charge && data.staff_in_charge.length > 0) {
+                data.staff_in_charge.forEach(staff => {
+                     staffOptions.innerHTML += `<div class="filter-option"><label><input type="checkbox" name="staff_in_charge" value="${escapeHtml(staff)}"> ${escapeHtml(staff)}</label></div>`;
+                });
+            } else {
+                 staffOptions.innerHTML = '<div style="padding:5px; color:#666; font-size:0.9em;">No staff found</div>';
+            }
+
+            // Bind Change Events
+            document.querySelectorAll('#job-position-options input, #department-options input, #outreach-options input, #staff-options input').forEach(input => {
                 input.addEventListener('change', fetchCandidates);
             });
         } catch (error) { console.error('Error fetching dynamic filters:', error); }
@@ -598,6 +645,9 @@ $currentEmail = $_GET['email'];
         const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
         const selectedJobPositions = Array.from(document.querySelectorAll('input[name="job_position"]:checked')).map(cb => cb.value);
         const selectedDepartments = Array.from(document.querySelectorAll('input[name="department"]:checked')).map(cb => cb.value);
+        // NEW FILTER COLLECTIONS
+        const selectedOutreach = Array.from(document.querySelectorAll('input[name="outreach_status"]:checked')).map(cb => cb.value);
+        const selectedStaff = Array.from(document.querySelectorAll('input[name="staff_in_charge"]:checked')).map(cb => cb.value);
         
         const filterYear = document.getElementById('filterYear').value;
         const filterMonth = document.getElementById('filterMonth').value;
@@ -607,6 +657,9 @@ $currentEmail = $_GET['email'];
         selectedStatuses.forEach(s => params.append('status[]', s));
         selectedJobPositions.forEach(jp => params.append('job_position[]', jp));
         selectedDepartments.forEach(d => params.append('department[]', d));
+        selectedOutreach.forEach(o => params.append('outreach_status[]', o));
+        selectedStaff.forEach(st => params.append('staff_in_charge[]', st));
+
         if (searchTerm) params.append('search', searchTerm);
         if (filterYear) params.append('year', filterYear);
         if (filterMonth) params.append('month', filterMonth);
@@ -1014,6 +1067,7 @@ $currentEmail = $_GET['email'];
     document.getElementById('status-options').addEventListener('change', fetchCandidates);
     document.getElementById('job-position-options').addEventListener('change', fetchCandidates);
     document.getElementById('department-options').addEventListener('change', fetchCandidates);
+    // outreach and staff listeners are added dynamically in fetchDynamicFilters
 
     document.getElementById('compareSelectedBtn').addEventListener('click', () => {
         const selected = Array.from(document.querySelectorAll('input[name="candidate_check"]:checked')).map(cb => cb.value);

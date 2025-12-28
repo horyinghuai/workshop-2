@@ -24,7 +24,8 @@ if (empty($meet_link) && !empty($body)) {
 $db_success = false;
 
 if ($action === 'accept') {
-    $outreach_status = 'Outreached - Scheduled Interview';
+    $outreach_status = 'Scheduled Interview';
+    $new_status = 'Interviewed';
     // Insert into calendar table
     $stmt = $conn->prepare("INSERT INTO interview (candidate_id, interview_date, meeting_link) VALUES (?, ?, ?)");
     $stmt->bind_param("iss", $candidate_id, $interview_date, $meet_link);
@@ -34,14 +35,14 @@ if ($action === 'accept') {
     $stmt->close();
     
     // Update candidate status
-    $stmt = $conn->prepare("UPDATE candidate SET outreach = ? WHERE candidate_id = ?");
-    $stmt->bind_param("si", $outreach_status, $candidate_id);
+    $stmt = $conn->prepare("UPDATE candidate SET status = ?, outreach = ? WHERE candidate_id = ?");
+    $stmt->bind_param("ssi", $new_status, $outreach_status, $candidate_id);
     $stmt->execute();
     $stmt->close();
 
 } else {
     // Reject Action
-    $outreach_status = 'Outreached - Rejected';
+    $outreach_status = 'Rejected';
     $new_status = 'Rejected';
     $stmt = $conn->prepare("UPDATE candidate SET status = ?, outreach = ? WHERE candidate_id = ?");
     $stmt->bind_param("ssi", $new_status, $outreach_status, $candidate_id);
