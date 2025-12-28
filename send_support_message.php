@@ -21,24 +21,28 @@ if (empty($message)) {
 }
 
 // 3. Identify User & Determine Sender Type
-$sender_type = 'user'; // Default
-$final_email = '';
+$sender_type = 'user'; 
+$final_email = NULL;
 $final_name = '';
 
 if (isset($_SESSION['user_email']) && !empty($_SESSION['user_email'])) {
-    // Registered User
-    $final_email = $_SESSION['user_email']; // Valid email, FK works
+    // --- REGISTERED USER ---
+    $final_email = $_SESSION['user_email']; 
     $final_name = $_SESSION['user_name'] ?? 'User';
     $sender_type = 'user';
 } else {
-    // Guest User
+    // --- GUEST USER ---
+    // Generate a unique Guest ID if not exists and store in Session
+    if (!isset($_SESSION['unique_guest_id'])) {
+        $_SESSION['unique_guest_id'] = 'Guest-' . substr(uniqid(), -6);
+    }
+    
     $final_email = NULL; // Must be NULL to avoid Foreign Key error
-    $final_name = 'Guest'; 
-    $sender_type = 'guest'; // Set sender as guest
+    $final_name = $_SESSION['unique_guest_id']; // Store Unique ID in Name for tracking
+    $sender_type = 'guest'; 
 }
 
 // 4. Log User Message to Database
-// Updated to use $sender_type instead of hardcoded 'user'
 $stmt = $conn->prepare("INSERT INTO support_messages (email, name, message, sender) VALUES (?, ?, ?, ?)");
 $stmt->bind_param("ssss", $final_email, $final_name, $message, $sender_type);
 $stmt->execute();
@@ -47,13 +51,11 @@ $stmt->close();
 
 // 5. Send Notification to Telegram
 if (!empty($telegram_bot_token) && !empty($telegram_chat_id)) {
-    // For display in Telegram, show "Guest" if email is null
     $display_email = $final_email ? $final_email : "Guest";
     
     $text = "<b>📩 New Support Request</b>\n" .
             "<b>Name:</b> " . htmlspecialchars($final_name) . "\n" .
             "<b>Email:</b> " . htmlspecialchars($display_email) . "\n" .
-            "<b>Type:</b> " . htmlspecialchars(ucfirst($sender_type)) . "\n" .
             "<b>Message:</b>\n" . htmlspecialchars($message) . "\n\n" .
             "<i>Reply to this message to chat with the user.</i>";
 
@@ -90,9 +92,11 @@ $sys_msg_id = 0;
 if (!$is_working_hours) {
     $auto_msg = "Thank you for contacting us. Our operating hours are 9:00 AM - 6:00 PM. We will attend to your message on the next working day.";
     
-    // Auto-reply is sent by 'system'
-    $sys = $conn->prepare("INSERT INTO support_messages (email, name, message, sender) VALUES (?, 'System', ?, 'system')");
-    $sys->bind_param("ss", $final_email, $auto_msg);
+    // For auto-reply to Guest, we must tag it with the Guest ID in the name so they can fetch it
+    $sys_name = ($sender_type === 'guest') ? 'System|' . $final_name : 'System';
+
+    $sys = $conn->prepare("INSERT INTO support_messages (email, name, message, sender) VALUES (?, ?, ?, 'system')");
+    $sys->bind_param("sss", $final_email, $sys_name, $auto_msg);
     $sys->execute();
     $sys_msg_id = $sys->insert_id;
     $sys->close();

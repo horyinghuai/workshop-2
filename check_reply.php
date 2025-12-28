@@ -5,15 +5,17 @@ header('Content-Type: application/json');
 
 $telegram_bot_token = getenv('TELEGRAM_BOT_TOKEN');
 
-// --- 1. Identify User Type & Email ---
+// --- 1. Identify User Type & Credentials ---
 $current_email = '';
-$is_guest = false;
+$current_guest_id = '';
+$user_type = 'none';
 
 if (isset($_SESSION['user_email'])) {
     $current_email = $_SESSION['user_email'];
-} elseif (isset($_SESSION['guest_email'])) {
-    $current_email = $_SESSION['guest_email'];
-    $is_guest = true;
+    $user_type = 'registered';
+} elseif (isset($_SESSION['unique_guest_id'])) {
+    $current_guest_id = $_SESSION['unique_guest_id'];
+    $user_type = 'guest';
 }
 
 if (empty($telegram_bot_token)) {
@@ -43,27 +45,38 @@ if (isset($data['result']) && !empty($data['result'])) {
         if (isset($update['message']['reply_to_message']) && isset($update['message']['text'])) {
             $msg = $update['message'];
             $original_msg_id = $msg['reply_to_message']['message_id'];
-            $admin_tg_id = $msg['message_id']; // Unique ID of this specific admin reply
+            $admin_tg_id = $msg['message_id']; 
             $admin_text = $msg['text'];
 
-            // DEDUPLICATION: Check if we already saved this specific Telegram message
+            // DEDUPLICATION check
             $check = $conn->prepare("SELECT message_id FROM support_messages WHERE telegram_msg_id = ?");
             $check->bind_param("s", $admin_tg_id);
             $check->execute();
             $check->store_result();
 
             if ($check->num_rows == 0) {
-                // Find original sender
-                $find = $conn->prepare("SELECT email FROM support_messages WHERE telegram_msg_id = ? LIMIT 1");
+                // Find original sender details
+                $find = $conn->prepare("SELECT email, name FROM support_messages WHERE telegram_msg_id = ? LIMIT 1");
                 $find->bind_param("s", $original_msg_id);
                 $find->execute();
                 $res = $find->get_result();
                 
                 if ($row = $res->fetch_assoc()) {
                     $target_email = $row['email'];
-                    // Insert Reply
-                    $ins = $conn->prepare("INSERT INTO support_messages (email, name, message, sender, telegram_msg_id) VALUES (?, 'Admin', ?, 'admin', ?)");
-                    $ins->bind_param("sss", $target_email, $admin_text, $admin_tg_id);
+                    $target_name = $row['name']; // This might be "Guest-12345"
+
+                    // If Guest (Email is NULL), we tag the Admin's reply name with the Guest ID
+                    // Format: "Admin|Guest-12345"
+                    if (empty($target_email)) {
+                        $reply_name_field = "Admin|" . $target_name;
+                        $ins = $conn->prepare("INSERT INTO support_messages (email, name, message, sender, telegram_msg_id) VALUES (NULL, ?, ?, 'admin', ?)");
+                        $ins->bind_param("sss", $reply_name_field, $admin_text, $admin_tg_id);
+                    } else {
+                        // Registered User
+                        $ins = $conn->prepare("INSERT INTO support_messages (email, name, message, sender, telegram_msg_id) VALUES (?, 'Admin', ?, 'admin', ?)");
+                        $ins->bind_param("sss", $target_email, $admin_text, $admin_tg_id);
+                    }
+
                     $ins->execute();
                     $ins->close();
                 }
@@ -76,40 +89,45 @@ if (isset($data['result']) && !empty($data['result'])) {
 
 // --- 3. FETCH MESSAGES FOR CLIENT ---
 
-if (empty($current_email)) {
+if ($user_type === 'none') {
     echo json_encode(['status' => 'no_user']);
     exit;
 }
 
 $last_id = isset($_GET['last_id']) ? intval($_GET['last_id']) : 0;
 
-// LOGIC FIX:
-// If Guest AND last_id == 0 (Fresh Load/Refresh), return NO history.
-// If Registered, always return history based on last_id.
-if ($is_guest && $last_id === 0) {
-    echo json_encode(['status' => 'success', 'messages' => []]);
-    exit;
+$result = null;
+
+if ($user_type === 'registered') {
+    // Fetch by Email
+    $stmt = $conn->prepare("SELECT message_id, message, sender, created_at FROM support_messages WHERE email = ? AND message_id > ? ORDER BY message_id ASC");
+    $stmt->bind_param("si", $current_email, $last_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} elseif ($user_type === 'guest') {
+    // Fetch by Guest ID (stored in Name)
+    // We look for messages sent BY the guest (name = GuestID)
+    // OR messages sent TO the guest (name = Admin|GuestID or System|GuestID)
+    $search_tag = "%|" . $current_guest_id;
+    
+    $stmt = $conn->prepare("SELECT message_id, message, sender, created_at FROM support_messages WHERE (name = ? OR name LIKE ?) AND message_id > ? ORDER BY message_id ASC");
+    $stmt->bind_param("ssi", $current_guest_id, $search_tag, $last_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
 }
-
-$sql = "SELECT message_id, message, sender, created_at FROM support_messages 
-        WHERE email = ? AND message_id > ? 
-        ORDER BY message_id ASC";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("si", $current_email, $last_id);
-$stmt->execute();
-$result = $stmt->get_result();
 
 $new_messages = [];
-while ($row = $result->fetch_assoc()) {
-    $new_messages[] = [
-        'id' => $row['message_id'],
-        'message' => $row['message'],
-        'sender' => $row['sender'],
-        'time' => $row['created_at']
-    ];
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $new_messages[] = [
+            'id' => $row['message_id'],
+            'message' => $row['message'],
+            'sender' => $row['sender'],
+            'time' => $row['created_at']
+        ];
+    }
 }
-$stmt->close();
+
 $conn->close();
 
 if (!empty($new_messages)) {
