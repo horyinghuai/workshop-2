@@ -19,7 +19,7 @@ $candidate_id = intval($_GET['candidate_id']);
 $email = $_GET['email'];
 $redirect_url = "uploadResume.php?email=" . urlencode($email);
 
-// --- 1. HANDLE DELETE ACTION (FROM CANCEL BUTTON) ---
+// --- 1. HANDLE DELETE ACTION (FROM CANCEL OR BACK BUTTON) ---
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     // Fetch file paths before deleting the record
     $file_query = "SELECT resume_original, resume_formatted FROM candidate WHERE candidate_id = ?";
@@ -124,7 +124,7 @@ $original_file_ext = strtolower(pathinfo($original_file_path, PATHINFO_EXTENSION
     <header class="header-bar shadow-md flex-none z-50">
         <nav class="max-w-screen-2xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center">
-                <a href="<?php echo $redirect_url; ?>" class="text-white hover:text-gray-200 text-lg font-medium flex items-center gap-2 font-size-1.5rm"><i class="fas fa-chevron-left"></i> Back</a>
+                <a href="previewResume.php?action=delete&candidate_id=<?php echo $candidate_id; ?>&email=<?php echo urlencode($email); ?>" class="text-white hover:text-gray-200 text-lg font-medium flex items-center gap-2 font-size-1.5rm"><i class="fas fa-chevron-left"></i> Back</a>
             </div>
             <h1 class="text-3xl font-bold tracking-wide">Resume Reader</h1>
             <a href="logout.php" class="logout-link">Log Out</a>
