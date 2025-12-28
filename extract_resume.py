@@ -8,8 +8,8 @@ import requests
 import time
 import pickle
 from dotenv import load_dotenv
-from sklearn.feature_extraction.text import CountVectorizer # Required for loading vectorizer
-from sklearn.naive_bayes import MultinomialNB # Required for loading model
+from sklearn.feature_extraction.text import CountVectorizer 
+from sklearn.naive_bayes import MultinomialNB 
 
 # --- LOAD ENV VARIABLES ---
 load_dotenv()
@@ -30,7 +30,6 @@ try:
         with open('gender_model.pkl', 'rb') as f:
             GENDER_MODEL = pickle.load(f)
 except Exception as e:
-    # Model not found or error loading, we will proceed but prediction will fail (blank)
     pass
 
 # --- UTILS ---
@@ -63,43 +62,30 @@ def extract_text_from_docx(file_path):
     return text
 
 def predict_gender(name):
-    """Predicts gender using the loaded local model. Returns '' if fails."""
     if not name or not GENDER_VECTORIZER or not GENDER_MODEL:
         return ""
-    
     try:
-        # Use first name for better accuracy
         first_name = name.split()[0].strip().lower()
-        if not first_name:
-            return ""
-            
+        if not first_name: return ""
         name_vec = GENDER_VECTORIZER.transform([first_name])
         prediction = GENDER_MODEL.predict(name_vec)
         return prediction[0]
     except Exception:
         return ""
 
-# --- LOCAL REGEX (FAST & ACCURATE) ---
 def extract_local_data(text):
     data = {}
-
-    # 1. Email (Standard Pattern)
+    # Email
     email_match = re.search(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text)
     data['email'] = email_match.group(0) if email_match else None
-
-    # 2. Contact Number (Flexible International/Local Format)
+    # Contact
     phone_match = re.search(r'(\+?\(?\d{1,4}\)?[\s\.-]?)?(\d{2,5}[\s\.-]?\d{2,5}[\s\.-]?\d{2,5})', text)
-    
     if phone_match:
         raw_number = phone_match.group(0)
         digits_only = re.sub(r'\D', '', raw_number)
-        if len(digits_only) >= 8:
-            data['contact_number'] = digits_only
-        else:
-            data['contact_number'] = None
+        data['contact_number'] = digits_only if len(digits_only) >= 8 else None
     else:
         data['contact_number'] = None
-
     return data
 
 # --- GEMINI API CALL ---
@@ -154,24 +140,26 @@ def process_resume(file_path, pid=None):
 
     update_progress(pid, 50)
 
-    # 3. API Extraction (Messy Data)
+    # 3. API Extraction (With Translation)
     clean_text = re.sub(r'\s+', ' ', full_text).strip()[:30000] 
 
-    # Modified prompt: Removed Gender inference, we will use local model
+    # --- UPDATED PROMPT FOR TRANSLATION ---
     prompt = f"""
-    You are a Resume Parser. Extract and normalize data from the resume text.
+    You are an expert Resume Parser. 
+    
+    CRITICAL INSTRUCTION: If the resume text is in a language other than English (e.g., Malay, Chinese, Tamil), you MUST TRANSLATE all extracted content into professional English.
     
     Resume Text: "{clean_text}"
 
-    Instructions:
+    Extract the following fields and format as valid JSON:
     1. "name": Extract full name.
-    2. "address": Extract city, state, country OR full address.
-    3. "education": List as "Course, University, Grade, Year". Newline for multiple.
-    4. "skills": List key skills (technical & soft), comma-separated.
-    5. "experience": Summarize into short paragraphs. Group by role.
-    6. "language": List languages and proficiency. If not explicitly listed, try to infer from context (e.g. "Native English speaker").
-    7. "others": Summarize awards/certs. Return null if empty.
-    8. "objective": Short summary.
+    2. "address": Extract city, state, country OR full address (Translate to English).
+    3. "education": List as "Course, University, Grade, Year". Newline for multiple. (Translate to English).
+    4. "skills": List key skills (technical & soft), comma-separated. (Translate to English).
+    5. "experience": Summarize into short paragraphs. Group by role. (Translate to English).
+    6. "language": List languages and proficiency. (Translate to English).
+    7. "others": Summarize awards/certs. Return null if empty. (Translate to English).
+    8. "objective": Short summary. (Translate to English).
 
     Return strictly valid JSON.
     """
@@ -192,12 +180,12 @@ def process_resume(file_path, pid=None):
             json_str = api_response.replace("```json", "").replace("```", "").strip()
             api_data = json.loads(json_str)
             for key in final_data:
-                if key in api_data and key != 'gender': # Skip gender from API
+                if key in api_data and key != 'gender': 
                     final_data[key] = api_data[key]
         except json.JSONDecodeError:
             final_data['others'] = "Error parsing AI response"
 
-    # 5. Override with Local Data (More Accurate)
+    # 5. Override with Local Data
     if local_data['email']:
         final_data['email'] = local_data['email']
     
@@ -210,7 +198,7 @@ def process_resume(file_path, pid=None):
         if pred:
             final_data['gender'] = pred
         else:
-            final_data['gender'] = "" # Blank if fails
+            final_data['gender'] = "" 
     else:
         final_data['gender'] = ""
 
