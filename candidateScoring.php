@@ -986,7 +986,13 @@ $currentEmail = $_GET['email'];
             document.body.appendChild(container);
             const opt = { margin: 0.5, filename: `${candidate.name}_Formatted_Resume.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
             const pdfBlobUrl = await html2pdf().set(opt).from(container).output('bloburl');
-            window.open(pdfBlobUrl, '_blank');
+            
+            // --- UPDATED: Show in pop-up window (modal) instead of new tab ---
+            const overlay = document.getElementById('resumeViewerOverlay');
+            const iframe = document.getElementById('resumeViewerIframe');
+            iframe.src = pdfBlobUrl;
+            overlay.classList.add('visible');
+            
             document.body.removeChild(container);
             popup.style.display = 'none';
         } catch (err) { console.error(err); alert("Error generating PDF"); popup.style.display = 'none'; }
