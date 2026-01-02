@@ -19,7 +19,7 @@ session_start();
 <body>
 
 <div class="logo-column">
-    <img src="image/logo.jpeg" alt="Resume Reader Logo">
+    <img src="image/logo.png" alt="Resume Reader Logo">
 </div>
 
 <div class="form-column">
