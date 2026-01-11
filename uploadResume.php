@@ -113,7 +113,7 @@ $conn->close();
                         </button>
                     </div>
                     <div class="drop-zone hidden" id="dropZone">
-                        <p>Drag & drop the resume here<br>PDF, DOCX up to 5MB</p>
+                        <p>Drag & drop the resume here<br>PDF up to 5MB</p>
                     </div>
                     <input type="file" name="resume_file" id="resumeFile" class="hidden" required accept=".pdf,.docx">
                     <!-- Add this right below the drop zone -->
