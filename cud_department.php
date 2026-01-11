@@ -23,6 +23,20 @@ if (isset($_POST['action_type'])) {
         $description = $_POST['description'];
 
         if ($action === 'add') {
+            // Check for duplicate department name
+            $checkSql = "SELECT COUNT(*) FROM department WHERE department_name = ?";
+            $checkStmt = $conn->prepare($checkSql);
+            $checkStmt->bind_param("s", $name);
+            $checkStmt->execute();
+            $checkStmt->bind_result($count);
+            $checkStmt->fetch();
+            $checkStmt->close();
+
+            if ($count > 0) {
+                header("Location: jobDepartment.php?status=error&message=" . urlencode("$name department existed in the database.") . $emailQuery . $redirectView);
+                exit();
+            }
+
             // INSERT (is_archived default 0)
             $sql = "INSERT INTO department (department_name, description, is_archived) VALUES (?, ?, 0)";
             $stmt = $conn->prepare($sql);

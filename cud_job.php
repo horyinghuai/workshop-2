@@ -30,6 +30,20 @@ if (isset($_POST['action_type'])) {
         $others = $_POST['others'];
 
         if ($action === 'add') {
+            // Check for duplicate job position name
+            $checkSql = "SELECT COUNT(*) FROM job_position WHERE job_name = ?";
+            $checkStmt = $conn->prepare($checkSql);
+            $checkStmt->bind_param("s", $name);
+            $checkStmt->execute();
+            $checkStmt->bind_result($count);
+            $checkStmt->fetch();
+            $checkStmt->close();
+
+            if ($count > 0) {
+                header("Location: jobPosition.php?status=error&message=" . urlencode("$name job position existed in the database.") . $emailQuery . $redirectView);
+                exit();
+            }
+
             $sql = "INSERT INTO job_position (department_id, job_name, description, education, skills, experience, language, others, is_archived) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("isssssss", $deptId, $name, $description, $education, $skills, $experience, $language, $others);
