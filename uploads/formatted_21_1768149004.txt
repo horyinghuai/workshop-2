@@ -1,0 +1,15 @@
+--- EXTRACTED RESUME DATA ---
+
+Name: Chelsey Dega
+Email: chelseydega@email.com
+Contact: 1234567890
+
+--- SKILLS ---
+HubSpot, Salesforce, Microsoft Excel, Word, PowerPoint, Paid Ads (Facebook, Google, LinkedIn, retargeting), A/B testing, audience segmentation, Google Analytics, SEO
+
+--- EXPERIENCE ---
+Marketing Manager, HADASSAH, May 2018 - Current, New York, NY: Directed the launch of a campaign for a new platform, resulting in revenue of $5.3M in the first year. Created a holistic paid acquisition strategy, leading to an ROI of 41% for every dollar spent. Built a culture of robust data collection and A/B testing, leading to an average improvement of 64% from campaign start to end. Developed partnerships with higher education institutions, resulting in an incremental $7.4M in revenue. Exceeded sales targets by 32% for the full year in 2019. Identified underperforming vendors, leading to a reduction in costs of $425,000. Oversaw a team of 5 full-time marketers and 4 paid contractors.
+
+Assistant Marketing Manager, Fora Financial, August 2016 - May 2018, New York, NY: Developed a paid acquisition strategy across Google, Facebook, and industry newsletters, generating $18M in new leads in 2017. Built a brand awareness campaign through conferences and speaking engagements, increasing inbound leads by 68% year over year. Implemented real-time reporting on marketing spend, improving ROI by 22%. Exceeded growth targets every quarter by 23% on average. Managed a team of 4 full-time marketing associates.
+
+Marketing Analyst, Insight Global, August 2014 - August 2016, Washington D.C.: Created A/B testing plan for Facebook ad copy, leading to an improvement in ROI of 12%. Built key reports in Tableau for the executive team around KPIs such as marketing spend, new leads, revenue generated, and ROI, saving 9 hours of manual reporting each week.
