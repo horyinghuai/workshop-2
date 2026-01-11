@@ -154,6 +154,12 @@ $conn->close();
                 return;
             }
 
+            const file = resumeFile.files[0];
+            if (file.type !== "application/pdf") {
+                alert("Only PDF format is supported. Please upload a PDF file.");
+                return;
+            }
+
             overlay.style.display = 'flex';
             bar.style.width = '0%';
             txt.innerText = '0%';
