@@ -1,0 +1,18 @@
+--- EXTRACTED RESUME DATA ---
+
+Name: Farah Martin
+Email: farahmartin@email.com
+Contact: 1234567890
+
+--- SKILLS ---
+SQL, Excel/Google Sheets, A/B Testing & Experimentation, Tableau, Python (Pandas, Scikit-learn), Google Analytics, Leadership
+
+--- EXPERIENCE ---
+Data Analyst, Fountain House, May 2018 - Current, New York, NY:
+Built data and reporting infrastructure using Tableau and SQL to provide real-time insights into product, marketing funnels, and business KPIs. Designed and implemented A/B experiments to improve conversion rate by 19 basis points and reduce churn by 12 basis points. Implemented a long-term pricing experiment that improved customer value by 25%. Built operational reporting in Tableau to identify areas of improvement for contractors, resulting in $250K in annual incremental revenue. Led a team of 2 full-time employees and 4 contractors.
+
+Data Analyst, Wavely, August 2016 - May 2018, New York, NY:
+Partnered with the executive team as the first data hire to formulate and report on KPIs across web properties with 225M annual visitors using SQL and Google Sheets. Built a logistic regression model to help the SEO team decide which keywords to target, resulting in a 15% lift in YoY site visitors in 2018. Collaborated with product managers to perform cohort analysis that identified an opportunity to reduce pricing by 22% for a segment of users to boost yearly revenue by $730K. Developed root cause reports to address problems with customer conversions, successfully revealing insights that boosted conversions by 32%.
+
+Product Modeling Analyst, Geico, August 2014 - August 2016, Washington D.C.:
+Developed and owned reporting for a nationwide retention program with Python, SQL, and Excel, saving ~90 hours of monthly labor. Identified procedural areas of improvement through customer data, using SQL to improve the profitability of a nationwide retention program by 8%. Applied models and data to understand and predict repair costs for vehicles on the market, and presented findings to stakeholders.
